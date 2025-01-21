@@ -37,4 +37,5 @@ jobs:
     - name: Upload a Build Artifact
       uses: actions/upload-artifact@v4
       with:
+        name: SmartSpawner-1.21+
         path: /home/runner/work/Smart-Spawner-Plugin/Smart-Spawner-Plugin/build/libs/**.jar
