@@ -188,8 +188,8 @@ public class SpawnerListener implements Listener {
     }
 
     private void startCleanupTask() {
-        plugin.getServer().getScheduler().runTaskTimer(plugin,
-                () -> cleanupCooldowns(),
+        plugin.getServer().getGlobalRegionScheduler().runAtFixedRate(plugin,
+                task -> cleanupCooldowns(),
                 6000L,  // 5 minutes initial delay
                 6000L   // 5 minutes between runs
         );

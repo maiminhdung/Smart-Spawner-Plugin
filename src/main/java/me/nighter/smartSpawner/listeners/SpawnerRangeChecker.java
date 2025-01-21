@@ -1,5 +1,7 @@
 package me.nighter.smartSpawner.listeners;
 
+import io.papermc.paper.threadedregions.scheduler.ScheduledTask;
+
 import me.nighter.smartSpawner.SmartSpawner;
 import me.nighter.smartSpawner.managers.ConfigManager;
 import me.nighter.smartSpawner.managers.SpawnerManager;
@@ -10,7 +12,6 @@ import org.bukkit.World;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
 import org.bukkit.event.Listener;
-import org.bukkit.scheduler.BukkitTask;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
@@ -19,7 +20,7 @@ public class SpawnerRangeChecker implements Listener {
     private final SmartSpawner plugin;
     private final ConfigManager configManager;
     private final SpawnerManager spawnerManager;
-    private final Map<String, BukkitTask> spawnerTasks;
+    private final Map<String, ScheduledTask> spawnerTasks;
     private final Map<String, Set<UUID>> playersInRange;
 
     public SpawnerRangeChecker(SmartSpawner plugin) {
@@ -34,7 +35,7 @@ public class SpawnerRangeChecker implements Listener {
     }
 
     private void startRangeCheckTask() {
-        Bukkit.getScheduler().runTaskTimer(plugin, () -> {
+        Bukkit.getGlobalRegionScheduler().runAtFixedRate(plugin, task -> {
             for (SpawnerData spawner : spawnerManager.getAllSpawners()) {
                 updateSpawnerStatus(spawner);
             }
@@ -106,7 +107,7 @@ public class SpawnerRangeChecker implements Listener {
 
         // Start new task
         spawner.setLastSpawnTime(System.currentTimeMillis() + spawner.getSpawnDelay());
-        BukkitTask task = Bukkit.getScheduler().runTaskTimer(plugin, () -> {
+        ScheduledTask task = Bukkit.getGlobalRegionScheduler().runAtFixedRate(plugin, newtask -> {
             if (!spawner.getSpawnerStop()) {
                 spawnerManager.spawnLoot(spawner);
             }
@@ -116,7 +117,7 @@ public class SpawnerRangeChecker implements Listener {
     }
 
     public void stopSpawnerTask(SpawnerData spawner) {
-        BukkitTask task = spawnerTasks.remove(spawner.getSpawnerId());
+        ScheduledTask task = spawnerTasks.remove(spawner.getSpawnerId());
         if (task != null) {
             task.cancel();
         }
@@ -128,13 +129,13 @@ public class SpawnerRangeChecker implements Listener {
 
     public void cleanup() {
         // Cancel all tasks on plugin disable
-        spawnerTasks.values().forEach(BukkitTask::cancel);
+        spawnerTasks.values().forEach(ScheduledTask::cancel);
         spawnerTasks.clear();
         playersInRange.clear();
     }
 
     private void updateGuiForSpawner(SpawnerData spawner) {
-        Bukkit.getScheduler().runTask(plugin, () -> {
+        Bukkit.getGlobalRegionScheduler().run(plugin, task -> {
             for (Map.Entry<UUID, SpawnerData> entry : spawnerManager.getOpenSpawnerGuis().entrySet()) {
                 if (entry.getValue().getSpawnerId().equals(spawner.getSpawnerId())) {
                     Player viewer = Bukkit.getPlayer(entry.getKey());

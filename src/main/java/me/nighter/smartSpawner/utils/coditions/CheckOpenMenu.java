@@ -2,17 +2,14 @@ package me.nighter.smartSpawner.utils.coditions;
 
 import java.util.UUID;
 
+import me.nighter.smartSpawner.hooks.protections.*;
+import me.nighter.smartSpawner.SmartSpawner;
+
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.block.Block;
 import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;
-
-import me.nighter.smartSpawner.SmartSpawner;
-import me.nighter.smartSpawner.hooks.protections.Towny;
-import me.nighter.smartSpawner.hooks.protections.WorldGuardAPI;
-import me.nighter.smartSpawner.hooks.protections.GriefPreventionAPI;
-import me.nighter.smartSpawner.hooks.protections.LandsIntegrationAPI;
 
 public class CheckOpenMenu {
     public static boolean CanPlayerOpenMenu(@NotNull final UUID playerUUID, @NotNull Block block) {

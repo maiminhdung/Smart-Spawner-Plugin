@@ -6,6 +6,7 @@ import me.nighter.smartSpawner.holders.SpawnerMenuHolder;
 import me.nighter.smartSpawner.holders.PagedSpawnerLootHolder;
 import me.nighter.smartSpawner.utils.SpawnerData;
 import me.nighter.smartSpawner.utils.VirtualInventory;
+
 import org.bukkit.*;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.FileConfiguration;
@@ -287,7 +288,9 @@ public class SpawnerManager {
     private void startSaveTask() {
         configManager.debug("Starting spawner data save task");
         int intervalSeconds = configManager.getSaveInterval();
-        Bukkit.getScheduler().runTaskTimerAsynchronously(plugin, this::saveSpawnerData, 0, intervalSeconds); // 5 phút
+        Bukkit.getGlobalRegionScheduler().runAtFixedRate(plugin, task -> {
+            this.saveSpawnerData();
+        }, 1L, intervalSeconds * 20L); // Initial delay set to 1 tick
     }
 
     public void backupSpawnerData() {
@@ -381,7 +384,7 @@ public class SpawnerManager {
             spawner.setLastSpawnTime(System.currentTimeMillis());
 
             // Update for all players viewing the spawner
-            Bukkit.getScheduler().runTask(plugin, () -> {
+            Bukkit.getGlobalRegionScheduler().run(plugin, task -> {
                 for (HumanEntity viewer : getViewersForSpawner(spawner)) {
                     if (viewer instanceof Player) {
                         Player player = (Player) viewer;

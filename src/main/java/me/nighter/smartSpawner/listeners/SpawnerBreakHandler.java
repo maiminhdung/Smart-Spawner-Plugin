@@ -7,6 +7,7 @@ import me.nighter.smartSpawner.utils.coditions.CheckBreakBlock;
 import me.nighter.smartSpawner.managers.SpawnerManager;
 import me.nighter.smartSpawner.managers.ConfigManager;
 import me.nighter.smartSpawner.managers.LanguageManager;
+
 import org.bukkit.*;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
@@ -345,7 +346,7 @@ public class SpawnerBreakHandler implements Listener {
 
         // Get entity type from nbt tag
         if (storedEntityType == null) {
-            Bukkit.getScheduler().runTaskLater(plugin, () -> {
+            Bukkit.getGlobalRegionScheduler().runDelayed(plugin, task -> {
                 // Added checks to ensure that the BlockState is an instance of CreatureSpawner before casting.
                 BlockState blockState = block.getState();
                 if (blockState instanceof CreatureSpawner) {
@@ -364,7 +365,7 @@ public class SpawnerBreakHandler implements Listener {
                     createNewSpawnerWithType(block, player, placedEntityType);
                 } else {
                     EntityType finalPlacedEntityType = placedEntityType;
-                    Bukkit.getScheduler().runTaskLater(plugin, () -> {
+                    Bukkit.getGlobalRegionScheduler().runDelayed(plugin, newtask -> {
                         placedSpawner.setSpawnedType(finalPlacedEntityType);
                         placedSpawner.update();
                         languageManager.sendMessage(player, "messages.entity-spawner-placed");
@@ -375,7 +376,7 @@ public class SpawnerBreakHandler implements Listener {
         } else {
             // Handle spawner activation with item meta entity type
             if (configManager.getActivateOnPlace()) {
-                Bukkit.getScheduler().runTaskLater(plugin, () -> {
+                Bukkit.getGlobalRegionScheduler().runDelayed(plugin, task -> {
                     //Added checks to ensure that the BlockState is an instance of CreatureSpawner before casting.
                     BlockState blockState = block.getState();
                     if (blockState instanceof CreatureSpawner) {
@@ -386,7 +387,7 @@ public class SpawnerBreakHandler implements Listener {
                     }
                 }, 2L);
             } else {
-                Bukkit.getScheduler().runTaskLater(plugin, () -> {
+                Bukkit.getGlobalRegionScheduler().runDelayed(plugin, task -> {
                     //Added checks to ensure that the BlockState is an instance of CreatureSpawner before casting.
                     BlockState blockState = block.getState();
                     if (blockState instanceof CreatureSpawner) {
@@ -440,11 +441,11 @@ public class SpawnerBreakHandler implements Listener {
         block.setType(Material.AIR);
         spawnerManager.removeSpawner(spawner.getSpawnerId());
 
-        Bukkit.getScheduler().runTaskAsynchronously(plugin, () -> {
+        Bukkit.getGlobalRegionScheduler().runAtFixedRate(plugin, task -> {
             spawnerManager.saveSpawnerData();
             configManager.debug("Player " + player.getName() +
                     " broke spawner with ID: " + spawner.getSpawnerId());
-        });
+        }, 0L, 20L);
     }
 
     private boolean isValidTool(ItemStack tool) {

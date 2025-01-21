@@ -1,5 +1,8 @@
 package me.nighter.smartSpawner;
 
+import io.papermc.paper.threadedregions.scheduler.AsyncScheduler;
+import io.papermc.paper.threadedregions.scheduler.ScheduledTask;
+
 import me.nighter.smartSpawner.hooks.shops.IShopIntegration;
 import me.nighter.smartSpawner.hooks.shops.ShopIntegrationManager;
 import me.nighter.smartSpawner.hooks.shops.api.shopguiplus.SpawnerHook;
@@ -10,15 +13,17 @@ import me.nighter.smartSpawner.utils.UpdateChecker;
 import me.ryanhamshire.GriefPrevention.GriefPrevention;
 import me.nighter.smartSpawner.hooks.protections.LandsIntegrationAPI;
 import me.nighter.smartSpawner.commands.SmartSpawnerCommand;
+
 import org.bukkit.Bukkit;
 import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.PluginManager;
 import org.bukkit.plugin.java.JavaPlugin;
-import org.bukkit.scheduler.BukkitTask;
 import org.geysermc.floodgate.api.FloodgateApi;
 
 import com.palmergames.bukkit.towny.TownyAPI;
 import com.sk89q.worldguard.WorldGuard;
+
+import java.util.function.Consumer;
 
 public class SmartSpawner extends JavaPlugin {
     private static SmartSpawner instance;
@@ -50,6 +55,7 @@ public class SmartSpawner extends JavaPlugin {
     @Override
     public void onEnable() {
         instance = this;
+        AsyncScheduler asyncScheduler = getServer().getAsyncScheduler();
         initializeComponents();
         setupCommand();
         checkDependencies();
@@ -182,8 +188,8 @@ public class SmartSpawner extends JavaPlugin {
     public SpawnerStackHandler getSpawnerStackHandler() { return spawnerStackHandler; }
     public HopperHandler getHopperHandler() { return hopperHandler; }
 
-    public BukkitTask runTaskAsync(Runnable runnable) {
-        return getServer().getScheduler().runTaskAsynchronously(this, runnable);
+    public ScheduledTask task(Runnable runnable) {
+        return getServer().getGlobalRegionScheduler().run(this, (Consumer<ScheduledTask>) runnable);
     }
 
     @FunctionalInterface

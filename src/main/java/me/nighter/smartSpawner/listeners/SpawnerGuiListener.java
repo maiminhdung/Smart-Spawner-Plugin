@@ -1,11 +1,13 @@
 package me.nighter.smartSpawner.listeners;
 
+import io.papermc.paper.threadedregions.scheduler.ScheduledTask;
 import me.nighter.smartSpawner.*;
 import me.nighter.smartSpawner.managers.ConfigManager;
 import me.nighter.smartSpawner.managers.LanguageManager;
 import me.nighter.smartSpawner.managers.SpawnerManager;
 import me.nighter.smartSpawner.utils.SpawnerData;
 import me.nighter.smartSpawner.holders.SpawnerMenuHolder;
+
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
@@ -14,7 +16,6 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.inventory.InventoryCloseEvent;
 import org.bukkit.event.inventory.InventoryOpenEvent;
 import org.bukkit.inventory.Inventory;
-import org.bukkit.scheduler.BukkitTask;
 
 import java.util.Map;
 import java.util.UUID;
@@ -24,7 +25,7 @@ public class SpawnerGuiListener implements Listener {
     private final ConfigManager configManager;
     private final LanguageManager languageManager;
     private final SpawnerManager spawnerManager;
-    private BukkitTask updateTask;
+    private ScheduledTask updateTask;
     private boolean isTaskRunning = false;
 
     public SpawnerGuiListener(SmartSpawner plugin) {
@@ -37,7 +38,7 @@ public class SpawnerGuiListener implements Listener {
 
     private void startUpdateTask() {
         if (isTaskRunning) return;
-        updateTask = Bukkit.getScheduler().runTaskTimer(plugin, () -> {
+        updateTask = Bukkit.getGlobalRegionScheduler().runAtFixedRate(plugin, task -> {
             Map<UUID, SpawnerData> guis = spawnerManager.getOpenSpawnerGuis();
             if (guis.isEmpty()) {
                 stopUpdateTask();

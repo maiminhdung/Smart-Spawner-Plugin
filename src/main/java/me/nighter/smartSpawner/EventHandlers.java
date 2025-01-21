@@ -27,6 +27,8 @@ import net.brcdev.shopgui.exception.api.ExternalSpawnerProviderNameConflictExcep
 
 import java.util.*;
 
+import static org.bukkit.Bukkit.getGlobalRegionScheduler;
+
 public class EventHandlers implements Listener {
     private final SmartSpawner plugin;
     private final ConfigManager configManager;
@@ -69,7 +71,7 @@ public class EventHandlers implements Listener {
         }
 
         // Schedule check for inventory reopen
-        Bukkit.getScheduler().runTaskLater(plugin, () -> {
+        Bukkit.getGlobalRegionScheduler().runDelayed(plugin, task -> {
             InventoryView view = player.getOpenInventory();
             // If player opened another valid inventory, don't unlock
             if (view != null && isValidHolder(view.getTopInventory().getHolder())) {
