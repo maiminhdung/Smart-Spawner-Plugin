@@ -34,7 +34,7 @@ public class LanguageManager {
         BOTH
     }
 
-    private final Map<String, String> defaultMessages = new HashMap<String, String>() {{
+    private final Map<String, Object> defaultMessages = new HashMap<String, Object>() {{
         // Prefix
         put("prefix", "&8[&#3287A9&lSmartSpawner&8]&r");
 
@@ -95,111 +95,171 @@ public class LanguageManager {
 
         // Spawner Interaction Messages
         put("messages.activated.message", "&#d6e7edSpawner &#3287A9activated&#d6e7ed! Mobs won’t spawn naturally, collect loot and XP through the GUI instead.");
-        put("messages.activated.prefix", "true");
+        put("messages.activated.prefix", true);
         put("messages.activated.type", "CHAT");
         put("messages.activated.sound", "entity.experience_orb.pickup");
 
         put("messages.entity-spawner-placed.message", "&#d6e7edThis spawner is &#3287A9not activated&#d6e7ed! Mobs will spawn naturally.");
-        put("messages.entity-spawner-placed.prefix", "true");
+        put("messages.entity-spawner-placed.prefix", true);
         put("messages.entity-spawner-placed.type", "CHAT");
         put("messages.entity-spawner-placed.sound", "block.note_block.pling");
 
         put("messages.changed.message", "&#d6e7edSpawner changed to &#3287A9%type%&#d6e7ed!");
-        put("messages.changed.prefix", "true");
+        put("messages.changed.prefix", true);
         put("messages.changed.type", "CHAT");
         put("messages.changed.sound", "block.note_block.pling");
 
         put("messages.invalid-egg.message", "&cInvalid spawn egg! or spawn egg not supported!");
-        put("messages.invalid-egg.prefix", "true");
+        put("messages.invalid-egg.prefix", true);
         put("messages.invalid-egg.type", "CHAT");
 
         put("messages.break-warning.message", "&c[!] Warning! All items and xp will be lost!");
-        put("messages.break-warning.prefix", "false");
+        put("messages.break-warning.prefix", false);
         put("messages.break-warning.type", "ACTION_BAR");
         put("messages.break-warning.sound", "block.note_block.chime");
 
         put("messages.required-tools.message", "&c[!] Can't break spawner with this tool!");
-        put("messages.required-tools.prefix", "false");
+        put("messages.required-tools.prefix", false);
         put("messages.required-tools.type", "ACTION_BAR");
         put("messages.required-tools.sound", "item.shield.block");
 
         put("messages.silk-touch-required.message", "&c[!] Required &#3287A9Silk Touch&c to break this spawner!");
-        put("messages.silk-touch-required.prefix", "false");
+        put("messages.silk-touch-required.prefix", false);
         put("messages.silk-touch-required.type", "ACTION_BAR");
         put("messages.silk-touch-required.sound", "block.note_block.pling");
 
         put("messages.spawner-in-use.message", "&c[!] Other player is currently using this spawner! Please wait.");
-        put("messages.spawner-in-use.prefix", "false");
+        put("messages.spawner-in-use.prefix", false);
         put("messages.spawner-in-use.type", "ACTION_BAR");
         put("messages.spawner-in-use.sound", "block.note_block.pling");
 
         put("messages.spawner-protected.message", "&c[!] This spawner is protected!");
-        put("messages.spawner-protected.prefix", "false");
+        put("messages.spawner-protected.prefix", false);
         put("messages.spawner-protected.type", "ACTION_BAR");
         put("messages.spawner-protected.sound", "block.note_block.pling");
 
         // Selling Items from Spawner
         put("messages.sell-all.message", "&#d6e7edYou sold a total of &#3287A9%amount% items&#d6e7ed for&a %price%$ &#d6e7ed!");
-        put("messages.sell-all.prefix", "true");
+        put("messages.sell-all.prefix", true);
         put("messages.sell-all.type", "CHAT");
         put("messages.sell-all.sound", "block.note_block.bell");
 
         put("messages.no-items.message", "&cThere are no items to sell in the spawner.");
-        put("messages.no-items.prefix", "true");
+        put("messages.no-items.prefix", true);
         put("messages.no-items.type", "CHAT");
         put("messages.no-items.sound", "block.note_block.pling");
 
         put("messages.no-sellable-items.message", "&cNo items can be sold from this spawner.");
-        put("messages.no-sellable-items.prefix", "true");
+        put("messages.no-sellable-items.prefix", true);
         put("messages.no-sellable-items.type", "CHAT");
         put("messages.no-sellable-items.sound", "block.note_block.pling");
 
         put("messages.sell-failed.message", "&cFailed to sell items! Please try again.");
-        put("messages.sell-failed.prefix", "true");
+        put("messages.sell-failed.prefix", true);
         put("messages.sell-failed.type", "CHAT");
         put("messages.sell-failed.sound", "block.note_block.pling");
 
         // Spawner Stacking/Unstacking Messages
-        put("messages.hand-stack.message", "&#00E689Successfully stacked &6%amount%&#00E689 spawners!");
-        put("messages.hand-stack.prefix", "false");
+        put("messages.hand-stack.message", "&#00E689[✔] Successfully stacked &6%amount%&#00E689 spawners!");
+        put("messages.hand-stack.prefix", false);
         put("messages.hand-stack.type", "ACTION_BAR");
         put("messages.hand-stack.sound", "entity.experience_orb.pickup");
 
         put("messages.items-lost.message", "&cSome items were lost due to unstacking!");
-        put("messages.items-lost.prefix", "true");
+        put("messages.items-lost.prefix", true);
         put("messages.items-lost.type", "CHAT");
         put("messages.items-lost.sound", "block.note_block.pling");
 
         put("messages.cannot-go-below-one.message", "&cCannot go below 1! Only decreasing by %amount%!");
-        put("messages.cannot-go-below-one.prefix", "true");
+        put("messages.cannot-go-below-one.prefix", true);
         put("messages.cannot-go-below-one.type", "CHAT");
         put("messages.cannot-go-below-one.sound", "block.note_block.pling");
 
         put("messages.stack-full.message", "&cStack limit reached! Cannot increase anymore!");
-        put("messages.stack-full.prefix", "true");
+        put("messages.stack-full.prefix", true);
         put("messages.stack-full.type", "CHAT");
         put("messages.stack-full.sound", "block.note_block.pling");
 
+        put("messages.not-enough-spawners.message", "&cYou don't have enough spawners! Need %amountChange% but only have %amountAvailable%!");
+        put("messages.not-enough-spawners.prefix", true);
+        put("messages.not-enough-spawners.type", "CHAT");
+        put("messages.not-enough-spawners.sound", "block.note_block.pling");
+
+        put("messages.stack-full-overflow.message", "&cStack limit reached! Only stack %amount% spawners!");
+        put("messages.stack-full-overflow.prefix", true);
+        put("messages.stack-full-overflow.type", "CHAT");
+        put("messages.stack-full-overflow.sound", "block.note_block.pling");
+
+        put("messages.inventory-full-drop.message", "&cSome spawners were dropped at your feet due to full inventory!");
+        put("messages.inventory-full-drop.prefix", true);
+        put("messages.inventory-full-drop.type", "CHAT");
+        put("messages.inventory-full-drop.sound", "block.note_block.pling");
+
         put("messages.invalid-spawner.message", "&cInvalid spawner type!");
-        put("messages.invalid-spawner.prefix", "true");
+        put("messages.invalid-spawner.prefix", true);
         put("messages.invalid-spawner.type", "CHAT");
         put("messages.invalid-spawner.sound", "block.note_block.pling");
 
         put("messages.different-type.message", "&cYou can only stack spawners of the same type!");
-        put("messages.different-type.prefix", "true");
+        put("messages.different-type.prefix", true);
         put("messages.different-type.type", "CHAT");
         put("messages.different-type.sound", "block.note_block.pling");
 
+        // Spawner Experience Collection
+        put("messages.exp-collected.message", "&#d6e7edCollected &a%exp%&#d6e7ed experience points!");
+        put("messages.exp-collected.prefix", true);
+        put("messages.exp-collected.type", "CHAT");
+
+        put("messages.exp-collected-with-mending.message", "&#d6e7edUsed &a%exp-mending%&d6e7ed experience points to repair items! Collected &a%exp%&d6e7ed experience points!");
+        put("messages.exp-collected-with-mending.prefix", true);
+        put("messages.exp-collected-with-mending.type", "CHAT");
+
+        put("messages.no-exp.message", "&cThere is no experience to take!");
+        put("messages.no-exp.prefix", true);
+        put("messages.no-exp.type", "CHAT");
+        put("messages.no-exp.sound", "block.note_block.pling");
+
+        // Spawner Storage Interaction
+        put("messages.no-items-to-take.message", "&cThere are no items to take!");
+        put("messages.no-items-to-take.prefix", true);
+        put("messages.no-items-to-take.type", "CHAT");
+        put("messages.no-items-to-take.sound", "block.note_block.pling");
+
+        put("messages.inventory-full.message", "&cYour inventory is full!");
+        put("messages.inventory-full.prefix", true);
+        put("messages.inventory-full.type", "CHAT");
+        put("messages.inventory-full.sound", "block.note_block.pling");
+
+        put("messages.take-some-items.message", "&#d6e7edYou have taken &3287A9%amount%&d6e7ed items! Your inventory is now full!");
+        put("messages.take-some-items.prefix", true);
+        put("messages.take-some-items.type", "CHAT");
+
+        put("messages.take-all-items.message", "&#d6e7edSuccessfully taken &3287A9%amount%&d6e7ed items!");
+        put("messages.take-all-items.prefix", true);
+        put("messages.take-all-items.type", "CHAT");
+        put("messages.take-all-items.sound", "block.note_block.chime");
+
+        // Hopper Interaction
         put("messages.hopper-paused.message", "&cHopper has been paused while interacting with the spawner!");
-        put("messages.hopper-paused.prefix", "true");
+        put("messages.hopper-paused.prefix", true);
         put("messages.hopper-paused.type", "CHAT");
         put("messages.hopper-paused.sound", "block.note_block.pling");
 
         put("messages.hopper-resumed.message", "&aHopper has been resumed!");
-        put("messages.hopper-resumed.prefix", "true");
+        put("messages.hopper-resumed.prefix", true);
         put("messages.hopper-resumed.type", "CHAT");
         put("messages.hopper-resumed.sound", "block.note_block.chime");
 
+        // Spawner List Teleport Message
+        put("messages.teleported.message", "&aSuccessfully teleported to &6Spawner #%spawnerId%");
+        put("messages.teleported.prefix", true);
+        put("messages.teleported.type", "CHAT");
+        put("messages.teleported.sound", "entity.enderman.teleport");
+
+        put("messages.not-found.message", "&cCould not teleport to that Spawner! Spawner not found.");
+        put("messages.not-found.prefix", true);
+        put("messages.not-found.type", "CHAT");
+        put("messages.not-found.sound", "block.note_block.pling");
 
         // GUI Titles
         put("gui-title.menu", "%entity% Spawner");
@@ -213,7 +273,7 @@ public class LanguageManager {
 
         // GUI Items - Spawner Info
         put("spawner-info-item.name", "&#4fc3f7&lSpawner Info");
-        put("spawner-info-item.lore.spawner-info", "\n&8▪ &#81d4faEntity: &f%entity%\n&8▪ &#81d4faRange: &f%range% &7blocks\n&8▪ &#81d4faStack Size: &f%stack_size%\n&8▪ &#81d4faMob Rate: &f%min_mobs% &7- &f%max_mobs%\n&8▪ &#81d4faSpawn Delay: &f%delay%&7s\n&8▪ &#81d4faNext Spawn: &e\n&8&m                       \n&#81d4fa➜ &7Click to open stack menu");
+        put("spawner-info-item.lore.spawner-info", "\n&8▪ &#81d4faEntity: &f%entity%\n&8▪ &#81d4faRange: &f%range% &7blocks\n&8▪ &#81d4faStack Size: &f%stack_size%\n&8▪ &#81d4faMob Rate: &f%min_mobs% &7- &f%max_mobs%\n&8▪ &#81d4faSpawn Delay: &f%delay%&7s\n&8▪ &#81d4faNext Spawn: &e\n&8&m\n&#81d4fa➜ &7Click to open stack menu");
         put("spawner-info-item.lore-change", "&8▪ &#81d4faNext Spawn: &e");
         put("spawner-info-item.lore-inactive", "&cSpawner is inactive!");
         put("spawner-info-item.lore-now", "&cNow!");
@@ -258,8 +318,8 @@ public class LanguageManager {
         put("equipment-toggle.lore.disabled", "&7Status: &c&lBlocked");
 
         // Command Messages
-        put("command.usage", "&#00E689SmartSpawner Commands:\n&f/smartspawner reload &7- Reload the plugin configuration\n&f/smartspawner give <player> <mobtype> <amount> &7- Give spawners to a player");
-        put("command.reload.usage", "&cUsage: /smartspawner reload [loot]");
+        put("command.usage", "&#00E689SmartSpawner Commands:\n&f/smartspawner reload &7- Reload the plugin configuration\n&f/smartspawner list &7- Open the spawner list (for admin management)\n&f/smartspawner give <player> <mobtype> <amount> &7- Give spawners to a player");
+        put("command.reload.usage", "&cUsage: /smartspawner reload");
         put("command.reload.success", "&aPlugin reloaded successfully!");
         put("command.reload.error", "&cError reloading plugin. Check console for details.");
 
@@ -275,7 +335,7 @@ public class LanguageManager {
 
         // No Permission Message
         put("no-permission.message", "&cYou do not have permission to do that!");
-        put("no-permission.prefix", "true");
+        put("no-permission.prefix", true);
         put("no-permission.type", "CHAT");
         put("no-permission.sound", "block.note_block.pling");
 
@@ -311,16 +371,6 @@ public class LanguageManager {
         put("spawner-list.navigation.next-page", "&e&lNext Page");
         put("spawner-list.navigation.back", "&c&lBack to World Selection");
 
-        // Teleport Messages
-        put("messages.teleported.message", "&aSuccessfully teleported to &6Spawner #%spawnerId%");
-        put("messages.teleported.prefix", "true");
-        put("messages.teleported.type", "CHAT");
-        put("messages.teleported.sound", "entity.enderman.teleport");
-
-        put("messages.not-found.message", "&cCould not teleport to that Spawner! Spawner not found.");
-        put("messages.not-found.prefix", "true");
-        put("messages.not-found.type", "CHAT");
-        put("messages.not-found.sound", "block.note_block.pling");
     }};
 
     public LanguageManager(Plugin plugin) {
@@ -408,7 +458,7 @@ public class LanguageManager {
         File langFile = new File(plugin.getDataFolder(), language.getResourcePath());
         FileConfiguration langConfig = new YamlConfiguration();
 
-        for (Map.Entry<String, String> entry : defaultMessages.entrySet()) {
+        for (Map.Entry<String, Object> entry : defaultMessages.entrySet()) {
             langConfig.set(entry.getKey(), entry.getValue());
         }
 
@@ -424,7 +474,7 @@ public class LanguageManager {
 
     private boolean mergeDefaultMessages(FileConfiguration config) {
         boolean changed = false;
-        for (Map.Entry<String, String> entry : defaultMessages.entrySet()) {
+        for (Map.Entry<String, Object> entry : defaultMessages.entrySet()) {
             if (!config.contains(entry.getKey())) {
                 config.set(entry.getKey(), entry.getValue());
                 changed = true;

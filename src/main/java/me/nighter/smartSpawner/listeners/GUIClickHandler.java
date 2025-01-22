@@ -33,31 +33,155 @@ public class GUIClickHandler implements Listener {
 
     @EventHandler
     public void onInventoryClick(InventoryClickEvent event) {
-        if (!(event.getWhoClicked() instanceof Player)) return;
-        if (!(event.getInventory().getHolder() instanceof PagedSpawnerLootHolder)) return;
-
-        switch (event.getClick()) {
-            case SHIFT_LEFT:
-            case SHIFT_RIGHT:
-            case DOUBLE_CLICK:
-            case DROP:
-            case CONTROL_DROP:
-            case WINDOW_BORDER_LEFT:
-            case WINDOW_BORDER_RIGHT:
-            case NUMBER_KEY:
-                event.setCancelled(true);
-                return;
-        }
+        if (!(event.getWhoClicked() instanceof Player) || !(event.getInventory().getHolder() instanceof PagedSpawnerLootHolder)) return;
 
         Player player = (Player) event.getWhoClicked();
         PagedSpawnerLootHolder holder = (PagedSpawnerLootHolder) event.getInventory().getHolder();
         SpawnerData spawner = holder.getSpawnerData();
         int slot = event.getRawSlot();
+        int inventorySize = event.getInventory().getSize();
 
-        // Xử lý các click thông thường
-        if (slot >= 0 && slot <= 53) {
+        if (slot < 0 || slot >= inventorySize) {
+            event.setCancelled(true);
+            return;
+        }
+
+        if (isControlSlot(slot)) {
             event.setCancelled(true);
             handleSlotClick(player, slot, holder, spawner, event.getInventory());
+            return;
+        }
+
+        ItemStack clickedItem = event.getCurrentItem();
+        if (clickedItem == null || clickedItem.getType() == Material.AIR) {
+            event.setCancelled(true);
+            return;
+        }
+
+        event.setCancelled(true);
+
+        switch (event.getClick()) {
+            case SHIFT_LEFT:
+            case SHIFT_RIGHT:
+                takeAllSimilarItems(player, event.getInventory(), clickedItem, spawner);
+                break;
+            case LEFT:
+                takeSingleItem(player, event.getInventory(), slot, clickedItem, spawner, true);
+                break;
+            case RIGHT:
+                takeSingleItem(player, event.getInventory(), slot, clickedItem, spawner, false);
+                break;
+            default:
+                break;
+        }
+    }
+
+    private boolean isControlSlot(int slot) {
+        return slot == 45 || slot == 46 || slot == 48 || slot == 49 || slot == 50 || slot == 53;
+    }
+
+    private void takeSingleItem(Player player, Inventory sourceInv, int slot, ItemStack item, SpawnerData spawner, boolean singleItem) {
+        int amountToMove = singleItem ? 1 : item.getAmount();
+        int amountMoved = 0;
+        PlayerInventory playerInv = player.getInventory();
+
+        for (int i = 0; i < 36 && amountToMove > 0; i++) {
+            ItemStack current = playerInv.getItem(i);
+
+            if (current == null || current.getType() == Material.AIR) {
+                ItemStack newStack = item.clone();
+                newStack.setAmount(Math.min(amountToMove, item.getMaxStackSize()));
+                playerInv.setItem(i, newStack);
+                amountMoved += newStack.getAmount();
+                amountToMove -= newStack.getAmount();
+                break;
+            } else if (current.isSimilar(item)) {
+                int spaceInStack = current.getMaxStackSize() - current.getAmount();
+                if (spaceInStack > 0) {
+                    int addAmount = Math.min(spaceInStack, amountToMove);
+                    current.setAmount(current.getAmount() + addAmount);
+                    amountMoved += addAmount;
+                    amountToMove -= addAmount;
+                    if (amountToMove <= 0) break;
+                }
+            }
+        }
+
+        if (amountMoved > 0) {
+            if (amountMoved == item.getAmount()) {
+                sourceInv.setItem(slot, null);
+            } else {
+                ItemStack remaining = item.clone();
+                remaining.setAmount(item.getAmount() - amountMoved);
+                sourceInv.setItem(slot, remaining);
+            }
+
+            plugin.getLootManager().saveItems(spawner, sourceInv);
+        } else {
+            languageManager.sendMessage(player, "messages.inventory-full");
+        }
+    }
+
+    private void takeAllSimilarItems(Player player, Inventory sourceInv, ItemStack targetItem, SpawnerData spawner) {
+        Map<Integer, ItemStack> similarItems = new HashMap<>();
+
+        for (int i = 0; i < 45; i++) {
+            ItemStack invItem = sourceInv.getItem(i);
+            if (invItem != null && invItem.isSimilar(targetItem)) {
+                similarItems.put(i, invItem.clone());
+            }
+        }
+
+        if (similarItems.isEmpty()) return;
+
+        PlayerInventory playerInv = player.getInventory();
+        int totalMoved = 0;
+
+        for (Map.Entry<Integer, ItemStack> entry : similarItems.entrySet()) {
+            ItemStack itemToMove = entry.getValue();
+            int amountToMove = itemToMove.getAmount();
+            int amountMoved = 0;
+
+            for (int i = 0; i < 36 && amountToMove > 0; i++) {
+                ItemStack current = playerInv.getItem(i);
+
+                if (current == null || current.getType() == Material.AIR) {
+                    ItemStack newStack = itemToMove.clone();
+                    newStack.setAmount(Math.min(amountToMove, itemToMove.getMaxStackSize()));
+                    playerInv.setItem(i, newStack);
+                    amountMoved += newStack.getAmount();
+                    amountToMove -= newStack.getAmount();
+                } else if (current.isSimilar(itemToMove)) {
+                    int spaceInStack = current.getMaxStackSize() - current.getAmount();
+                    if (spaceInStack > 0) {
+                        int addAmount = Math.min(spaceInStack, amountToMove);
+                        current.setAmount(current.getAmount() + addAmount);
+                        amountMoved += addAmount;
+                        amountToMove -= addAmount;
+                    }
+                }
+            }
+
+            if (amountMoved > 0) {
+                totalMoved += amountMoved;
+                if (amountMoved == itemToMove.getAmount()) {
+                    sourceInv.setItem(entry.getKey(), null);
+                } else {
+                    ItemStack remaining = itemToMove.clone();
+                    remaining.setAmount(itemToMove.getAmount() - amountMoved);
+                    sourceInv.setItem(entry.getKey(), remaining);
+                }
+            }
+
+            if (amountToMove > 0) {
+                languageManager.sendMessage(player, "messages.inventory-full");
+                break;
+            }
+        }
+
+        if (totalMoved > 0) {
+            plugin.getLootManager().saveItems(spawner, sourceInv);
+            player.updateInventory();
         }
     }
 

@@ -6,6 +6,7 @@ import me.nighter.smartSpawner.utils.VirtualInventory;
 import org.bukkit.ChatColor;
 import org.bukkit.Material;
 import org.bukkit.configuration.ConfigurationSection;
+import org.bukkit.enchantments.Enchantment;
 import org.bukkit.entity.EntityType;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.Damageable;
@@ -14,10 +15,7 @@ import org.bukkit.inventory.meta.PotionMeta;
 import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Random;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class SpawnerLootGenerator {
@@ -293,88 +291,136 @@ public class SpawnerLootGenerator {
         return new LootResult(totalLoot, totalExperience);
     }
 
-//    private ItemStack createItemStack(LootItem lootItem, int amount) {
-//        ItemStack item = new ItemStack(lootItem.material, amount);
-//
-//        if (lootItem.minDurability != null && lootItem.maxDurability != null) {
-//            ItemMeta meta = item.getItemMeta();
-//            if (meta instanceof Damageable) {
-//                int durability = random.nextInt(lootItem.maxDurability - lootItem.minDurability + 1) + lootItem.minDurability;
-//                ((Damageable) meta).setDamage(durability);
-//                item.setItemMeta(meta);
-//            }
-//        }
-//
-//        return item;
-//    }
-
     public void addLootToSpawner(SpawnerData spawner, LootResult lootResult) {
-//        configManager.debug("Adding loot to spawner " + spawner.getSpawnerId());
         VirtualInventory virtualInv = spawner.getVirtualInventory();
-        Map<Integer, ItemStack> inventoryMap = virtualInv.getAllItems();
+        Map<Integer, ItemStack> inventoryMap = new HashMap<>(virtualInv.getAllItems());
+        int inventorySize = virtualInv.getSize();
 
         int addedItems = 0;
         int skippedItems = 0;
 
-        // Process items in batches
-        for (ItemStack newItem : lootResult.getItems()) {
-            boolean added = false;
+        // Create a map of similar items for batch processing
+        Map<ItemSignature, List<ItemStack>> similarItems = new HashMap<>();
+        Map<ItemSignature, List<Integer>> availableSlots = new HashMap<>();
 
-            // Try to merge with existing stacks first
-            for (Map.Entry<Integer, ItemStack> entry : inventoryMap.entrySet()) {
-                ItemStack existingItem = entry.getValue();
-                if (existingItem != null && existingItem.isSimilar(newItem) &&
-                        existingItem.getAmount() < existingItem.getMaxStackSize()) {
-
-                    int spaceLeft = existingItem.getMaxStackSize() - existingItem.getAmount();
-                    int amountToAdd = Math.min(spaceLeft, newItem.getAmount());
-
-                    existingItem.setAmount(existingItem.getAmount() + amountToAdd);
-                    virtualInv.setItem(entry.getKey(), existingItem);
-
-                    if (amountToAdd >= newItem.getAmount()) {
-                        added = true;
-                        addedItems++;
-                        break;
-                    } else {
-                        newItem.setAmount(newItem.getAmount() - amountToAdd);
-                    }
-                }
-            }
-
-            // If not fully added, find empty slot
-            if (!added) {
-                boolean foundSlot = false;
-                for (int i = 0; i < virtualInv.getSize(); i++) {
-                    if (!inventoryMap.containsKey(i)) {
-                        virtualInv.setItem(i, newItem);
-                        inventoryMap.put(i, newItem);
-                        addedItems++;
-                        foundSlot = true;
-                        break;
-                    }
-                }
-                if (!foundSlot) {
-                    skippedItems++;
+        // Find all empty slots and sort them in ascending order
+        TreeSet<Integer> emptySlots = new TreeSet<>();
+        for (int i = 0; i < inventorySize; i++) {
+            if (!inventoryMap.containsKey(i)) {
+                emptySlots.add(i);
+            } else {
+                ItemStack item = inventoryMap.get(i);
+                if (item != null) {
+                    ItemSignature sig = new ItemSignature(item);
+                    similarItems.computeIfAbsent(sig, k -> new ArrayList<>()).add(item);
+                    availableSlots.computeIfAbsent(sig, k -> new ArrayList<>()).add(i);
                 }
             }
         }
 
+        // Process new items
+        for (ItemStack newItem : lootResult.getItems()) {
+            if (!spawner.isAllowEquipmentItems() && isEquipment(newItem)) {
+                skippedItems++;
+                continue;
+            }
+
+            ItemSignature newItemSig = new ItemSignature(newItem);
+            int remainingAmount = newItem.getAmount();
+            boolean itemAdded = false;
+
+            // First try to merge with existing similar items
+            if (similarItems.containsKey(newItemSig)) {
+                List<ItemStack> existingStacks = similarItems.get(newItemSig);
+                List<Integer> slots = availableSlots.get(newItemSig);
+
+                for (int i = 0; i < existingStacks.size() && remainingAmount > 0; i++) {
+                    ItemStack existingStack = existingStacks.get(i);
+                    int slot = slots.get(i);
+
+                    int spaceLeft = existingStack.getMaxStackSize() - existingStack.getAmount();
+                    if (spaceLeft > 0) {
+                        int amountToAdd = Math.min(spaceLeft, remainingAmount);
+                        existingStack.setAmount(existingStack.getAmount() + amountToAdd);
+                        inventoryMap.put(slot, existingStack);
+                        remainingAmount -= amountToAdd;
+                        itemAdded = true;
+                    }
+                }
+            }
+
+            // Use empty slots if needed
+            while (remainingAmount > 0 && !emptySlots.isEmpty()) {
+                int slot = emptySlots.pollFirst();
+                int maxStackSize = newItem.getMaxStackSize();
+                int amountToAdd = Math.min(maxStackSize, remainingAmount);
+
+                ItemStack newStack = newItem.clone();
+                newStack.setAmount(amountToAdd);
+                inventoryMap.put(slot, newStack);
+
+                // Update tracking maps
+                ItemSignature sig = new ItemSignature(newStack);
+                similarItems.computeIfAbsent(sig, k -> new ArrayList<>()).add(newStack);
+                availableSlots.computeIfAbsent(sig, k -> new ArrayList<>()).add(slot);
+
+                remainingAmount -= amountToAdd;
+                itemAdded = true;
+            }
+
+            if (itemAdded) {
+                addedItems++;
+            }
+            if (remainingAmount > 0) {
+                skippedItems++;
+            }
+        }
+
+        // Bulk update virtual inventory
+        virtualInv.setItems(inventoryMap);
+
         // Update experience
         int oldExp = spawner.getSpawnerExp();
-        int newExp = Math.min(oldExp + lootResult.getExperience(), spawner.getMaxStoredExp());
-        spawner.setSpawnerExp(newExp);
+        int maxExp = spawner.getMaxStoredExp();
+        spawner.setSpawnerExp(Math.min(oldExp + lootResult.getExperience(), maxExp));
 
-        configManager.debug("Loot addition complete: " +
-                "Added items: " + addedItems +
-                ", Skipped items: " + skippedItems +
-                ", XP change: " + oldExp + " -> " + newExp);
+        configManager.debug(String.format("Loot addition complete: Added=%d, Skipped=%d, XP: %d->%d",
+                addedItems, skippedItems, oldExp, spawner.getSpawnerExp()));
     }
 
-    public void reloadConfigurations() {
-        configManager.debug("Reloading loot configurations...");
-        entityLootConfigs.clear();
-        loadConfigurations();
-        configManager.debug("Loot configurations reloaded successfully");
+    private static class ItemSignature {
+        private final Material type;
+        private final short durability;
+
+        public ItemSignature(ItemStack item) {
+            this.type = item.getType();
+            this.durability = item.getDurability();
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (!(o instanceof ItemSignature)) return false;
+            ItemSignature that = (ItemSignature) o;
+            return durability == that.durability && type == that.type;
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(type, durability);
+        }
+    }
+
+    private boolean isEquipment(ItemStack item) {
+        Material type = item.getType();
+        return type.name().endsWith("_HELMET") ||
+                type.name().endsWith("_CHESTPLATE") ||
+                type.name().endsWith("_LEGGINGS") ||
+                type.name().endsWith("_BOOTS") ||
+                type.name().endsWith("_SWORD") ||
+                type.name().endsWith("_AXE") ||
+                type.name().endsWith("_PICKAXE") ||
+                type.name().endsWith("_SHOVEL") ||
+                type.name().endsWith("_HOE");
     }
 }

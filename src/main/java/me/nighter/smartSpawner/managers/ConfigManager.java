@@ -11,12 +11,15 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.logging.Logger;
 
 public class ConfigManager {
     private final SmartSpawner plugin;
+    private final Logger logger;
     private FileConfiguration config;
     private FileConfiguration lootConfig;
     private File configFile;
@@ -25,6 +28,7 @@ public class ConfigManager {
 
     public ConfigManager(SmartSpawner plugin) {
         this.plugin = plugin;
+        this.logger = plugin.getLogger();
         this.configCache = new ConcurrentHashMap<>();
         loadConfigs();
     }
@@ -71,13 +75,42 @@ public class ConfigManager {
         return config;
     }
 
-    private void loadMainConfig() {
-        plugin.saveDefaultConfig();
-        config = plugin.getConfig();
-        configFile = new File(plugin.getDataFolder(), "config.yml");
+    public void loadMainConfig() {
+        if (!plugin.getDataFolder().exists()) {
+            plugin.getDataFolder().mkdirs();
+        }
 
-        // Set default values if not present
-        addDefaultConfigs();
+        configFile = new File(plugin.getDataFolder(), "config.yml");
+        if (!configFile.exists()) {
+            plugin.saveDefaultConfig();
+        }
+
+        config = YamlConfiguration.loadConfiguration(configFile);
+        boolean hasChanges = mergeDefaultConfig();
+
+        if (hasChanges) {
+            try {
+                config.save(configFile);
+                logger.info("Updated config.yml with new default values");
+            } catch (IOException e) {
+                logger.severe("Could not save updated config.yml: " + e.getMessage());
+            }
+        }
+    }
+
+    private boolean mergeDefaultConfig() {
+        boolean changed = false;
+        for (Map.Entry<String, Object> entry : defaultConfig.entrySet()) {
+            String path = entry.getKey();
+            Object defaultValue = entry.getValue();
+
+            if (!config.contains(path)) {
+                config.set(path, defaultValue);
+                changed = true;
+                logger.info("Added missing config value: " + path);
+            }
+        }
+        return changed;
     }
 
     private void saveMainConfig() {
@@ -88,72 +121,59 @@ public class ConfigManager {
         }
     }
 
-    private void addDefaultConfigs() {
+    private final Map<String, Object> defaultConfig = new HashMap<String, Object>() {{
         // Global Settings
-        if (!config.contains("settings")) {
-            config.set("settings.language", "en");
-            config.set("settings.debug", false);
-            config.set("settings.save-interval", 6000);
-        }
+        put("settings.language", "en");
+        put("settings.debug", false);
+        put("settings.save-interval", 6000);
 
         // Spawner Core Mechanics
-        if (!config.contains("spawner")) {
-            config.set("spawner.default-entity", "PIG");
-            config.set("spawner.min-mobs", 1);
-            config.set("spawner.max-mobs", 4);
-            config.set("spawner.range", 16);
-            config.set("spawner.delay", 600);
-            config.set("spawner.max-storage-pages", 1);
-            config.set("spawner.max-stored-exp", 1000);
-            config.set("spawner.max-stack-size", 1000);
-            config.set("spawner.allow-exp-mending", true);
-            config.set("spawner.allow-toggle-equipment-drops", true);
-            config.set("spawner.allow-grief", false);
-            config.set("spawner.activate-on-place", true);
-        }
+        put("spawner.default-entity", "PIG");
+        put("spawner.min-mobs", 1);
+        put("spawner.max-mobs", 4);
+        put("spawner.range", 16);
+        put("spawner.delay", 600);
+        put("spawner.max-storage-pages", 1);
+        put("spawner.max-stored-exp", 1000);
+        put("spawner.max-stack-size", 1000);
+        put("spawner.allow-exp-mending", true);
+        put("spawner.allow-toggle-equipment-drops", true);
+        put("spawner.allow-grief", false);
+        put("spawner.activate-on-place", true);
 
         // Spawner Breaking Mechanics
-        if (!config.contains("spawner-break")) {
-            config.set("spawner-break.enabled", true);
-            config.set("spawner-break.required-tools",
-                    Arrays.asList("IRON_PICKAXE", "GOLDEN_PICKAXE", "DIAMOND_PICKAXE", "NETHERITE_PICKAXE"));
-            config.set("spawner-break.durability-loss-per-spawner", 1);
-            config.set("spawner-break.silk-touch.required", true);
-            config.set("spawner-break.silk-touch.level", 1);
-            config.set("spawner-break.drop-stack.amount", 64);
-        }
+        put("spawner-break.enabled", true);
+        put("spawner-break.required-tools", Arrays.asList(
+                "IRON_PICKAXE",
+                "GOLDEN_PICKAXE",
+                "DIAMOND_PICKAXE",
+                "NETHERITE_PICKAXE"
+        ));
+        put("spawner-break.durability-loss-per-spawner", 1);
+        put("spawner-break.silk-touch.required", true);
+        put("spawner-break.silk-touch.level", 1);
+        put("spawner-break.drop-stack.amount", 64);
 
         // Economic Integration
-        if (!config.contains("shop-integration")) {
-            config.set("shop-integration", "EconomyShopGUI");
-        }
-        if (!config.contains("tax")) {
-            config.set("tax.enabled", false);
-            config.set("tax.rate", 10.0);
-        }
+        put("shop-integration", "EconomyShopGUI");
+        put("formated-price", true);
+        put("tax.enabled", false);
+        put("tax.rate", 10.0);
 
         // Hopper Mechanics
-        if (!config.contains("hopper")) {
-            config.set("hopper.enabled", false);
-            config.set("hopper.items-per-transfer", 1);
-            config.set("hopper.check-interval", 20);
-        }
+        put("hopper.enabled", false);
+        put("hopper.items-per-transfer", 1);
+        put("hopper.check-interval", 20);
 
-        // Performance Optimizations
-        if (!config.contains("performance")) {
-            config.set("performance.batch-size", 3);
-        }
+        // Performance
+        put("performance.batch-size", 3);
 
-        // Update checker configs
-        if (!config.contains("update-checker")) {
-            config.set("update-checker.enabled", true);
-            config.set("update-checker.check-interval", 24);
-            config.set("update-checker.notify-ops", true);
-            config.set("update-checker.notify-on-join", true);
-        }
-
-        saveMainConfig();
-    }
+        // Update Checker
+        put("update-checker.enabled", true);
+        put("update-checker.check-interval", 24);
+        put("update-checker.notify-ops", true);
+        put("update-checker.notify-on-join", true);
+    }};
 
     private void initializeCache() {
         configCache.clear();

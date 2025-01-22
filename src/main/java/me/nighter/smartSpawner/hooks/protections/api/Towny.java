@@ -1,4 +1,4 @@
-package me.nighter.smartSpawner.hooks.protections;
+package me.nighter.smartSpawner.hooks.protections.api;
 
 import com.palmergames.bukkit.towny.TownyAPI;
 import com.palmergames.bukkit.towny.exceptions.NotRegisteredException;
@@ -8,7 +8,6 @@ import com.palmergames.bukkit.towny.object.Town;
 import java.util.UUID;
 
 import org.bukkit.Location;
-import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;
 
 public class Towny {

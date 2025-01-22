@@ -1,7 +1,7 @@
 package me.nighter.smartSpawner.hooks.shops;
 
 import me.nighter.smartSpawner.SmartSpawner;
-import me.nighter.smartSpawner.hooks.shops.api.EconomyShopGUI;
+import me.nighter.smartSpawner.hooks.shops.api.economyshopgui.EconomyShopGUI;
 import me.nighter.smartSpawner.hooks.shops.api.shopguiplus.ShopGuiPlus;
 import me.nighter.smartSpawner.managers.ConfigManager;
 import org.bukkit.Bukkit;
@@ -15,7 +15,6 @@ public class ShopIntegrationManager {
 
     public ShopIntegrationManager(SmartSpawner plugin) {
         this.plugin = plugin;
-        ConfigManager configManager = plugin.getConfigManager();
     }
 
     public void initialize() {
@@ -83,18 +82,6 @@ public class ShopIntegrationManager {
         }
     }
 
-        private boolean checkPlugin(String pluginName, PluginCheck checker) {
-        try {
-            if (checker.check()) {
-                plugin.getLogger().info(pluginName + " integration enabled successfully!");
-                return true;
-            }
-        } catch (NoClassDefFoundError | NullPointerException e) {
-            plugin.getLogger().info(pluginName + " not detected, continuing without it");
-        }
-        return false;
-    }
-
     // Getters
     public IShopIntegration getShopIntegration() {
         if (shopIntegration != null && shopIntegration.isEnabled()) {
@@ -109,10 +96,5 @@ public class ShopIntegrationManager {
 
     public boolean isShopGUIPlusEnabled() {
         return isShopGUIPlusEnabled;
-    }
-
-    @FunctionalInterface
-    private interface PluginCheck {
-        boolean check();
     }
 }

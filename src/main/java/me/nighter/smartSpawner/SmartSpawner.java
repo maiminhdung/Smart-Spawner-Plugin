@@ -11,7 +11,7 @@ import me.nighter.smartSpawner.managers.*;
 import me.nighter.smartSpawner.listeners.*;
 import me.nighter.smartSpawner.utils.UpdateChecker;
 import me.ryanhamshire.GriefPrevention.GriefPrevention;
-import me.nighter.smartSpawner.hooks.protections.LandsIntegrationAPI;
+import me.nighter.smartSpawner.hooks.protections.api.Lands;
 import me.nighter.smartSpawner.commands.SmartSpawnerCommand;
 
 import org.bukkit.Bukkit;
@@ -83,7 +83,6 @@ public class SmartSpawner extends JavaPlugin {
             this.hopperHandler = new HopperHandler(this);
             this.hopperHandler.checkAllHoppers();
         } else {
-            getLogger().info("Hopper integration is disabled by configuration");
             this.hopperHandler = null;
         }
     }
@@ -118,7 +117,7 @@ public class SmartSpawner extends JavaPlugin {
         hasLands = checkPlugin("Lands", () -> {
             Plugin landsPlugin = Bukkit.getPluginManager().getPlugin("Lands");
             if (landsPlugin != null) {
-                new LandsIntegrationAPI(this);
+                new Lands(this);
                 return true;
             }
             return false;
@@ -151,7 +150,6 @@ public class SmartSpawner extends JavaPlugin {
         pm.registerEvents(new EventHandlers(this), this);
         pm.registerEvents(new SpawnerListener(this), this);
         pm.registerEvents(new SpawnerGuiListener(this), this);
-        pm.registerEvents(new SpawnerRangeChecker(this), this);
         pm.registerEvents(new SpawnerBreakHandler(this), this);
         pm.registerEvents(new GUIClickHandler(this), this);
         pm.registerEvents(new SpawnerExplosionListener(this), this);

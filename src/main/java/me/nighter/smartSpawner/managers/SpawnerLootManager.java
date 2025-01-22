@@ -4,7 +4,6 @@ import me.nighter.smartSpawner.*;
 import me.nighter.smartSpawner.holders.PagedSpawnerLootHolder;
 import me.nighter.smartSpawner.utils.SpawnerData;
 import me.nighter.smartSpawner.utils.VirtualInventory;
-
 import org.bukkit.entity.HumanEntity;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.Inventory;
@@ -49,7 +48,6 @@ public class SpawnerLootManager {
         return pageInv;
     }
 
-    // New method to update inventory contents
     public void updateInventoryContents(Inventory inventory, SpawnerData spawner, int page) {
         VirtualInventory virtualInv = spawner.getVirtualInventory();
         int totalSlots = virtualInv.getSize();
@@ -109,23 +107,6 @@ public class SpawnerLootManager {
 
     }
 
-    // Method to update inventory for all viewers
-    public void updateAllViewers(SpawnerData spawner) {
-        Bukkit.getGlobalRegionScheduler().run(plugin, task -> {
-            for (HumanEntity viewer : Bukkit.getOnlinePlayers()) {
-                Inventory openInv = viewer.getOpenInventory().getTopInventory();
-                if (openInv.getHolder() instanceof PagedSpawnerLootHolder) {
-                    PagedSpawnerLootHolder holder = (PagedSpawnerLootHolder) openInv.getHolder();
-                    if (holder.getSpawnerData().getSpawnerId().equals(spawner.getSpawnerId())) {
-                        updateInventoryContents(openInv, spawner, holder.getCurrentPage());
-                        if (viewer instanceof Player) {
-                            ((Player) viewer).updateInventory();
-                        }
-                    }
-                }
-            }
-        });
-    }
 
     public void saveItems(SpawnerData spawner, Inventory pageInventory) {
         PagedSpawnerLootHolder holder = (PagedSpawnerLootHolder) pageInventory.getHolder();

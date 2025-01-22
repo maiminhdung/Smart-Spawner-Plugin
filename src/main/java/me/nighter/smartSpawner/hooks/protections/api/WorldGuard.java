@@ -1,9 +1,8 @@
-package me.nighter.smartSpawner.hooks.protections;
+package me.nighter.smartSpawner.hooks.protections.api;
 
 import com.sk89q.worldedit.bukkit.BukkitAdapter;
 import com.sk89q.worldedit.util.Location;
 import com.sk89q.worldguard.LocalPlayer;
-import com.sk89q.worldguard.WorldGuard;
 import com.sk89q.worldguard.bukkit.WorldGuardPlugin;
 import com.sk89q.worldguard.protection.flags.Flags;
 import com.sk89q.worldguard.protection.flags.StateFlag;
@@ -16,7 +15,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.UUID;
 
-public class WorldGuardAPI {
+public class WorldGuard {
     // Check if player can break in a location
     public static boolean canPlayerBreakBlockInRegion(@NotNull UUID pUUID, @NotNull org.bukkit.Location location) {
         Player player = Bukkit.getServer().getPlayer(pUUID);
@@ -26,7 +25,7 @@ public class WorldGuardAPI {
 
         LocalPlayer localPlayer = player != null ? WorldGuardPlugin.inst().wrapPlayer(player) : WorldGuardPlugin.inst().wrapOfflinePlayer(Bukkit.getServer().getOfflinePlayer(pUUID));
         Location loc = new Location(BukkitAdapter.adapt(location.getWorld()), location.getX(), location.getY(), location.getZ());
-        RegionContainer container = WorldGuard.getInstance().getPlatform().getRegionContainer();
+        RegionContainer container = com.sk89q.worldguard.WorldGuard.getInstance().getPlatform().getRegionContainer();
         RegionQuery query = container.createQuery();
 
         StateFlag[] condition = new StateFlag[]{Flags.BLOCK_BREAK};
@@ -46,7 +45,7 @@ public class WorldGuardAPI {
 
         LocalPlayer localPlayer = WorldGuardPlugin.inst().wrapOfflinePlayer(player);
         Location loc = new Location(BukkitAdapter.adapt(location.getWorld()), location.getX(), location.getY(), location.getZ());
-        RegionContainer container = WorldGuard.getInstance().getPlatform().getRegionContainer();
+        RegionContainer container = com.sk89q.worldguard.WorldGuard.getInstance().getPlatform().getRegionContainer();
         RegionQuery query = container.createQuery();
 
         StateFlag[] condition = new StateFlag[]{Flags.BLOCK_PLACE};
@@ -61,7 +60,7 @@ public class WorldGuardAPI {
 
         LocalPlayer localPlayer = WorldGuardPlugin.inst().wrapPlayer(p);
         Location loc = new Location(BukkitAdapter.adapt(location.getWorld()), location.getX(), location.getY(), location.getZ());
-        RegionContainer container = WorldGuard.getInstance().getPlatform().getRegionContainer();
+        RegionContainer container = com.sk89q.worldguard.WorldGuard.getInstance().getPlatform().getRegionContainer();
         RegionQuery query = container.createQuery();
 
         StateFlag[] condition = new StateFlag[]{Flags.BLOCK_BREAK};
@@ -76,7 +75,7 @@ public class WorldGuardAPI {
         
         LocalPlayer localPlayer = WorldGuardPlugin.inst().wrapPlayer(p);
         Location loc = new Location(BukkitAdapter.adapt(location.getWorld()), location.getX(), location.getY(), location.getZ());
-        RegionContainer container = WorldGuard.getInstance().getPlatform().getRegionContainer();
+        RegionContainer container = com.sk89q.worldguard.WorldGuard.getInstance().getPlatform().getRegionContainer();
         RegionQuery query = container.createQuery();
 
         StateFlag[] condition = new StateFlag[]{Flags.INTERACT};

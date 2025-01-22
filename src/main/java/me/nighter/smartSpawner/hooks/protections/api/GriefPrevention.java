@@ -1,8 +1,7 @@
-package me.nighter.smartSpawner.hooks.protections;
+package me.nighter.smartSpawner.hooks.protections.api;
 
 import me.ryanhamshire.GriefPrevention.Claim;
 import me.ryanhamshire.GriefPrevention.ClaimPermission;
-import me.ryanhamshire.GriefPrevention.GriefPrevention;
 
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
@@ -11,10 +10,10 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.UUID;
 
-public class GriefPreventionAPI {
+public class GriefPrevention {
 
     public static boolean CanplayerBreakClaimBlock(@NotNull UUID pUUID, @NotNull Location location) {
-        Claim claim = GriefPrevention.instance.dataStore.getClaimAt(location, true, null);
+        Claim claim = me.ryanhamshire.GriefPrevention.GriefPrevention.instance.dataStore.getClaimAt(location, true, null);
         if (claim == null) return true;
 
         Player player = Bukkit.getPlayer(pUUID);
@@ -24,7 +23,7 @@ public class GriefPreventionAPI {
     }
 
     public static boolean CanplayerPlaceClaimBlock(@NotNull UUID pUUID, @NotNull Location location) {
-        Claim claim = GriefPrevention.instance.dataStore.getClaimAt(location, true, null);
+        Claim claim = me.ryanhamshire.GriefPrevention.GriefPrevention.instance.dataStore.getClaimAt(location, true, null);
         if (claim == null) return true;
 
         Player player = Bukkit.getPlayer(pUUID);
@@ -34,7 +33,7 @@ public class GriefPreventionAPI {
     }
 
     public static boolean CanplayerOpenMenuOnClaim(@NotNull UUID pUUID, @NotNull Location location) {
-        Claim claim = GriefPrevention.instance.dataStore.getClaimAt(location, true, null);
+        Claim claim = me.ryanhamshire.GriefPrevention.GriefPrevention.instance.dataStore.getClaimAt(location, true, null);
         if (claim == null) return true;
 
         Player player = Bukkit.getPlayer(pUUID);

@@ -1,4 +1,4 @@
-package me.nighter.smartSpawner.hooks.protections;
+package me.nighter.smartSpawner.hooks.protections.api;
 
 import java.util.UUID;
 
@@ -13,11 +13,11 @@ import org.bukkit.entity.Player;
 import org.bukkit.plugin.Plugin;
 import org.jetbrains.annotations.NotNull;
 
-public class LandsIntegrationAPI {
+public class Lands {
 
     private static LandsIntegration landsIntegration;
 
-    public LandsIntegrationAPI(Plugin smartSpawner) {
+    public Lands(Plugin smartSpawner) {
         landsIntegration = LandsIntegration.of(smartSpawner);
     }
 

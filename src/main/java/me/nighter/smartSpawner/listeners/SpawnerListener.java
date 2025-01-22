@@ -3,7 +3,7 @@ package me.nighter.smartSpawner.listeners;
 import me.nighter.smartSpawner.*;
 import me.nighter.smartSpawner.utils.*;
 import me.nighter.smartSpawner.managers.*;
-import me.nighter.smartSpawner.utils.coditions.CheckOpenMenu;
+import me.nighter.smartSpawner.hooks.protections.CheckOpenMenu;
 import me.nighter.smartSpawner.holders.SpawnerMenuHolder;
 import me.nighter.smartSpawner.commands.SpawnerListCommand;
 import me.nighter.smartSpawner.holders.SpawnerStackerHolder;

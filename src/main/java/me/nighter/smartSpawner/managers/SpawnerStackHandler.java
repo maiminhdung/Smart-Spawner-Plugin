@@ -2,7 +2,7 @@ package me.nighter.smartSpawner.managers;
 
 import me.nighter.smartSpawner.SmartSpawner;
 import me.nighter.smartSpawner.utils.SpawnerData;
-import me.nighter.smartSpawner.utils.coditions.CheckPlaceBlock;
+import me.nighter.smartSpawner.hooks.protections.CheckPlaceBlock;
 
 import org.bukkit.*;
 import org.bukkit.block.CreatureSpawner;

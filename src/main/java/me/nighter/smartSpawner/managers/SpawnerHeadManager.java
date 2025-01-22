@@ -20,7 +20,6 @@ public class SpawnerHeadManager {
     private static final Map<EntityType, String> TEXTURE_MAP = new EnumMap<>(EntityType.class);
 
     static {
-        // Khởi tạo texture map
         TEXTURE_MAP.put(EntityType.BLAZE, "737623f79f7eb4f3f80da65b652cc44b2148eea41f9ffe2e86a23bdf49ab77b1");
         TEXTURE_MAP.put(EntityType.BOGGED, "a3b9003ba2d05562c75119b8a62185c67130e9282f7acbac4bc2824c21eb95d9");
         TEXTURE_MAP.put(EntityType.BREEZE, "a275728af7e6a29c88125b675a39d88ae9919bb61fdc200337fed6ab0c49d65c");
@@ -57,7 +56,6 @@ public class SpawnerHeadManager {
         TEXTURE_MAP.put(EntityType.ZOGLIN, "c19b7b5e9ffd4e22b890ab778b4795b662faff2b4978bf815574e48b0e52b301");
         TEXTURE_MAP.put(EntityType.ZOMBIE_VILLAGER, "37e838ccc26776a217c678386f6a65791fe8cdab8ce9ca4ac6b28397a4d81c22");
         TEXTURE_MAP.put(EntityType.ZOMBIFIED_PIGLIN, "e935842af769380f78e8b8a88d1ea6ca2807c1e5693c2cf797456620833e936f");
-        // Thêm các texture khác nếu cần
     }
 
     private static boolean isBedrockPlayer(Player player) {
@@ -71,7 +69,6 @@ public class SpawnerHeadManager {
     }
 
     public static ItemStack getCustomHead(EntityType entityType, Player player) {
-        // Xử lý các head có sẵn trong game trước
         switch (entityType) {
             case ZOMBIE:
                 return new ItemStack(Material.ZOMBIE_HEAD);
@@ -89,17 +86,13 @@ public class SpawnerHeadManager {
             return new ItemStack(Material.SPAWNER);
         }
 
-        // Kiểm tra cache
         if (HEAD_CACHE.containsKey(entityType)) {
             return HEAD_CACHE.get(entityType).clone();
         }
 
-        // Nếu không có trong TEXTURE_MAP, trả về spawner
         if (!TEXTURE_MAP.containsKey(entityType)) {
             return new ItemStack(Material.SPAWNER);
         }
-
-        // Tạo head mới
         ItemStack head = new ItemStack(Material.PLAYER_HEAD);
         SkullMeta meta = (SkullMeta) head.getItemMeta();
 
@@ -115,7 +108,6 @@ public class SpawnerHeadManager {
 
             head.setItemMeta(meta);
 
-            // Cache the head
             HEAD_CACHE.put(entityType, head.clone());
 
             return head;
@@ -162,7 +154,6 @@ public class SpawnerHeadManager {
 
             head.setItemMeta(meta);
 
-            // Cache the head
             HEAD_CACHE.put(entityType, head.clone());
 
             return head;
@@ -172,7 +163,6 @@ public class SpawnerHeadManager {
         }
     }
 
-    // Phương thức để xóa cache nếu cần
     public static void clearCache() {
         HEAD_CACHE.clear();
     }
