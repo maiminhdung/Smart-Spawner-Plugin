@@ -6,7 +6,7 @@ plugins {
 runPaper.folia.registerTask()
 
 group = 'me.nighter'
-version = '1.2.0'
+version = '1.2.1-DEV'
 
 repositories {
     mavenCentral()
