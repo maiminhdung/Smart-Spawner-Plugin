@@ -3,7 +3,7 @@ This plugin is a fork of the original Smart Spawner plugin by [ptthanh02](https:
 
 For the full plugin and additional resources, please visit the SpigotMC page: [Smart Spawner GUI Plugin](https://www.spigotmc.org/resources/smart-spawner-gui-spawner-plugin%E2%9C%A8-1-21-1-21-3-%EF%B8%8F.120743/)
 
-### 💵Donate
+### 💵 Donate
 MBBank: 0383007137 - Mai Minh Dũng
 
 ### 🛠️ Supported Minecraft Versions
