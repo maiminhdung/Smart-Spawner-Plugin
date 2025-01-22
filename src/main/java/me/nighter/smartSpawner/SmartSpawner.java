@@ -1,6 +1,5 @@
 package me.nighter.smartSpawner;
 
-import io.papermc.paper.threadedregions.scheduler.AsyncScheduler;
 import io.papermc.paper.threadedregions.scheduler.ScheduledTask;
 
 import me.nighter.smartSpawner.hooks.shops.IShopIntegration;
@@ -55,7 +54,6 @@ public class SmartSpawner extends JavaPlugin {
     @Override
     public void onEnable() {
         instance = this;
-        AsyncScheduler asyncScheduler = getServer().getAsyncScheduler();
         initializeComponents();
         setupCommand();
         checkDependencies();

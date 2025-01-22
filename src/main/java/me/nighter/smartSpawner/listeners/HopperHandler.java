@@ -280,7 +280,7 @@ public class HopperHandler implements Listener {
     }
 
     private void updateOpenGuis(SpawnerData spawner) {
-        Bukkit.getScheduler().runTask(plugin, () -> {
+        Bukkit.getGlobalRegionScheduler().run(plugin, task -> {
             // Cập nhật cho người chơi đang xem inventory
             for (HumanEntity viewer : getViewersForSpawner(spawner)) {
                 if (viewer instanceof Player) {

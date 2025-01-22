@@ -77,32 +77,44 @@ public class SpawnerBreakHandler implements Listener {
             return;
         }
 
+        ItemStack tool = player.getInventory().getItemInMainHand();
+        boolean hasSilkTouch = tool.containsEnchantment(Enchantment.SILK_TOUCH);
+
         Bukkit.getRegionScheduler().execute(plugin, location.getWorld(), block.getX() >> 4, block.getZ() >> 4, () -> {
-        // Get spawner data
-        final SpawnerData spawner = spawnerManager.getSpawnerByLocation(location);
-        CreatureSpawner cs = (CreatureSpawner) block.getState();
+            // Get spawner data
+            final SpawnerData spawner = spawnerManager.getSpawnerByLocation(location);
+            BlockState blockState = block.getState();
 
-        // Handle GUI closing and player notification
-        if (spawner != null) {
-            // Get the player who currently has the spawner locked
-            UUID lockedBy = spawner.getLockedBy();
-            if (lockedBy != null) {
-                Player viewingPlayer = Bukkit.getPlayer(lockedBy);
-                if (viewingPlayer != null) {
-                    viewingPlayer.closeInventory();
-                    //languageManager.sendMessage(viewingPlayer, "messages.spawner-broken");
+            if (blockState instanceof CreatureSpawner) {
+                CreatureSpawner cs = (CreatureSpawner) blockState;
+
+                // Handle GUI closing and player notification
+                if (spawner != null) {
+                    // Get the player who currently has the spawner locked
+                    UUID lockedBy = spawner.getLockedBy();
+                    if (lockedBy != null) {
+                        Player viewingPlayer = Bukkit.getPlayer(lockedBy);
+                        if (viewingPlayer != null) {
+                            viewingPlayer.closeInventory();
+                            //languageManager.sendMessage(viewingPlayer, "messages.spawner-broken");
+                        }
+                        spawner.unlock(lockedBy);
+                    }
+
+                    handleSpawnerBreak(block, spawner, player);
+                } else {
+                    handleCSpawnerBreak(block, cs, player);
                 }
-                spawner.unlock(lockedBy);
+
+                // Drop the spawner item if the player has Silk Touch or OP permissions
+                if (hasSilkTouch || player.isOp()) {
+                    ItemStack spawnerItem = createSpawnerItem(cs.getSpawnedType());
+                    block.getWorld().dropItemNaturally(location, spawnerItem);
+                }
+
+                // Cancel the vanilla break event as we handle it ourselves
+                event.setCancelled(true);
             }
-
-            handleSpawnerBreak(block, spawner, player);
-        } else {
-            handleCSpawnerBreak(block, cs, player);
-        }
-
-        // Cancel the vanilla break event as we handle it ourselves
-        event.setCancelled(true);
-
         });
 
         // Handle hopper cleanup
