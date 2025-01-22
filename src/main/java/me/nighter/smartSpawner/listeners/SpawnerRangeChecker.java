@@ -45,7 +45,8 @@ public class SpawnerRangeChecker {
         World world = spawnerLoc.getWorld();
         if (world == null) return;
 
-        Bukkit.getAsyncScheduler().runNow(plugin, task -> {
+        // Sử dụng RegionScheduler để đồng bộ
+        Bukkit.getRegionScheduler().execute(plugin, world, spawnerLoc.getBlockX() >> 4, spawnerLoc.getBlockZ() >> 4, () -> {
             boolean playerFound = isPlayerInRange(spawner, spawnerLoc, world);
             boolean shouldStop = !playerFound;
 
@@ -59,16 +60,21 @@ public class SpawnerRangeChecker {
     private boolean isPlayerInRange(SpawnerData spawner, Location spawnerLoc, World world) {
         int range = spawner.getSpawnerRange();
         double rangeSquared = range * range;
+
+        // Kiểm tra các chunk trong bán kính
         int chunkRadius = (range >> 4) + 1;
         int baseX = spawnerLoc.getBlockX() >> 4;
         int baseZ = spawnerLoc.getBlockZ() >> 4;
 
         for (int dx = -chunkRadius; dx <= chunkRadius; dx++) {
             for (int dz = -chunkRadius; dz <= chunkRadius; dz++) {
-                if (!world.isChunkLoaded(baseX + dx, baseZ + dz)) continue;
+                int chunkX = baseX + dx;
+                int chunkZ = baseZ + dz;
 
-                if (checkChunkForPlayers(world, spawnerLoc, range, rangeSquared)) {
-                    return true;
+                if (world.isChunkLoaded(chunkX, chunkZ)) {
+                    if (checkChunkForPlayers(world, spawnerLoc, range, rangeSquared)) {
+                        return true;
+                    }
                 }
             }
         }
@@ -76,8 +82,7 @@ public class SpawnerRangeChecker {
     }
 
     private boolean checkChunkForPlayers(World world, Location spawnerLoc, int range, double rangeSquared) {
-        Collection<Entity> nearbyEntities = world.getNearbyEntities(spawnerLoc, range, range, range,
-                entity -> entity instanceof Player);
+        Collection<Entity> nearbyEntities = world.getNearbyEntities(spawnerLoc, range, range, range, entity -> entity instanceof Player);
 
         for (Entity entity : nearbyEntities) {
             if (entity.getLocation().distanceSquared(spawnerLoc) <= rangeSquared) {
@@ -116,7 +121,7 @@ public class SpawnerRangeChecker {
                         spawnerManager.spawnLoot(spawner);
                     }
                 },
-                0L, spawner.getSpawnDelay()
+                1L, spawner.getSpawnDelay()
         );
 
         spawnerTasks.put(spawner.getSpawnerId(), spawnertask);
@@ -130,16 +135,17 @@ public class SpawnerRangeChecker {
     }
 
     private void updateGuiForSpawner(SpawnerData spawner) {
-        Bukkit.getGlobalRegionScheduler().run(plugin, task ->
-                spawnerManager.getOpenSpawnerGuis().entrySet().stream()
-                        .filter(entry -> entry.getValue().getSpawnerId().equals(spawner.getSpawnerId()))
-                        .forEach(entry -> {
-                            Player viewer = Bukkit.getPlayer(entry.getKey());
-                            if (viewer != null && viewer.isOnline()) {
-                                spawnerManager.updateSpawnerGui(viewer, spawner, true);
-                            }
-                        })
-        );
+        Bukkit.getRegionScheduler().execute(plugin, spawner.getSpawnerLocation().getWorld(),
+                spawner.getSpawnerLocation().getBlockX() >> 4, spawner.getSpawnerLocation().getBlockZ() >> 4, () -> {
+                    spawnerManager.getOpenSpawnerGuis().entrySet().stream()
+                            .filter(entry -> entry.getValue().getSpawnerId().equals(spawner.getSpawnerId()))
+                            .forEach(entry -> {
+                                Player viewer = Bukkit.getPlayer(entry.getKey());
+                                if (viewer != null && viewer.isOnline()) {
+                                    spawnerManager.updateSpawnerGui(viewer, spawner, true);
+                                }
+                            });
+                });
     }
 
     public Set<UUID> getPlayersInRange(String spawnerId) {
