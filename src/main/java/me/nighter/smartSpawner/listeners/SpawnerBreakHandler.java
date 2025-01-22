@@ -32,6 +32,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 import java.util.UUID;
+import java.util.concurrent.TimeUnit;
 
 public class SpawnerBreakHandler implements Listener {
     private final SmartSpawner plugin;
@@ -311,12 +312,11 @@ public class SpawnerBreakHandler implements Listener {
 
     @EventHandler(priority = EventPriority.HIGH)
     public void onBlockPlace(BlockPlaceEvent event) {
-
         Player player = event.getPlayer();
         ItemStack item = event.getItemInHand();
         ItemMeta meta = item.getItemMeta();
         Location location = event.getBlock().getLocation();
-    
+
         // Check WorldGuard restrictions
         if (!CheckBreakBlock.CanPlayerBreakBlock(player.getUniqueId(), location)) {
             event.setCancelled(true);
@@ -343,38 +343,38 @@ public class SpawnerBreakHandler implements Listener {
 
         // Get entity type from nbt tag
         if (storedEntityType == null) {
-            Bukkit.getGlobalRegionScheduler().runDelayed(plugin, task -> {
+            Bukkit.getAsyncScheduler().runNow(plugin, task -> {
                 // Added checks to ensure that the BlockState is an instance of CreatureSpawner before casting.
                 BlockState blockState = block.getState();
                 if (blockState instanceof CreatureSpawner) {
                     CreatureSpawner placedSpawner = (CreatureSpawner) blockState;
                     EntityType placedEntityType = placedSpawner.getSpawnedType();
 
-                // Handle default entity type
-                if ((placedEntityType == null || placedEntityType == EntityType.UNKNOWN)) {
-                    placedEntityType = configManager.getDefaultEntityType();
-                    placedSpawner.setSpawnedType(placedEntityType);
-                    placedSpawner.update();
-                }
-
-                // Handle spawner activation
-                if (configManager.getActivateOnPlace()) {
-                    createNewSpawnerWithType(block, player, placedEntityType);
-                } else {
-                    EntityType finalPlacedEntityType = placedEntityType;
-                    Bukkit.getGlobalRegionScheduler().runDelayed(plugin, newtask -> {
-                        placedSpawner.setSpawnedType(finalPlacedEntityType);
+                    // Handle default entity type
+                    if (placedEntityType == null || placedEntityType == EntityType.UNKNOWN) {
+                        placedEntityType = configManager.getDefaultEntityType();
+                        placedSpawner.setSpawnedType(placedEntityType);
                         placedSpawner.update();
-                        languageManager.sendMessage(player, "messages.entity-spawner-placed");
-                        }, 2L);
+                    }
+
+                    // Handle spawner activation
+                    if (configManager.getActivateOnPlace()) {
+                        createNewSpawnerWithType(block, player, placedEntityType);
+                    } else {
+                        EntityType finalPlacedEntityType = placedEntityType;
+                        Bukkit.getAsyncScheduler().runDelayed(plugin, newtask -> {
+                            placedSpawner.setSpawnedType(finalPlacedEntityType);
+                            placedSpawner.update();
+                            languageManager.sendMessage(player, "messages.entity-spawner-placed");
+                        }, 2L, TimeUnit.MICROSECONDS);
                     }
                 }
-            }, 2L);
+            });
         } else {
             // Handle spawner activation with item meta entity type
             if (configManager.getActivateOnPlace()) {
-                Bukkit.getGlobalRegionScheduler().runDelayed(plugin, task -> {
-                    //Added checks to ensure that the BlockState is an instance of CreatureSpawner before casting.
+                Bukkit.getAsyncScheduler().runNow(plugin, task -> {
+                    // Added checks to ensure that the BlockState is an instance of CreatureSpawner before casting.
                     BlockState blockState = block.getState();
                     if (blockState instanceof CreatureSpawner) {
                         CreatureSpawner placedSpawner = (CreatureSpawner) blockState;
@@ -382,10 +382,10 @@ public class SpawnerBreakHandler implements Listener {
                         placedSpawner.update();
                         createNewSpawnerWithType(block, player, storedEntityType);
                     }
-                }, 2L);
+                });
             } else {
-                Bukkit.getGlobalRegionScheduler().runDelayed(plugin, task -> {
-                    //Added checks to ensure that the BlockState is an instance of CreatureSpawner before casting.
+                Bukkit.getAsyncScheduler().runNow(plugin, task -> {
+                    // Added checks to ensure that the BlockState is an instance of CreatureSpawner before casting.
                     BlockState blockState = block.getState();
                     if (blockState instanceof CreatureSpawner) {
                         CreatureSpawner placedSpawner = (CreatureSpawner) blockState;
@@ -393,7 +393,7 @@ public class SpawnerBreakHandler implements Listener {
                         placedSpawner.update();
                         languageManager.sendMessage(player, "messages.entity-spawner-placed");
                     }
-                }, 2L);
+                });
             }
         }
 
@@ -408,8 +408,8 @@ public class SpawnerBreakHandler implements Listener {
         }
 
         // Debug message
-            configManager.debug("Player " + player.getName() + " placed " + storedEntityType + " spawner at " + block.getLocation());
-        }
+        configManager.debug("Player " + player.getName() + " placed " + storedEntityType + " spawner at " + block.getLocation());
+    }
 
     private void createNewSpawnerWithType(Block block, Player player, EntityType entityType) {
         String newSpawnerId = UUID.randomUUID().toString().substring(0, 8);
@@ -438,11 +438,11 @@ public class SpawnerBreakHandler implements Listener {
         block.setType(Material.AIR);
         spawnerManager.removeSpawner(spawner.getSpawnerId());
 
-        Bukkit.getGlobalRegionScheduler().runAtFixedRate(plugin, task -> {
+        Bukkit.getAsyncScheduler().runNow(plugin, task -> {
             spawnerManager.saveSpawnerData();
             configManager.debug("Player " + player.getName() +
                     " broke spawner with ID: " + spawner.getSpawnerId());
-        }, 0L, 20L);
+        });
     }
 
     private boolean isValidTool(ItemStack tool) {

@@ -1,25 +1,28 @@
 package me.nighter.smartSpawner.listeners;
 
+import io.papermc.paper.threadedregions.scheduler.ScheduledTask;
+
 import me.nighter.smartSpawner.SmartSpawner;
 import me.nighter.smartSpawner.managers.ConfigManager;
 import me.nighter.smartSpawner.managers.SpawnerManager;
 import me.nighter.smartSpawner.utils.SpawnerData;
+
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.World;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
-import org.bukkit.scheduler.BukkitTask;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.TimeUnit;
 
 public class SpawnerRangeChecker {
     private static final long CHECK_INTERVAL = 20L; // 1 second in ticks
     private final SmartSpawner plugin;
     private final ConfigManager configManager;
     private final SpawnerManager spawnerManager;
-    private final Map<String, BukkitTask> spawnerTasks;
+    private final Map<String, ScheduledTask> spawnerTasks;
     private final Map<String, Set<UUID>> playersInRange;
 
     public SpawnerRangeChecker(SmartSpawner plugin) {
@@ -32,7 +35,7 @@ public class SpawnerRangeChecker {
     }
 
     private void initializeRangeCheckTask() {
-        Bukkit.getScheduler().runTaskTimer(plugin, () ->
+        Bukkit.getGlobalRegionScheduler().runAtFixedRate(plugin, task ->
                         spawnerManager.getAllSpawners().forEach(this::updateSpawnerStatus),
                 CHECK_INTERVAL, CHECK_INTERVAL);
     }
@@ -42,13 +45,15 @@ public class SpawnerRangeChecker {
         World world = spawnerLoc.getWorld();
         if (world == null) return;
 
-        boolean playerFound = isPlayerInRange(spawner, spawnerLoc, world);
-        boolean shouldStop = !playerFound;
+        Bukkit.getAsyncScheduler().runNow(plugin, task -> {
+            boolean playerFound = isPlayerInRange(spawner, spawnerLoc, world);
+            boolean shouldStop = !playerFound;
 
-        if (spawner.getSpawnerStop() != shouldStop) {
-            spawner.setSpawnerStop(shouldStop);
-            handleSpawnerStateChange(spawner, shouldStop);
-        }
+            if (spawner.getSpawnerStop() != shouldStop) {
+                spawner.setSpawnerStop(shouldStop);
+                handleSpawnerStateChange(spawner, shouldStop);
+            }
+        });
     }
 
     private boolean isPlayerInRange(SpawnerData spawner, Location spawnerLoc, World world) {
@@ -105,8 +110,8 @@ public class SpawnerRangeChecker {
         stopSpawnerTask(spawner);
 
         spawner.setLastSpawnTime(System.currentTimeMillis() + spawner.getSpawnDelay());
-        BukkitTask task = Bukkit.getScheduler().runTaskTimer(plugin,
-                () -> {
+        ScheduledTask spawnertask = Bukkit.getGlobalRegionScheduler().runAtFixedRate(plugin,
+                task -> {
                     if (!spawner.getSpawnerStop()) {
                         spawnerManager.spawnLoot(spawner);
                     }
@@ -114,18 +119,18 @@ public class SpawnerRangeChecker {
                 0L, spawner.getSpawnDelay()
         );
 
-        spawnerTasks.put(spawner.getSpawnerId(), task);
+        spawnerTasks.put(spawner.getSpawnerId(), spawnertask);
     }
 
     public void stopSpawnerTask(SpawnerData spawner) {
-        BukkitTask task = spawnerTasks.remove(spawner.getSpawnerId());
+        ScheduledTask task = spawnerTasks.remove(spawner.getSpawnerId());
         if (task != null) {
             task.cancel();
         }
     }
 
     private void updateGuiForSpawner(SpawnerData spawner) {
-        Bukkit.getScheduler().runTask(plugin, () ->
+        Bukkit.getGlobalRegionScheduler().run(plugin, task ->
                 spawnerManager.getOpenSpawnerGuis().entrySet().stream()
                         .filter(entry -> entry.getValue().getSpawnerId().equals(spawner.getSpawnerId()))
                         .forEach(entry -> {
@@ -142,7 +147,7 @@ public class SpawnerRangeChecker {
     }
 
     public void cleanup() {
-        spawnerTasks.values().forEach(BukkitTask::cancel);
+        spawnerTasks.values().forEach(ScheduledTask::cancel);
         spawnerTasks.clear();
         playersInRange.clear();
     }

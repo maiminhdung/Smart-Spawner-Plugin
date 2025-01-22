@@ -15,6 +15,7 @@ import net.kyori.adventure.text.event.ClickEvent;
 import net.kyori.adventure.text.event.HoverEvent;
 import net.kyori.adventure.text.format.TextColor;
 import net.kyori.adventure.text.format.TextDecoration;
+
 import org.bukkit.Bukkit;
 import org.bukkit.Sound;
 import org.bukkit.entity.Player;
@@ -65,15 +66,16 @@ public class UpdateChecker implements Listener {
         Bukkit.getPluginManager().registerEvents(this, plugin);
 
         // Initial check after server starts (delayed by 1 minute)
-        Bukkit.getGlobalRegionScheduler().runAtFixedRate(plugin, task ->
-                checkForUpdate().thenAccept(this::handleUpdateResult), 1L, 20L * 60L);
+        Bukkit.getAsyncScheduler().runDelayed(plugin, task ->
+                checkForUpdate().thenAccept(this::handleUpdateResult), 20L * 60L, TimeUnit.SECONDS);
 
         // Schedule periodic checks
         long intervalTicks = configManager.getUpdateCheckInterval() * 20L * 60L * 60L;
-        updateTask = Bukkit.getGlobalRegionScheduler().runAtFixedRate(plugin,
+        updateTask = Bukkit.getAsyncScheduler().runAtFixedRate(plugin,
                 task -> checkForUpdate().thenAccept(this::handleUpdateResult),
                 intervalTicks,
-                intervalTicks
+                intervalTicks,
+                TimeUnit.SECONDS
         );
     }
 

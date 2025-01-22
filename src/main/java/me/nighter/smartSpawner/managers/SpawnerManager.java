@@ -22,6 +22,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.IntStream;
 
 public class SpawnerManager {
@@ -288,9 +289,9 @@ public class SpawnerManager {
     private void startSaveTask() {
         configManager.debug("Starting spawner data save task");
         int intervalSeconds = configManager.getSaveInterval();
-        Bukkit.getGlobalRegionScheduler().runAtFixedRate(plugin, task -> {
+        Bukkit.getAsyncScheduler().runAtFixedRate(plugin, task -> {
             this.saveSpawnerData();
-        }, 1L, intervalSeconds * 20L); // Initial delay set to 1 tick
+        }, 1, intervalSeconds, TimeUnit.SECONDS); // 5 phút
     }
 
     public void backupSpawnerData() {
@@ -390,7 +391,7 @@ public class SpawnerManager {
                         Player player = (Player) viewer;
                         Inventory currentInv = player.getOpenInventory().getTopInventory();
                         if (currentInv.getHolder() instanceof PagedSpawnerLootHolder) {
-                            PagedSpawnerLootHolder holder = (PagedSpawnerLootHolder) currentInv.getHolder();
+                                PagedSpawnerLootHolder holder = (PagedSpawnerLootHolder) currentInv.getHolder();
                             int currentPage = holder.getCurrentPage();
                             // Create new inventory with the latest data
                             Inventory newInv = lootManager.createLootInventory(spawner, languageManager.getGuiTitle("gui-title.loot-menu"), currentPage);

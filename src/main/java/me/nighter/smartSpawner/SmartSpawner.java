@@ -186,8 +186,8 @@ public class SmartSpawner extends JavaPlugin {
     public SpawnerStackHandler getSpawnerStackHandler() { return spawnerStackHandler; }
     public HopperHandler getHopperHandler() { return hopperHandler; }
 
-    public ScheduledTask task(Runnable runnable) {
-        return getServer().getGlobalRegionScheduler().run(this, (Consumer<ScheduledTask>) runnable);
+    public ScheduledTask task(Consumer<ScheduledTask> task) {
+        return getServer().getAsyncScheduler().runNow(this, task);
     }
 
     @FunctionalInterface
