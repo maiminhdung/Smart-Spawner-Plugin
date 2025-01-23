@@ -78,7 +78,6 @@ public class SpawnerBreakHandler implements Listener {
             return;
         }
 
-        Bukkit.getRegionScheduler().execute(plugin, location.getWorld(), block.getX() >> 4, block.getZ() >> 4, () -> {
             final SpawnerData spawner = spawnerManager.getSpawnerByLocation(location);
             final CreatureSpawner cs = (CreatureSpawner) block.getState();
 
@@ -109,7 +108,7 @@ public class SpawnerBreakHandler implements Listener {
             Bukkit.getRegionScheduler().execute(plugin, blockBelow.getWorld(), blockBelow.getX() >> 4, blockBelow.getZ() >> 4, () -> {
                 hopperHandler.stopHopperTask(blockBelow.getLocation());
             });
-        }});
+        }
     }
 
 
