@@ -42,12 +42,14 @@ repositories {
 }
 
 dependencies {
-    compileOnly("io.papermc.paper:paper-api:1.21.3-R0.1-SNAPSHOT")
+    compileOnly("io.papermc.paper:paper-api:1.21.4-R0.1-SNAPSHOT")
 
     compileOnly("org.geysermc.floodgate:api:2.2.3-SNAPSHOT")
     compileOnly("com.sk89q.worldguard:worldguard-bukkit:7.0.13-SNAPSHOT")
     compileOnly("com.sk89q.worldedit:worldedit-bukkit:7.3.10-SNAPSHOT")
-    compileOnly("com.github.brcdev-minecraft:shopgui-api:3.0.0")
+    compileOnly('com.github.brcdev-minecraft:shopgui-api:3.0.0') { // Confllict with Paper-API 1.21.4 so I need to remove
+        exclude group: 'org.spigotmc', module: 'spigot-api'
+    }
     compileOnly("com.palmergames.bukkit.towny:towny:0.101.1.0")
     implementation 'net.kyori:adventure-api:4.14.0'
     implementation 'net.kyori:adventure-text-minimessage:4.14.0'
