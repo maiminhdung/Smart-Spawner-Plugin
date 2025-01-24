@@ -55,23 +55,22 @@ public class HopperHandler implements Listener {
     }
 
     public void restartAllHoppers() {
-        // Duyệt qua tất cả chunk đã load
-        for (World world : plugin.getServer().getWorlds()) {
-            for (Chunk chunk : world.getLoadedChunks()) {
-                // Tìm tất cả block state trong chunk
-                for (BlockState state : chunk.getTileEntities()) {
-                    if (state.getType() == Material.HOPPER) {
-                        Block hopperBlock = state.getBlock();
-                        Block aboveBlock = hopperBlock.getRelative(BlockFace.UP);
+        Bukkit.getGlobalRegionScheduler().run(plugin, task -> {
+            for (World world : plugin.getServer().getWorlds()) {
+                for (Chunk chunk : world.getLoadedChunks()) {
+                    for (BlockState state : chunk.getTileEntities()) {
+                        if (state.getType() == Material.HOPPER) {
+                            Block hopperBlock = state.getBlock();
+                            Block aboveBlock = hopperBlock.getRelative(BlockFace.UP);
 
-                        // Kiểm tra xem phía trên có phải là spawner không
-                        if (aboveBlock.getType() == Material.SPAWNER) {
-                            startHopperTask(hopperBlock.getLocation(), aboveBlock.getLocation());
+                            if (aboveBlock.getType() == Material.SPAWNER) {
+                                startHopperTask(hopperBlock.getLocation(), aboveBlock.getLocation());
+                            }
                         }
                     }
                 }
             }
-        }
+        });
     }
 
     @EventHandler
@@ -184,7 +183,7 @@ public class HopperHandler implements Listener {
             };
             runnable.run();
         };
-        ScheduledTask task = Bukkit.getGlobalRegionScheduler().runAtFixedRate(plugin, taskConsumer, 0L, config.getHopperCheckInterval());
+        ScheduledTask task = Bukkit.getGlobalRegionScheduler().runAtFixedRate(plugin, taskConsumer, 1L, config.getHopperCheckInterval());
         activeHoppers.put(hopperLoc, task);
     }
 
