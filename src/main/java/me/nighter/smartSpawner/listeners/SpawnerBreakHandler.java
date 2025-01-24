@@ -349,28 +349,27 @@ public class SpawnerBreakHandler implements Listener {
             Bukkit.getRegionScheduler().execute(plugin, location.getWorld(), block.getX() >> 4, block.getZ() >> 4, () -> {
                 // Added checks to ensure that the BlockState is an instance of CreatureSpawner before casting.
                 BlockState blockState = block.getState();
-                if (blockState instanceof CreatureSpawner) {
-                    CreatureSpawner placedSpawner = (CreatureSpawner) blockState;
-                    EntityType placedEntityType = placedSpawner.getSpawnedType();
+                if (!(blockState instanceof CreatureSpawner)) {
+                    return;
+                }
 
-                    // Handle default entity type
-                    if ((placedEntityType == null || placedEntityType == EntityType.UNKNOWN)) {
-                        placedEntityType = configManager.getDefaultEntityType();
+                // Handle default entity type
+                CreatureSpawner placedSpawner = (CreatureSpawner) blockState;
+                EntityType placedEntityType = (storedEntityType == null || storedEntityType == EntityType.UNKNOWN)
+                        ? configManager.getDefaultEntityType()
+                        : storedEntityType;
+
+                placedSpawner.setSpawnedType(placedEntityType);
+                placedSpawner.update();
+
+                if (configManager.getActivateOnPlace()) {
+                    createNewSpawnerWithType(block, player, placedEntityType);
+                } else {
+                    Bukkit.getGlobalRegionScheduler().runDelayed(plugin, task -> {
                         placedSpawner.setSpawnedType(placedEntityType);
                         placedSpawner.update();
-                    }
-
-                    // Handle spawner activation
-                    if (configManager.getActivateOnPlace()) {
-                        createNewSpawnerWithType(block, player, placedEntityType);
-                    } else {
-                        EntityType finalPlacedEntityType = placedEntityType;
-                        Bukkit.getGlobalRegionScheduler().runDelayed(plugin, task -> {
-                            placedSpawner.setSpawnedType(finalPlacedEntityType);
-                            placedSpawner.update();
-                            languageManager.sendMessage(player, "messages.entity-spawner-placed");
-                        }, 2L);
-                    }
+                        languageManager.sendMessage(player, "messages.entity-spawner-placed");
+                    }, 2L);
                 }
             });
         } else {
