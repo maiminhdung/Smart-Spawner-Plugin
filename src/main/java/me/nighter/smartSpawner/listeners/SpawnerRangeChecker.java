@@ -15,7 +15,6 @@ import org.bukkit.entity.Player;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.TimeUnit;
 
 public class SpawnerRangeChecker {
     private static final long CHECK_INTERVAL = 20L; // 1 second in ticks

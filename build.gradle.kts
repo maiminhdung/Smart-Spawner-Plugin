@@ -1,5 +1,3 @@
-import org.gradle.internal.impldep.org.junit.experimental.categories.Categories.CategoryFilter.exclude
-
 plugins {
     id("java")
     id("xyz.jpenilla.run-paper") version "2.3.1"
@@ -44,8 +42,6 @@ dependencies {
         exclude(group = "org.spigotmc", module = "spigot-api")
     }
     compileOnly("com.palmergames.bukkit.towny:towny:0.101.1.0")
-    implementation("net.kyori:adventure-api:4.14.0")
-    implementation("net.kyori:adventure-text-minimessage:4.14.0")
     implementation("com.github.Gypopo:EconomyShopGUI-API:1.7.2")
     implementation("com.github.GriefPrevention:GriefPrevention:16.18.4")
     implementation("com.github.IncrediblePlugins:LandsAPI:7.10.13")
