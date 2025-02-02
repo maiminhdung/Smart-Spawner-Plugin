@@ -35,7 +35,7 @@ public class CheckPlaceBlock {
             if (!Lands.canPlayerBreakClaimBlock(playerUUID, location)) return false;
         
         if (SmartSpawner.hasTowny)
-            if (!Towny.IfPlayerHasResident(playerUUID, location)) return false;
+            if (!Towny.CheckPlayerHasResident(playerUUID, location)) return false;
 
         return true;
     }
