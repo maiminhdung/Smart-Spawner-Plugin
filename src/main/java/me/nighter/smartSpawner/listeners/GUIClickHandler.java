@@ -117,6 +117,7 @@ public class GUIClickHandler implements Listener {
             }
 
             plugin.getLootManager().saveItems(spawner, sourceInv);
+            refreshSpawnerMenuForAllPlayers(spawner);
         } else {
             languageManager.sendMessage(player, "messages.inventory-full");
         }
@@ -181,6 +182,7 @@ public class GUIClickHandler implements Listener {
 
         if (totalMoved > 0) {
             plugin.getLootManager().saveItems(spawner, sourceInv);
+            refreshSpawnerMenuForAllPlayers(spawner);
             player.updateInventory();
         }
     }
@@ -350,5 +352,18 @@ public class GUIClickHandler implements Listener {
         }
 
         player.updateInventory();
+        refreshSpawnerMenuForAllPlayers(spawner);
+    }
+
+    // Refreshes the spawner menu for all players
+    private void refreshSpawnerMenuForAllPlayers(SpawnerData spawner) {
+        for (Player player : plugin.getServer().getOnlinePlayers()) {
+            if (player.getOpenInventory().getTopInventory().getHolder() instanceof PagedSpawnerLootHolder) {
+                PagedSpawnerLootHolder holder = (PagedSpawnerLootHolder) player.getOpenInventory().getTopInventory().getHolder();
+                if (holder.getSpawnerData().equals(spawner)) {
+                    openLootPage(player, spawner, holder.getCurrentPage(), true);
+                }
+            }
+        }
     }
 }

@@ -73,19 +73,8 @@ public class EventHandlers implements Listener {
                 return;
             }
 
-            // Unlock spawner and clean up
-            SpawnerData spawner = ((SpawnerHolder) holder).getSpawnerData();
-            spawner.unlock(player.getUniqueId());
             playerCurrentMenu.remove(player);
         }, 1L, TimeUnit.SECONDS);
-    }
-
-    @EventHandler(priority = EventPriority.HIGH)
-    public void onPlayerQuit(PlayerQuitEvent event) {
-        UUID playerUUID = event.getPlayer().getUniqueId();
-        spawnerManager.getAllSpawners().stream()
-                .filter(spawner -> playerUUID.equals(spawner.getLockedBy()))
-                .forEach(spawner -> spawner.unlock(playerUUID));
     }
 
     private boolean isValidHolder(InventoryHolder holder) {

@@ -145,32 +145,18 @@ public class SpawnerListener implements Listener {
 
         // Handle spawn egg usage
         if (isSpawnEgg(itemType)) {
-            // Check if spawner is locked
-            if (spawner.isLocked()) {
-                languageManager.sendMessage(player, "messages.spawner-in-use");
-                return;
-            }
             handleSpawnEggUse(player, (CreatureSpawner) block.getState(), spawner, itemInHand);
             return;
         }
 
         // Handle spawner stacking
         if (itemType == Material.SPAWNER) {
-            // Check if spawner is locked
-            if (spawner.isLocked()) {
-                languageManager.sendMessage(player, "messages.spawner-in-use");
-                return;
-            }
             handleSpawnerStacking(player, block, spawner, itemInHand);
             return;
         }
 
-        // Open menu if not locked
-        if (spawner.lock(player.getUniqueId())) {
-            openSpawnerMenu(player, spawner, false);
-        } else {
-            languageManager.sendMessage(player, "messages.spawner-in-use");
-        }
+        // Open menu
+        openSpawnerMenu(player, spawner, false);
     }
 
     private boolean checkCooldown(Player player) {
@@ -450,7 +436,6 @@ public class SpawnerListener implements Listener {
         }
 
         int maxStackSize = configManager.getMaxStackSize();
-        int currentSize = spawner.getStackSize();
 
         // Get the display name of clicked item to determine the change amount
         String displayName = clicked.getItemMeta().getDisplayName();
@@ -460,75 +445,62 @@ public class SpawnerListener implements Listener {
         int change = getChangeAmount(displayName);
         if (change == 0) return;
 
+        handleStackChange(player, spawner, change, maxStackSize);
+        handleSpawnerInfoClick(player, spawner);
+    }
+
+    private void handleStackChange(Player player, SpawnerData spawner, int change, int maxStackSize) {
+        int currentSize = spawner.getStackSize();
+        int targetSize = currentSize + change;
+
         if (change > 0) {
-            handleStackIncrease(player, spawner, currentSize, change, maxStackSize);
-            handleSpawnerInfoClick(player, spawner);
+            // Handle stack increase
+            int spaceLeft = maxStackSize - currentSize;
+            if (spaceLeft <= 0) {
+                languageManager.sendMessage(player, "messages.stack-full");
+                return;
+            }
+
+            int actualChange = Math.min(change, spaceLeft);
+            int validSpawners = countValidSpawnersInInventory(player, spawner.getEntityType());
+
+            if (validSpawners == 0 && hasDifferentSpawnerType(player, spawner.getEntityType())) {
+                languageManager.sendMessage(player, "messages.different-type");
+                return;
+            }
+
+            if (validSpawners < actualChange) {
+                languageManager.sendMessage(player, "messages.not-enough-spawners",
+                        "%amountChange%", String.valueOf(actualChange),
+                        "%amountAvailable%", String.valueOf(validSpawners));
+                return;
+            }
+
+            removeValidSpawnersFromInventory(player, spawner.getEntityType(), actualChange);
+            spawner.setStackSize(currentSize + actualChange, player);
+
+            if (actualChange < change) {
+                languageManager.sendMessage(player, "messages.stack-full-overflow",
+                        "%amount%", String.valueOf(actualChange));
+            }
         } else {
-            handleStackDecrease(player, spawner, currentSize, change);
-            handleSpawnerInfoClick(player, spawner);
-        }
-    }
+            // Handle stack decrease
+            int removeAmount = Math.abs(change);
+            if (targetSize < 1) {
+                int actualChange = -(currentSize - 1);
+                removeAmount = Math.abs(actualChange);
+                languageManager.sendMessage(player, "messages.cannot-go-below-one", "%amount%", String.valueOf(removeAmount));
+                return;
+            }
 
-    private void handleStackDecrease(Player player, SpawnerData spawner, int currentSize, int change) {
-        int removeAmount = Math.abs(change);
-        int targetSize = currentSize + change; // change is negative
-
-        // Không thể giảm xuống dưới 1
-        int actualChange;
-        if (targetSize < 1) {
-            actualChange = -(currentSize - 1);
-            removeAmount = Math.abs(actualChange);
-            languageManager.sendMessage(player, "messages.cannot-go-below-one", "%amount%", String.valueOf(removeAmount));
-            return;
-        } else {
-            actualChange = change;
-        }
-
-        spawner.setStackSize(currentSize + actualChange, player);
-        giveSpawnersWithMergeAndDrop(player, removeAmount, spawner.getEntityType());
-
-        player.playSound(player.getLocation(), Sound.ENTITY_EXPERIENCE_ORB_PICKUP, 1.0f, 1.0f);
-    }
-
-    private void handleStackIncrease(Player player, SpawnerData spawner, int currentSize, int change, int maxStackSize) {
-        // Tính toán số lượng thực sự cần thêm
-        int spaceLeft = maxStackSize - currentSize;
-        if (spaceLeft <= 0) {
-            languageManager.sendMessage(player, "messages.stack-full");
-            return;
-        }
-
-        // Lấy số spawner thực tế cần
-        int actualChange = Math.min(change, spaceLeft);
-
-        // Kiểm tra số lượng và type của spawner trong inventory
-        int validSpawners = countValidSpawnersInInventory(player, spawner.getEntityType());
-
-        if (validSpawners == 0 && hasDifferentSpawnerType(player, spawner.getEntityType())) {
-            // Chỉ hiện thông báo different-type khi không có spawner cùng loại nào
-            languageManager.sendMessage(player, "messages.different-type");
-            return;
-        }
-
-        if (validSpawners < actualChange) {
-            // Hiện thông báo không đủ spawner khi có ít nhất 1 spawner cùng loại
-            languageManager.sendMessage(player, "messages.not-enough-spawners",
-                    "%amountChange%", String.valueOf(actualChange),
-                    "%amountAvailable%", String.valueOf(validSpawners));
-            return;
-        }
-
-        // Chỉ remove đúng số spawner cần thiết và cùng loại
-        removeValidSpawnersFromInventory(player, spawner.getEntityType(), actualChange);
-        spawner.setStackSize(currentSize + actualChange, player);
-
-        // Thông báo nếu không thể thêm hết
-        if (actualChange < change) {
-            languageManager.sendMessage(player, "messages.stack-full-overflow",
-                    "%amount%", String.valueOf(actualChange));
+            spawner.setStackSize(targetSize, player);
+            giveSpawnersWithMergeAndDrop(player, removeAmount, spawner.getEntityType());
         }
 
         player.playSound(player.getLocation(), Sound.ENTITY_EXPERIENCE_ORB_PICKUP, 1.0f, 1.0f);
+
+        // Refresh spawner menu for all players who have it open
+        refreshSpawnerMenuForAllPlayers(spawner);
     }
 
     private EntityType getSpawnerEntityType(ItemStack item) {
@@ -769,7 +741,9 @@ public class SpawnerListener implements Listener {
         }
 
         spawner.setSpawnerExp(0);
-        openSpawnerMenu(player, spawner, true);
+
+        // Refresh spawner menu for all players who have it open
+        refreshSpawnerMenuForAllPlayers(spawner);
 
         // Thông báo kết quả
         if (remainingExp < exp) {
@@ -907,6 +881,16 @@ public class SpawnerListener implements Listener {
         } else {
             Player player = (Player) event.getWhoClicked();
             languageManager.sendMessage(player, "messages.not-found");
+        }
+    }
+    private void refreshSpawnerMenuForAllPlayers(SpawnerData spawner) {
+        for (Player onlinePlayer : Bukkit.getOnlinePlayers()) {
+            if (onlinePlayer.getOpenInventory().getTopInventory().getHolder() instanceof SpawnerMenuHolder) {
+                SpawnerMenuHolder holder = (SpawnerMenuHolder) onlinePlayer.getOpenInventory().getTopInventory().getHolder();
+                if (holder.getSpawnerData().equals(spawner)) {
+                    openSpawnerMenu(onlinePlayer, spawner, true);
+                }
+            }
         }
     }
 }

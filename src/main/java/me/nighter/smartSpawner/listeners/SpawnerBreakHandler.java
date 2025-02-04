@@ -82,22 +82,11 @@ public class SpawnerBreakHandler implements Listener {
             final CreatureSpawner cs = (CreatureSpawner) block.getState();
 
             // Handle GUI closing and player notification
-            if (spawner != null) {
-                // Get the player who currently has the spawner locked
-                UUID lockedBy = spawner.getLockedBy();
-                if (lockedBy != null) {
-                    Player viewingPlayer = Bukkit.getPlayer(lockedBy);
-                    if (viewingPlayer != null) {
-                        viewingPlayer.closeInventory();
-                        //languageManager.sendMessage(viewingPlayer, "messages.spawner-broken");
-                    }
-                    spawner.unlock(lockedBy);
-                }
-
-                handleSpawnerBreak(block, spawner, player);
-            } else {
-                handleCSpawnerBreak(block, cs, player);
-            }
+        if (spawner != null) {
+            handleSpawnerBreak(block, spawner, player);
+        } else {
+            handleCSpawnerBreak(block, cs, player);
+        }
 
         // Cancel the vanilla break event as we handle it ourselves
         event.setCancelled(true);
