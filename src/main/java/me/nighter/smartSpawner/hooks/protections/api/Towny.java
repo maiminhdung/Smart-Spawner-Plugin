@@ -11,7 +11,7 @@ import org.bukkit.Location;
 import org.jetbrains.annotations.NotNull;
 
 public class Towny {
-    public static boolean IfPlayerHasResident(@NotNull UUID pUUID, @NotNull Location location){
+    public static boolean CheckPlayerHasResident(@NotNull UUID pUUID, @NotNull Location location){
 
         Resident resident = TownyAPI.getInstance().getResident(pUUID);
         if (resident == null) return false;

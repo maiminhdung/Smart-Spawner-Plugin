@@ -13,9 +13,11 @@ softdepend:
   - GriefPrevention
   - Lands
   - Towny
+folia-supported: true
 commands:
   smartspawner:
     description: Main command for SmartSpawner plugin
+    usage: /<command>
     aliases: [ss, spawner]
     permission: smartspawner.reload
 

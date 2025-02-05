@@ -1,11 +1,13 @@
 package me.nighter.smartSpawner.managers;
 
+import io.papermc.paper.threadedregions.scheduler.RegionScheduler;
 import me.nighter.smartSpawner.serializers.ItemStackSerializer;
 import me.nighter.smartSpawner.SmartSpawner;
 import me.nighter.smartSpawner.holders.SpawnerMenuHolder;
 import me.nighter.smartSpawner.holders.PagedSpawnerLootHolder;
 import me.nighter.smartSpawner.utils.SpawnerData;
 import me.nighter.smartSpawner.utils.VirtualInventory;
+
 import org.bukkit.*;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.FileConfiguration;
@@ -21,6 +23,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.IntStream;
 
 public class SpawnerManager {
@@ -287,7 +290,9 @@ public class SpawnerManager {
     private void startSaveTask() {
         configManager.debug("Starting spawner data save task");
         int intervalSeconds = configManager.getSaveInterval();
-        Bukkit.getScheduler().runTaskTimerAsynchronously(plugin, this::saveSpawnerData, 0, intervalSeconds); // 5 phút
+        Bukkit.getAsyncScheduler().runAtFixedRate(plugin, task -> {
+            this.saveSpawnerData();
+        }, 1, intervalSeconds, TimeUnit.SECONDS); // 5 phút
     }
 
     public void backupSpawnerData() {
@@ -361,6 +366,8 @@ public class SpawnerManager {
         }
     }
 
+
+
     public void spawnLoot(SpawnerData spawner) {
         if (System.currentTimeMillis() - spawner.getLastSpawnTime() >= spawner.getSpawnDelay()) {
             LootResult loot = spawnerLootGenerator.generateLoot(
@@ -381,13 +388,13 @@ public class SpawnerManager {
             spawner.setLastSpawnTime(System.currentTimeMillis());
 
             // Update for all players viewing the spawner
-            Bukkit.getScheduler().runTask(plugin, () -> {
+            Bukkit.getGlobalRegionScheduler().run(plugin, task -> {
                 for (HumanEntity viewer : getViewersForSpawner(spawner)) {
                     if (viewer instanceof Player) {
                         Player player = (Player) viewer;
                         Inventory currentInv = player.getOpenInventory().getTopInventory();
                         if (currentInv.getHolder() instanceof PagedSpawnerLootHolder) {
-                            PagedSpawnerLootHolder holder = (PagedSpawnerLootHolder) currentInv.getHolder();
+                                PagedSpawnerLootHolder holder = (PagedSpawnerLootHolder) currentInv.getHolder();
                             int currentPage = holder.getCurrentPage();
                             // Create new inventory with the latest data
                             Inventory newInv = lootManager.createLootInventory(spawner, languageManager.getGuiTitle("gui-title.loot-menu"), currentPage);

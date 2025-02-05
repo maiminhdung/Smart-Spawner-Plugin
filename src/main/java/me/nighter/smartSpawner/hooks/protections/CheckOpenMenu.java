@@ -35,7 +35,7 @@ public class CheckOpenMenu {
             if (!Lands.CanPlayerInteractContainer(playerUUID, location)) return false;
         
         if (SmartSpawner.hasTowny)
-            if (!Towny.IfPlayerHasResident(playerUUID, location)) return false;
+            if (!Towny.CheckPlayerHasResident(playerUUID, location)) return false;
 
         return true;
     }

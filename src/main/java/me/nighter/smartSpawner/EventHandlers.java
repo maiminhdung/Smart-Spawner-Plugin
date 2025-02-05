@@ -22,6 +22,7 @@ import org.bukkit.inventory.InventoryView;
 
 
 import java.util.*;
+import java.util.concurrent.TimeUnit;
 
 public class EventHandlers implements Listener {
     private final SmartSpawner plugin;
@@ -65,26 +66,15 @@ public class EventHandlers implements Listener {
         }
 
         // Schedule check for inventory reopen
-        Bukkit.getScheduler().runTaskLater(plugin, () -> {
+        Bukkit.getAsyncScheduler().runDelayed(plugin, task -> {
             InventoryView view = player.getOpenInventory();
             // If player opened another valid inventory, don't unlock
             if (view != null && isValidHolder(view.getTopInventory().getHolder())) {
                 return;
             }
 
-            // Unlock spawner and clean up
-            SpawnerData spawner = ((SpawnerHolder) holder).getSpawnerData();
-            spawner.unlock(player.getUniqueId());
             playerCurrentMenu.remove(player);
-        }, 1L);
-    }
-
-    @EventHandler(priority = EventPriority.HIGH)
-    public void onPlayerQuit(PlayerQuitEvent event) {
-        UUID playerUUID = event.getPlayer().getUniqueId();
-        spawnerManager.getAllSpawners().stream()
-                .filter(spawner -> playerUUID.equals(spawner.getLockedBy()))
-                .forEach(spawner -> spawner.unlock(playerUUID));
+        }, 1L, TimeUnit.SECONDS);
     }
 
     private boolean isValidHolder(InventoryHolder holder) {

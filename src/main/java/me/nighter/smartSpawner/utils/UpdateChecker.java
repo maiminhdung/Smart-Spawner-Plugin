@@ -4,6 +4,9 @@ import com.google.gson.Gson;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
+
+import io.papermc.paper.threadedregions.scheduler.ScheduledTask;
+
 import me.nighter.smartSpawner.SmartSpawner;
 import me.nighter.smartSpawner.managers.ConfigManager;
 import me.nighter.smartSpawner.managers.LanguageManager;
@@ -12,13 +15,13 @@ import net.kyori.adventure.text.event.ClickEvent;
 import net.kyori.adventure.text.event.HoverEvent;
 import net.kyori.adventure.text.format.TextColor;
 import net.kyori.adventure.text.format.TextDecoration;
+
 import org.bukkit.Bukkit;
 import org.bukkit.Sound;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerJoinEvent;
-import org.bukkit.scheduler.BukkitTask;
 
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
@@ -38,7 +41,7 @@ public class UpdateChecker implements Listener {
     private static final int TIMEOUT_SECONDS = 5;
     private final ConfigManager configManager;
     private final LanguageManager languageManager;
-    private BukkitTask updateTask;
+    private ScheduledTask updateTask;
 
     // Console colors
     private static final String CONSOLE_RESET = "\u001B[0m";
@@ -63,15 +66,16 @@ public class UpdateChecker implements Listener {
         Bukkit.getPluginManager().registerEvents(this, plugin);
 
         // Initial check after server starts (delayed by 1 minute)
-        Bukkit.getScheduler().runTaskLaterAsynchronously(plugin, () ->
-                checkForUpdate().thenAccept(this::handleUpdateResult), 20L * 60L);
+        Bukkit.getAsyncScheduler().runDelayed(plugin, task ->
+                checkForUpdate().thenAccept(this::handleUpdateResult), 20L * 60L, TimeUnit.SECONDS);
 
         // Schedule periodic checks
         long intervalTicks = configManager.getUpdateCheckInterval() * 20L * 60L * 60L;
-        updateTask = Bukkit.getScheduler().runTaskTimerAsynchronously(plugin,
-                () -> checkForUpdate().thenAccept(this::handleUpdateResult),
+        updateTask = Bukkit.getAsyncScheduler().runAtFixedRate(plugin,
+                task -> checkForUpdate().thenAccept(this::handleUpdateResult),
                 intervalTicks,
-                intervalTicks
+                intervalTicks,
+                TimeUnit.SECONDS
         );
     }
 
@@ -205,9 +209,9 @@ public class UpdateChecker implements Listener {
 
         Player player = event.getPlayer();
         if (player.isOp() || player.hasPermission("smartspawner.update")) {
-            Bukkit.getScheduler().runTaskLater(plugin,
-                    () -> sendUpdateMessage(player),
-                    40L
+            Bukkit.getGlobalRegionScheduler().runAtFixedRate(plugin,
+                    task -> sendUpdateMessage(player),
+                    40L, 40L
             );
         }
     }

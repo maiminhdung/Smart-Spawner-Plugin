@@ -1,15 +1,17 @@
 package me.nighter.smartSpawner.listeners;
 
+import io.papermc.paper.threadedregions.scheduler.ScheduledTask;
+
 import me.nighter.smartSpawner.SmartSpawner;
 import me.nighter.smartSpawner.managers.ConfigManager;
 import me.nighter.smartSpawner.managers.SpawnerManager;
 import me.nighter.smartSpawner.utils.SpawnerData;
+
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.World;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
-import org.bukkit.scheduler.BukkitTask;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
@@ -19,7 +21,7 @@ public class SpawnerRangeChecker {
     private final SmartSpawner plugin;
     private final ConfigManager configManager;
     private final SpawnerManager spawnerManager;
-    private final Map<String, BukkitTask> spawnerTasks;
+    private final Map<String, ScheduledTask> spawnerTasks;
     private final Map<String, Set<UUID>> playersInRange;
 
     public SpawnerRangeChecker(SmartSpawner plugin) {
@@ -32,7 +34,7 @@ public class SpawnerRangeChecker {
     }
 
     private void initializeRangeCheckTask() {
-        Bukkit.getScheduler().runTaskTimer(plugin, () ->
+        Bukkit.getGlobalRegionScheduler().runAtFixedRate(plugin, task ->
                         spawnerManager.getAllSpawners().forEach(this::updateSpawnerStatus),
                 CHECK_INTERVAL, CHECK_INTERVAL);
     }
@@ -42,28 +44,36 @@ public class SpawnerRangeChecker {
         World world = spawnerLoc.getWorld();
         if (world == null) return;
 
-        boolean playerFound = isPlayerInRange(spawner, spawnerLoc, world);
-        boolean shouldStop = !playerFound;
+        // Sử dụng RegionScheduler để đồng bộ
+        Bukkit.getRegionScheduler().execute(plugin, world, spawnerLoc.getBlockX() >> 4, spawnerLoc.getBlockZ() >> 4, () -> {
+            boolean playerFound = isPlayerInRange(spawner, spawnerLoc, world);
+            boolean shouldStop = !playerFound;
 
-        if (spawner.getSpawnerStop() != shouldStop) {
-            spawner.setSpawnerStop(shouldStop);
-            handleSpawnerStateChange(spawner, shouldStop);
-        }
+            if (spawner.getSpawnerStop() != shouldStop) {
+                spawner.setSpawnerStop(shouldStop);
+                handleSpawnerStateChange(spawner, shouldStop);
+            }
+        });
     }
 
     private boolean isPlayerInRange(SpawnerData spawner, Location spawnerLoc, World world) {
         int range = spawner.getSpawnerRange();
         double rangeSquared = range * range;
+
+        // Kiểm tra các chunk trong bán kính
         int chunkRadius = (range >> 4) + 1;
         int baseX = spawnerLoc.getBlockX() >> 4;
         int baseZ = spawnerLoc.getBlockZ() >> 4;
 
         for (int dx = -chunkRadius; dx <= chunkRadius; dx++) {
             for (int dz = -chunkRadius; dz <= chunkRadius; dz++) {
-                if (!world.isChunkLoaded(baseX + dx, baseZ + dz)) continue;
+                int chunkX = baseX + dx;
+                int chunkZ = baseZ + dz;
 
-                if (checkChunkForPlayers(world, spawnerLoc, range, rangeSquared)) {
-                    return true;
+                if (world.isChunkLoaded(chunkX, chunkZ)) {
+                    if (checkChunkForPlayers(world, spawnerLoc, range, rangeSquared)) {
+                        return true;
+                    }
                 }
             }
         }
@@ -71,8 +81,7 @@ public class SpawnerRangeChecker {
     }
 
     private boolean checkChunkForPlayers(World world, Location spawnerLoc, int range, double rangeSquared) {
-        Collection<Entity> nearbyEntities = world.getNearbyEntities(spawnerLoc, range, range, range,
-                entity -> entity instanceof Player);
+        Collection<Entity> nearbyEntities = world.getNearbyEntities(spawnerLoc, range, range, range, entity -> entity instanceof Player);
 
         for (Entity entity : nearbyEntities) {
             if (entity.getLocation().distanceSquared(spawnerLoc) <= rangeSquared) {
@@ -105,36 +114,37 @@ public class SpawnerRangeChecker {
         stopSpawnerTask(spawner);
 
         spawner.setLastSpawnTime(System.currentTimeMillis() + spawner.getSpawnDelay());
-        BukkitTask task = Bukkit.getScheduler().runTaskTimer(plugin,
-                () -> {
+        ScheduledTask spawnertask = Bukkit.getGlobalRegionScheduler().runAtFixedRate(plugin,
+                task -> {
                     if (!spawner.getSpawnerStop()) {
                         spawnerManager.spawnLoot(spawner);
                     }
                 },
-                0L, spawner.getSpawnDelay()
+                1L, spawner.getSpawnDelay()
         );
 
-        spawnerTasks.put(spawner.getSpawnerId(), task);
+        spawnerTasks.put(spawner.getSpawnerId(), spawnertask);
     }
 
     public void stopSpawnerTask(SpawnerData spawner) {
-        BukkitTask task = spawnerTasks.remove(spawner.getSpawnerId());
+        ScheduledTask task = spawnerTasks.remove(spawner.getSpawnerId());
         if (task != null) {
             task.cancel();
         }
     }
 
     private void updateGuiForSpawner(SpawnerData spawner) {
-        Bukkit.getScheduler().runTask(plugin, () ->
-                spawnerManager.getOpenSpawnerGuis().entrySet().stream()
-                        .filter(entry -> entry.getValue().getSpawnerId().equals(spawner.getSpawnerId()))
-                        .forEach(entry -> {
-                            Player viewer = Bukkit.getPlayer(entry.getKey());
-                            if (viewer != null && viewer.isOnline()) {
-                                spawnerManager.updateSpawnerGui(viewer, spawner, true);
-                            }
-                        })
-        );
+        Bukkit.getRegionScheduler().execute(plugin, spawner.getSpawnerLocation().getWorld(),
+                spawner.getSpawnerLocation().getBlockX() >> 4, spawner.getSpawnerLocation().getBlockZ() >> 4, () -> {
+                    spawnerManager.getOpenSpawnerGuis().entrySet().stream()
+                            .filter(entry -> entry.getValue().getSpawnerId().equals(spawner.getSpawnerId()))
+                            .forEach(entry -> {
+                                Player viewer = Bukkit.getPlayer(entry.getKey());
+                                if (viewer != null && viewer.isOnline()) {
+                                    spawnerManager.updateSpawnerGui(viewer, spawner, true);
+                                }
+                            });
+                });
     }
 
     public Set<UUID> getPlayersInRange(String spawnerId) {
@@ -142,7 +152,7 @@ public class SpawnerRangeChecker {
     }
 
     public void cleanup() {
-        spawnerTasks.values().forEach(BukkitTask::cancel);
+        spawnerTasks.values().forEach(ScheduledTask::cancel);
         spawnerTasks.clear();
         playersInRange.clear();
     }

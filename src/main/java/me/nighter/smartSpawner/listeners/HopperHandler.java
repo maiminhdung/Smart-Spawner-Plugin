@@ -1,5 +1,7 @@
 package me.nighter.smartSpawner.listeners;
 
+import io.papermc.paper.threadedregions.scheduler.ScheduledTask;
+
 import me.nighter.smartSpawner.SmartSpawner;
 import me.nighter.smartSpawner.managers.ConfigManager;
 import me.nighter.smartSpawner.managers.LanguageManager;
@@ -8,6 +10,7 @@ import me.nighter.smartSpawner.managers.SpawnerManager;
 import me.nighter.smartSpawner.holders.PagedSpawnerLootHolder;
 import me.nighter.smartSpawner.utils.SpawnerData;
 import me.nighter.smartSpawner.utils.VirtualInventory;
+
 import org.bukkit.*;
 import org.bukkit.block.BlockState;
 import org.bukkit.block.Hopper;
@@ -25,14 +28,13 @@ import org.bukkit.event.world.ChunkLoadEvent;
 import org.bukkit.event.world.ChunkUnloadEvent;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
-import org.bukkit.scheduler.BukkitRunnable;
-import org.bukkit.scheduler.BukkitTask;
 
 import java.util.*;
+import java.util.function.Consumer;
 
 public class HopperHandler implements Listener {
     private final SmartSpawner plugin;
-    private final Map<Location, BukkitTask> activeHoppers = new HashMap<>();
+    private final Map<Location, ScheduledTask> activeHoppers = new HashMap<>();
     private final Map<Location, Boolean> hopperPaused = new HashMap<>();
     private SpawnerManager spawnerManager;
     private SpawnerLootManager lootManager;
@@ -47,27 +49,28 @@ public class HopperHandler implements Listener {
         this.config = plugin.getConfigManager();
 
         plugin.getServer().getPluginManager().registerEvents(this, plugin);
-        Bukkit.getScheduler().runTaskLater(plugin, this::restartAllHoppers, 40L);
+        Bukkit.getGlobalRegionScheduler().runDelayed(plugin, task -> {
+            this.restartAllHoppers();
+        }, 40L);
     }
 
     public void restartAllHoppers() {
-        // Duyệt qua tất cả chunk đã load
-        for (World world : plugin.getServer().getWorlds()) {
-            for (Chunk chunk : world.getLoadedChunks()) {
-                // Tìm tất cả block state trong chunk
-                for (BlockState state : chunk.getTileEntities()) {
-                    if (state.getType() == Material.HOPPER) {
-                        Block hopperBlock = state.getBlock();
-                        Block aboveBlock = hopperBlock.getRelative(BlockFace.UP);
+        Bukkit.getGlobalRegionScheduler().run(plugin, task -> {
+            for (World world : plugin.getServer().getWorlds()) {
+                for (Chunk chunk : world.getLoadedChunks()) {
+                    for (BlockState state : chunk.getTileEntities()) {
+                        if (state.getType() == Material.HOPPER) {
+                            Block hopperBlock = state.getBlock();
+                            Block aboveBlock = hopperBlock.getRelative(BlockFace.UP);
 
-                        // Kiểm tra xem phía trên có phải là spawner không
-                        if (aboveBlock.getType() == Material.SPAWNER) {
-                            startHopperTask(hopperBlock.getLocation(), aboveBlock.getLocation());
+                            if (aboveBlock.getType() == Material.SPAWNER) {
+                                startHopperTask(hopperBlock.getLocation(), aboveBlock.getLocation());
+                            }
                         }
                     }
                 }
             }
-        }
+        });
     }
 
     @EventHandler
@@ -97,7 +100,7 @@ public class HopperHandler implements Listener {
     }
 
     public void cleanup() {
-        activeHoppers.values().forEach(BukkitTask::cancel);
+        activeHoppers.values().forEach(ScheduledTask::cancel);
         activeHoppers.clear();
         hopperPaused.clear();
     }
@@ -161,24 +164,26 @@ public class HopperHandler implements Listener {
 
         // Nếu đã có task đang chạy thì không cần tạo mới
         if (activeHoppers.containsKey(hopperLoc)) return;
+        Consumer<ScheduledTask> taskConsumer = task -> {
+            Runnable runnable = new Runnable() {
+                @Override
+                public void run() {
+                    if (!isValidSetup(hopperLoc, spawnerLoc)) {
+                        stopHopperTask(hopperLoc);
+                        return;
+                    }
 
-        BukkitTask task = new BukkitRunnable() {
-            @Override
-            public void run() {
-                if (!isValidSetup(hopperLoc, spawnerLoc)) {
-                    stopHopperTask(hopperLoc);
-                    return;
+                    // Kiểm tra trạng thái pause
+                    if (hopperPaused.getOrDefault(hopperLoc, false)) {
+                        return;
+                    }
+
+                    transferItems(hopperLoc, spawnerLoc);
                 }
-
-                // Kiểm tra trạng thái pause
-                if (hopperPaused.getOrDefault(hopperLoc, false)) {
-                    return;
-                }
-
-                transferItems(hopperLoc, spawnerLoc);
-            }
-        }.runTaskTimer(plugin, 0L, config.getHopperCheckInterval());
-
+            };
+            runnable.run();
+        };
+        ScheduledTask task = Bukkit.getGlobalRegionScheduler().runAtFixedRate(plugin, taskConsumer, 1L, config.getHopperCheckInterval());
         activeHoppers.put(hopperLoc, task);
     }
 
@@ -192,7 +197,7 @@ public class HopperHandler implements Listener {
     }
 
     public void stopHopperTask(Location hopperLoc) {
-        BukkitTask task = activeHoppers.remove(hopperLoc);
+        ScheduledTask task = activeHoppers.remove(hopperLoc);
         if (task != null) {
             task.cancel();
         }
@@ -274,7 +279,7 @@ public class HopperHandler implements Listener {
     }
 
     private void updateOpenGuis(SpawnerData spawner) {
-        Bukkit.getScheduler().runTask(plugin, () -> {
+        Bukkit.getGlobalRegionScheduler().run(plugin, task -> {
             // Cập nhật cho người chơi đang xem inventory
             for (HumanEntity viewer : getViewersForSpawner(spawner)) {
                 if (viewer instanceof Player) {
