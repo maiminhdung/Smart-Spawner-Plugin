@@ -221,6 +221,8 @@ public class GUIClickHandler implements Listener {
                         player.sendMessage(languageManager.getMessage("no-permission"));
                     } else if (plugin.getShopIntegration().sellAllItems(player, spawner)) {
                         openLootPage(player, spawner, holder.getCurrentPage(), true);
+                        player.updateInventory();
+                        refreshSpawnerMenuForAllPlayers(spawner);
                     }
                 }
                 break;
