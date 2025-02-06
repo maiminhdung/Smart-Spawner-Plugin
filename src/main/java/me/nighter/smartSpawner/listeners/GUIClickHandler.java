@@ -183,7 +183,6 @@ public class GUIClickHandler implements Listener {
         if (totalMoved > 0) {
             plugin.getLootManager().saveItems(spawner, sourceInv);
             refreshSpawnerMenuForAllPlayers(spawner);
-            player.updateInventory();
         }
     }
 
@@ -221,7 +220,6 @@ public class GUIClickHandler implements Listener {
                         player.sendMessage(languageManager.getMessage("no-permission"));
                     } else if (plugin.getShopIntegration().sellAllItems(player, spawner)) {
                         openLootPage(player, spawner, holder.getCurrentPage(), true);
-                        player.updateInventory();
                         refreshSpawnerMenuForAllPlayers(spawner);
                     }
                 }
@@ -353,7 +351,6 @@ public class GUIClickHandler implements Listener {
             languageManager.sendMessage(player, "messages.take-all-items", "%amount%", String.valueOf(totalAmountMoved));
         }
 
-        player.updateInventory();
         refreshSpawnerMenuForAllPlayers(spawner);
     }
 
