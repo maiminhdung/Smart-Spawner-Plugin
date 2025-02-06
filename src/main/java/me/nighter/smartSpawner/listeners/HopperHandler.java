@@ -55,9 +55,13 @@ public class HopperHandler implements Listener {
     }
 
     public void restartAllHoppers() {
-        Bukkit.getGlobalRegionScheduler().run(plugin, task -> {
-            for (World world : plugin.getServer().getWorlds()) {
-                for (Chunk chunk : world.getLoadedChunks()) {
+        for (World world : plugin.getServer().getWorlds()) {
+            for (Chunk chunk : world.getLoadedChunks()) {
+                int chunkX = chunk.getX();
+                int chunkZ = chunk.getZ();
+
+                // Thực thi trên RegionScheduler để đảm bảo quyền truy cập dữ liệu an toàn
+                Bukkit.getRegionScheduler().execute(plugin, world, chunkX, chunkZ, () -> {
                     for (BlockState state : chunk.getTileEntities()) {
                         if (state.getType() == Material.HOPPER) {
                             Block hopperBlock = state.getBlock();
@@ -68,9 +72,9 @@ public class HopperHandler implements Listener {
                             }
                         }
                     }
-                }
+                });
             }
-        });
+        }
     }
 
     @EventHandler
