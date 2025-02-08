@@ -1,5 +1,8 @@
+import org.gradle.kotlin.dsl.accessors.runtime.applySoftwareType
+
 plugins {
     id("java")
+    id("java-library")
     id("xyz.jpenilla.run-paper") version "2.3.1"
     id("io.papermc.paperweight.userdev") version "2.0.0-beta.14"
 }
@@ -31,19 +34,24 @@ repositories {
     }
 }
 
-paperweight.reobfArtifactConfiguration = io.papermc.paperweight.userdev.ReobfArtifactConfiguration.MOJANG_PRODUCTION
+paperweight {
+    paperweight.reobfArtifactConfiguration = io.papermc.paperweight.userdev.ReobfArtifactConfiguration.MOJANG_PRODUCTION
+}
 
 dependencies {
-    paperweight.paperDevBundle("1.21.4-R0.1-SNAPSHOT")
+    // Paper API
+    paperweight.paperDevBundle("1.20.4-R0.1-SNAPSHOT")
+
+    // Hooks plugin
     compileOnly("org.geysermc.floodgate:api:2.2.3-SNAPSHOT")
     compileOnly("com.sk89q.worldguard:worldguard-bukkit:7.0.13-SNAPSHOT")
-    compileOnly("com.sk89q.worldedit:worldedit-bukkit:7.3.10-SNAPSHOT")
+    compileOnly("com.sk89q.worldedit:worldedit-bukkit:7.4.0-SNAPSHOT")
     compileOnly("com.github.brcdev-minecraft:shopgui-api:3.0.0") {
         exclude(group = "org.spigotmc", module = "spigot-api")
     }
-    compileOnly("com.palmergames.bukkit.towny:towny:0.101.1.0")
-    implementation("com.github.Gypopo:EconomyShopGUI-API:1.7.2")
-    implementation("com.github.GriefPrevention:GriefPrevention:16.18.4")
+    compileOnly("com.palmergames.bukkit.towny:towny:0.101.1.2")
+    implementation("com.github.Gypopo:EconomyShopGUI-API:1.7.3")
+    implementation("com.github.GriefPrevention:GriefPrevention:17.0.0")
     implementation("com.github.IncrediblePlugins:LandsAPI:7.10.13")
 }
 
@@ -73,10 +81,22 @@ tasks.processResources {
     }
 }
 
-val minecraftVersion = "1.21+"
-
 tasks.jar {
     archiveBaseName.set("SmartSpawner")
-    archiveVersion.set("$version-MC-$minecraftVersion")
+    archiveVersion.set("Paper-$version-SNAPSHOT")
     //destinationDirectory.set(file("C:\\Users\\ADMIN\\OneDrive\\Desktop\\TestServer\\plugins\\"))
+
+    // Combine subprojects
+    from({
+        subprojects.map { project ->
+            project.extensions.getByType<SourceSetContainer>()["main"].output
+        }
+    })
+
+    from(sourceSets["main"].output)
+
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+
+// Exclude unnecessary files
+    exclude("META-INF/*.RSA", "META-INF/*.SF", "META-INF/*.DSA")
 }

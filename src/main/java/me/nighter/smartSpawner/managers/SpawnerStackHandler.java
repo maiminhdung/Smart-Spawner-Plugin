@@ -2,6 +2,7 @@ package me.nighter.smartSpawner.managers;
 
 import me.nighter.smartSpawner.SmartSpawner;
 import me.nighter.smartSpawner.utils.SpawnerData;
+import me.nighter.smartSpawner.nms.ParticleWrapper;
 import me.nighter.smartSpawner.hooks.protections.CheckPlaceBlock;
 
 import org.bukkit.*;
@@ -113,7 +114,7 @@ public class SpawnerStackHandler {
         World world = loc.getWorld();
         if (world == null) return;
 
-        world.spawnParticle(Particle.HAPPY_VILLAGER,
+        world.spawnParticle(ParticleWrapper.VILLAGER_HAPPY,
                 loc.clone().add(0.5, 0.5, 0.5),
                 10, 0.3, 0.3, 0.3, 0);
 

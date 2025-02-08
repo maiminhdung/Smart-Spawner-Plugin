@@ -6,6 +6,7 @@ import me.nighter.smartSpawner.hooks.protections.CheckBreakBlock;
 import me.nighter.smartSpawner.managers.SpawnerManager;
 import me.nighter.smartSpawner.managers.ConfigManager;
 import me.nighter.smartSpawner.managers.LanguageManager;
+import me.nighter.smartSpawner.nms.ParticleWrapper;
 
 import org.bukkit.*;
 import org.bukkit.block.Block;
@@ -416,7 +417,7 @@ public class SpawnerBreakHandler implements Listener {
 
         // Visual effect
         block.getWorld().spawnParticle(
-                Particle.WITCH,
+                ParticleWrapper.SPELL_WITCH,
                 block.getLocation().clone().add(0.5, 0.5, 0.5),
                 50, 0.5, 0.5, 0.5, 0
         );

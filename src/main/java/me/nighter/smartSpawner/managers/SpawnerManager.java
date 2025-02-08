@@ -1,8 +1,8 @@
 package me.nighter.smartSpawner.managers;
 
-import io.papermc.paper.threadedregions.scheduler.RegionScheduler;
 import me.nighter.smartSpawner.serializers.ItemStackSerializer;
 import me.nighter.smartSpawner.SmartSpawner;
+import me.nighter.smartSpawner.nms.ParticleWrapper;
 import me.nighter.smartSpawner.holders.SpawnerMenuHolder;
 import me.nighter.smartSpawner.holders.PagedSpawnerLootHolder;
 import me.nighter.smartSpawner.utils.SpawnerData;
@@ -379,7 +379,7 @@ public class SpawnerManager {
 
             Location loc = spawner.getSpawnerLocation();
             World world = loc.getWorld();
-            world.spawnParticle(Particle.HAPPY_VILLAGER,
+            world.spawnParticle(ParticleWrapper.VILLAGER_HAPPY,
                     loc.clone().add(0.5, 0.5, 0.5),
                     10, 0.3, 0.3, 0.3, 0);
 

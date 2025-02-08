@@ -65,6 +65,7 @@ public class SmartSpawner extends JavaPlugin {
         instance = this;
         String currentVersion = this.getDescription().getVersion();
         ComponentLogger prefixedLogger = ComponentLogger.logger(Bukkit.getLogger().getName());
+        initializeVersionSpecificComponents();
         initializeComponents();
         setupCommand();
         checkDependencies();
@@ -230,6 +231,35 @@ public class SmartSpawner extends JavaPlugin {
 
     public SpawnerProvider getSpawnerProvider() {
         return new SpawnerProvider(this);
+    }
+
+    // Version specific implementations
+    private void initializeVersionSpecificComponents() {
+        String version = Bukkit.getServer().getBukkitVersion();
+        String[][] versionSpecificComponents = {
+                {"Particles", "me.nighter.smartSpawner.v1_20.ParticleInitializer", "me.nighter.smartSpawner.v1_21.ParticleInitializer"},
+                {"Textures", "me.nighter.smartSpawner.v1_20.TextureInitializer", "me.nighter.smartSpawner.v1_21.TextureInitializer"},
+                {"Spawners", "me.nighter.smartSpawner.v1_20.SpawnerInitializer", "me.nighter.smartSpawner.v1_21.SpawnerInitializer"}
+        };
+        for (String[] component : versionSpecificComponents) {
+            try {
+                String componentName = component[0];
+                String v1_20Class = component[1];
+                String v1_21Class = component[2];
+                if (version.contains("1.20")) {
+                    Class.forName(v1_20Class)
+                            .getMethod("init")
+                            .invoke(null);
+                } else if (version.contains("1.21")) {
+                    Class.forName(v1_21Class)
+                            .getMethod("init")
+                            .invoke(null);
+                }
+            } catch (Exception e) {
+                getLogger().severe("Failed to initialize " + component[0] + " for version " + version);
+                e.printStackTrace();
+            }
+        }
     }
 
     // Getters for kyori/adventure

@@ -65,10 +65,10 @@ public class GUIClickHandler implements Listener {
             case SHIFT_RIGHT:
                 takeAllSimilarItems(player, event.getInventory(), clickedItem, spawner);
                 break;
-            case LEFT:
+            case RIGHT:
                 takeSingleItem(player, event.getInventory(), slot, clickedItem, spawner, true);
                 break;
-            case RIGHT:
+            case LEFT:
                 takeSingleItem(player, event.getInventory(), slot, clickedItem, spawner, false);
                 break;
             default:
