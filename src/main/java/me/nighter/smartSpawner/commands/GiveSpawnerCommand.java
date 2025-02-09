@@ -3,6 +3,7 @@ package me.nighter.smartSpawner.commands;
 import me.nighter.smartSpawner.SmartSpawner;
 import me.nighter.smartSpawner.nms.SpawnerWrapper;
 import me.nighter.smartSpawner.managers.LanguageManager;
+import me.nighter.smartSpawner.nms.SpawnerWrapper;
 
 import org.bukkit.Bukkit;
 import org.bukkit.Material;

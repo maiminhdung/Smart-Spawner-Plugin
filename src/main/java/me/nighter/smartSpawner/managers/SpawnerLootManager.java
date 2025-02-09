@@ -2,20 +2,15 @@ package me.nighter.smartSpawner.managers;
 
 import me.nighter.smartSpawner.*;
 import me.nighter.smartSpawner.holders.PagedSpawnerLootHolder;
+import me.nighter.smartSpawner.utils.OptimizedVirtualInventory;
 import me.nighter.smartSpawner.utils.SpawnerData;
-import me.nighter.smartSpawner.utils.VirtualInventory;
-import org.bukkit.entity.HumanEntity;
-import org.bukkit.entity.Player;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
 public class SpawnerLootManager {
     private static final int NAVIGATION_ROW = 5;
@@ -32,10 +27,12 @@ public class SpawnerLootManager {
     }
 
     public Inventory createLootInventory(SpawnerData spawner, String title, int page) {
-        VirtualInventory virtualInv = spawner.getVirtualInventory();
-        int totalSlots = virtualInv.getSize();
-        int totalPages = (int) Math.ceil((double) totalSlots / SLOTS_PER_PAGE);
+        OptimizedVirtualInventory virtualInv = spawner.getVirtualInventory();
+        Map<Integer, ItemStack> displayItems = virtualInv.getDisplayInventory();
+        int totalItems = displayItems.size();
+        int totalPages = Math.max(1, (int) Math.ceil((double) totalItems / SLOTS_PER_PAGE));
         page = Math.min(Math.max(1, page), totalPages);
+
         Inventory pageInv = Bukkit.createInventory(
                 new PagedSpawnerLootHolder(spawner, page, totalPages),
                 INVENTORY_SIZE,
@@ -49,23 +46,28 @@ public class SpawnerLootManager {
     }
 
     public void updateInventoryContents(Inventory inventory, SpawnerData spawner, int page) {
-        VirtualInventory virtualInv = spawner.getVirtualInventory();
-        int totalSlots = virtualInv.getSize();
-        int totalPages = (int) Math.ceil((double) totalSlots / SLOTS_PER_PAGE);
+        OptimizedVirtualInventory virtualInv = spawner.getVirtualInventory();
+        Map<Integer, ItemStack> displayItems = virtualInv.getDisplayInventory();
+        int totalItems = displayItems.size();
+        int totalPages = Math.max(1, (int) Math.ceil((double) totalItems / SLOTS_PER_PAGE));
 
         // Clear existing items (only in the item slots, not navigation)
         for (int i = 0; i < SLOTS_PER_PAGE; i++) {
             inventory.setItem(i, null);
         }
 
-        // Load items for current page from virtual inventory
-        int startSlot = (page - 1) * SLOTS_PER_PAGE;
-        for (int i = 0; i < SLOTS_PER_PAGE; i++) {
-            int virtualSlot = startSlot + i;
-            if (virtualSlot < totalSlots) {
-                ItemStack item = virtualInv.getItem(virtualSlot);
-                inventory.setItem(i, item);
+        // Calculate the range of items to display on this page
+        int startIndex = (page - 1) * SLOTS_PER_PAGE;
+        int endIndex = Math.min(startIndex + SLOTS_PER_PAGE, totalItems);
+
+        // Display items for the current page
+        int slot = 0;
+        for (Map.Entry<Integer, ItemStack> entry : displayItems.entrySet()) {
+            if (slot >= startIndex && slot < endIndex) {
+                inventory.setItem(slot - startIndex, entry.getValue());
             }
+            slot++;
+            if (slot >= endIndex) break;
         }
 
         // Update navigation items
@@ -84,42 +86,22 @@ public class SpawnerLootManager {
         }
 
         // Page indicator
-        ItemStack pageIndicator;
-        pageIndicator = createPageIndicator(page, totalPages, totalSlots, virtualInv, spawner.getMaxSpawnerLootSlots());
+        ItemStack pageIndicator = createPageIndicator(page, totalPages, totalItems, virtualInv, spawner.getMaxSpawnerLootSlots());
         inventory.setItem(NAVIGATION_ROW * 9 + 4, pageIndicator);
 
+        // Other buttons
         ItemStack returnButton = createReturnButton();
         inventory.setItem(NAVIGATION_ROW * 9 + 8, returnButton);
 
-        // Take all button
         ItemStack takeAllButton = new ItemStack(Material.CHEST);
         ItemMeta meta = takeAllButton.getItemMeta();
         meta.setDisplayName(languageManager.getMessage("take-all-button.name"));
         takeAllButton.setItemMeta(meta);
         inventory.setItem(NAVIGATION_ROW * 9 + 0, takeAllButton);
 
-        // Allow equipment items toggle button
         if (configManager.isAllowToggleEquipmentItems()) {
             ItemStack durabilityToggle = createAllowEquipmentToggleButton(spawner.isAllowEquipmentItems());
             inventory.setItem(NAVIGATION_ROW * 9 + 1, durabilityToggle);
-        }
-        //configManager.debug("Is allow equipment items: " + configManager.isAllowToggleEquipmentItems());
-
-    }
-
-
-    public void saveItems(SpawnerData spawner, Inventory pageInventory) {
-        PagedSpawnerLootHolder holder = (PagedSpawnerLootHolder) pageInventory.getHolder();
-        VirtualInventory virtualInv = spawner.getVirtualInventory();
-        int startSlot = (holder.getCurrentPage() - 1) * SLOTS_PER_PAGE;
-
-        // Save items from current page to virtual inventory
-        for (int i = 0; i < SLOTS_PER_PAGE; i++) {
-            int virtualSlot = startSlot + i;
-            if (virtualSlot < virtualInv.getSize()) {
-                ItemStack item = pageInventory.getItem(i);
-                virtualInv.setItem(virtualSlot, item);
-            }
         }
     }
 
@@ -169,12 +151,22 @@ public class SpawnerLootManager {
         return createItemStack(material, buttonName, buttonLore);
     }
 
-    private ItemStack createPageIndicator(int currentPage, int totalPages, int totalSlots, VirtualInventory virtualInventory, int maxSlots) {
+    private ItemStack createPageIndicator(int currentPage, int totalPages, int totalItems, OptimizedVirtualInventory virtualInventory, int maxSlots) {
         Material material;
         String itemName;
         List<String> itemLore = new ArrayList<>();
 
-        int currentItems = virtualInventory.getAllItems().size();
+        // Get total number of actual items (counting stacks)
+        long totalActualItems = virtualInventory.getTotalItems();
+
+        // Calculate maximum possible items (assuming max stack size of 64)
+        long maxPossibleItems = (long) maxSlots * 64;
+
+        // Calculate storage percentage based on actual items vs maximum possible
+        int percentStorage = (int) ((double) totalActualItems / maxPossibleItems * 100);
+
+        String formattedMaxPossibleItems = languageManager.formatNumber(maxPossibleItems);
+        String formattedTotalActualItems = languageManager.formatNumber(totalActualItems);
 
         if (plugin.hasShopIntegration()) {
             material = Material.GOLD_INGOT;
@@ -182,12 +174,10 @@ public class SpawnerLootManager {
                     .replace("%current_page%", String.valueOf(currentPage))
                     .replace("%total_pages%", String.valueOf(totalPages));
 
-            int percentStorage = (int) ((double) currentItems / maxSlots * 100);
 
             String loreMessage = languageManager.getMessage("shop-page-indicator.lore")
-                    .replace("%total_slots%", String.valueOf(totalSlots))
-                    .replace("%max_slots%", String.valueOf(maxSlots))
-                    .replace("%current_items%", String.valueOf(currentItems))
+                    .replace("%max_slots%", formattedMaxPossibleItems)
+                    .replace("%current_items%", formattedTotalActualItems)
                     .replace("%percent_storage%", String.valueOf(percentStorage));
 
             itemLore.addAll(Arrays.asList(loreMessage.split("\n")));
@@ -198,14 +188,13 @@ public class SpawnerLootManager {
                     .replace("%total_pages%", String.valueOf(totalPages));
 
             String loreMessage = languageManager.getMessage("page-indicator.lore")
-                    .replace("%total_slots%", String.valueOf(totalSlots))
-                    .replace("%max_slots%", String.valueOf(maxSlots))
-                    .replace("%current_items%", String.valueOf(currentItems));
+                    .replace("%max_slots%", formattedMaxPossibleItems)
+                    .replace("%current_items%", formattedTotalActualItems);
 
             itemLore.addAll(Arrays.asList(loreMessage.split("\n")));
         }
 
-        // Tạo ItemStack
+        // Create ItemStack with the information
         ItemStack itemStack = new ItemStack(material);
         ItemMeta itemMeta = itemStack.getItemMeta();
         itemMeta.setDisplayName(itemName);

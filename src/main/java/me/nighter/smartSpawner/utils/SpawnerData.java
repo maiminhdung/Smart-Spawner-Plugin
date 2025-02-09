@@ -28,7 +28,7 @@ public class SpawnerData {
     private int minMobs;
     private int maxMobs;
     private int stackSize;
-    private VirtualInventory virtualInventory;
+    private OptimizedVirtualInventory virtualInventory;
     private boolean allowEquipmentItems;
     private static final Logger logger = Logger.getLogger("SmartSpawnerConfig");
     private final LanguageManager languageManager;
@@ -48,30 +48,20 @@ public class SpawnerData {
         this.configManager = plugin.getConfigManager();
         this.languageManager = plugin.getLanguageManager();
         loadConfigValues();
-        this.virtualInventory = new VirtualInventory(maxSpawnerLootSlots);
+        this.virtualInventory = new OptimizedVirtualInventory(maxSpawnerLootSlots);
     }
 
-    public VirtualInventory getVirtualInventory() {
+    public OptimizedVirtualInventory getVirtualInventory() {
         return virtualInventory;
     }
 
-    public void setVirtualInventory(VirtualInventory inventory) {
+    public void setVirtualInventory(OptimizedVirtualInventory inventory) {
         this.virtualInventory = inventory;
     }
 
     // Add method to get items for display in real inventory
-    public ItemStack getItemAt(int slot) {
-        return virtualInventory.getItem(slot);
-    }
-
-    // Add method to set items from real inventory
-    public void setItemAt(int slot, ItemStack item) {
-        virtualInventory.setItem(slot, item);
-    }
-
-    // Add method to get total slots
-    public int getTotalSlots() {
-        return virtualInventory.getSize();
+    public Map<Integer, ItemStack> getDisplayInventory() {
+        return virtualInventory.getDisplayInventory();
     }
 
     private void loadConfigValues() {
@@ -80,10 +70,12 @@ public class SpawnerData {
         int baseMaxMobs = configManager.getMaxMobs();
         int baseSpawnerDelay = configManager.getSpawnerDelay();
         int maxStoragePages = configManager.getMaxStoragePages();
+
         if (maxStoragePages <= 0) {
             logger.warning("Invalid max-storage-pages value. Setting to default: 1");
             maxStoragePages = 1;
         }
+
         this.maxSpawnerLootSlots = (45 * maxStoragePages) * stackSize;
         if (this.maxSpawnerLootSlots < 0) this.maxSpawnerLootSlots = 45;
 
@@ -110,6 +102,7 @@ public class SpawnerData {
             logger.warning("Invalid delay value. Setting to default: 600");
             this.spawnDelay = 600;
         }
+
         this.spawnerRange = configManager.getSpawnerRange();
         if (this.spawnerRange <= 0) {
             logger.warning("Invalid range value. Setting to default: 16");
@@ -117,165 +110,111 @@ public class SpawnerData {
         }
     }
 
-    public int getStackSize() {
-        return stackSize;
-    }
-
     public void setStackSize(int stackSize) {
         int maxAllowedStack = configManager.getMaxStackSize();
-        int maxStoragePages = configManager.getMaxStoragePages();
         if (stackSize <= 0) {
             this.stackSize = 1;
             logger.warning("Invalid stack size. Setting to 1");
-        } else if (stackSize > maxAllowedStack) {
+            return;
+        }
+
+        if (stackSize > maxAllowedStack) {
             this.stackSize = maxAllowedStack;
             logger.warning("Stack size exceeds maximum. Setting to " + maxAllowedStack);
-        } else {
-            // Lưu lại inventory cũ
-            Map<Integer, ItemStack> oldInventory = this.virtualInventory.getAllItems();
-
-            // Tính toán số slot mới dựa trên stackSize mới
-            int newMaxSlots = (45 * maxStoragePages) * stackSize;
-
-            // Kiểm tra xem có items nào sẽ bị mất không
-            boolean hasItemsInExcessSlots = false;
-            List<ItemStack> excessItems = new ArrayList<>();
-
-            for (Map.Entry<Integer, ItemStack> entry : oldInventory.entrySet()) {
-                if (entry.getKey() >= newMaxSlots && entry.getValue() != null) {
-                    hasItemsInExcessSlots = true;
-                    excessItems.add(entry.getValue());
-                }
-            }
-
-            // Nếu có items sẽ bị mất, thử merge chúng vào các slot còn trống
-            if (hasItemsInExcessSlots) {
-                Map<Integer, ItemStack> safeInventory = new HashMap<>();
-
-                // Copy các items trong phạm vi slot mới
-                for (int i = 0; i < newMaxSlots; i++) {
-                    if (oldInventory.containsKey(i)) {
-                        safeInventory.put(i, oldInventory.get(i));
-                    }
-                }
-
-                // Thử merge excess items vào các slot trống
-                for (ItemStack excessItem : excessItems) {
-                    boolean merged = false;
-                    for (int i = 0; i < newMaxSlots; i++) {
-                        ItemStack existingItem = safeInventory.get(i);
-                        if (existingItem == null) {
-                            safeInventory.put(i, excessItem);
-                            merged = true;
-                            break;
-                        } else if (existingItem.isSimilar(excessItem) &&
-                                existingItem.getAmount() + excessItem.getAmount() <= existingItem.getMaxStackSize()) {
-                            existingItem.setAmount(existingItem.getAmount() + excessItem.getAmount());
-                            merged = true;
-                            break;
-                        }
-                    }
-
-                    if (!merged) {
-                        // Nếu không merge được, thêm vào cuối
-                    }
-                }
-
-                // Cập nhật stackSize và tạo inventory mới
-                this.stackSize = stackSize;
-                loadConfigValues();
-                this.lastSpawnTime = System.currentTimeMillis() + (long) this.spawnDelay;
-                this.virtualInventory = new VirtualInventory(this.maxSpawnerLootSlots);
-                this.virtualInventory.setItems(safeInventory);
-
-            } else {
-                // Nếu không có items bị ảnh hưởng, cập nhật bình thường
-                this.stackSize = stackSize;
-                loadConfigValues();
-                this.lastSpawnTime = System.currentTimeMillis() + (long) this.spawnDelay;
-                this.virtualInventory = new VirtualInventory(this.maxSpawnerLootSlots);
-                this.virtualInventory.setItems(oldInventory);
-            }
+            return;
         }
+
+        // Get current consolidated items
+        Map<OptimizedVirtualInventory.ItemSignature, Long> currentItems = virtualInventory.getConsolidatedItems();
+
+        // Calculate new max slots
+        int maxStoragePages = configManager.getMaxStoragePages();
+        int newMaxSlots = (45 * maxStoragePages) * stackSize;
+
+        // Create new inventory with new size
+        OptimizedVirtualInventory newInventory = new OptimizedVirtualInventory(newMaxSlots);
+
+        // Convert consolidated items to ItemStack list for adding to new inventory
+        List<ItemStack> itemsToTransfer = new ArrayList<>();
+        currentItems.forEach((signature, amount) -> {
+            ItemStack template = signature.getTemplate();
+            while (amount > 0) {
+                int batchSize = (int) Math.min(amount, Integer.MAX_VALUE);
+                ItemStack batch = template.clone();
+                batch.setAmount(batchSize);
+                itemsToTransfer.add(batch);
+                amount -= batchSize;
+            }
+        });
+
+        // Update stack size and config values
+        this.stackSize = stackSize;
+        loadConfigValues();
+        this.lastSpawnTime = System.currentTimeMillis() + (long) this.spawnDelay;
+
+        // Add items to new inventory
+        newInventory.addItems(itemsToTransfer);
+        this.virtualInventory = newInventory;
     }
 
     public void setStackSize(int stackSize, Player player) {
-        boolean stop = false;
         int maxAllowedStack = configManager.getMaxStackSize();
-        int maxStoragePages = configManager.getMaxStoragePages();
         if (stackSize <= 0) {
             this.stackSize = 1;
             configManager.debug("Invalid stack size. Setting to 1");
-        } else if (stackSize > maxAllowedStack) {
+            return;
+        }
+
+        if (stackSize > maxAllowedStack) {
             this.stackSize = maxAllowedStack;
             configManager.debug("Stack size exceeds maximum. Setting to " + maxAllowedStack);
-        } else {
-            // Lưu lại inventory cũ
-            Map<Integer, ItemStack> oldInventory = this.virtualInventory.getAllItems();
-
-            // Tính toán số slot mới dựa trên stackSize mới
-            int newMaxSlots = (45 * maxStoragePages) * stackSize;
-
-            // Kiểm tra xem có items nào sẽ bị mất không
-            boolean hasItemsInExcessSlots = false;
-            List<ItemStack> excessItems = new ArrayList<>();
-
-            for (Map.Entry<Integer, ItemStack> entry : oldInventory.entrySet()) {
-                if (entry.getKey() >= newMaxSlots && entry.getValue() != null) {
-                    hasItemsInExcessSlots = true;
-                    excessItems.add(entry.getValue());
-                }
-            }
-
-            // Nếu có items sẽ bị mất, thử merge chúng vào các slot còn trống
-            if (hasItemsInExcessSlots) {
-                Map<Integer, ItemStack> safeInventory = new HashMap<>();
-
-                // Copy các items trong phạm vi slot mới
-                for (int i = 0; i < newMaxSlots; i++) {
-                    if (oldInventory.containsKey(i)) {
-                        safeInventory.put(i, oldInventory.get(i));
-                    }
-                }
-                // Thử merge excess items vào các slot trống
-                for (ItemStack excessItem : excessItems) {
-                    boolean merged = false;
-                    for (int i = 0; i < newMaxSlots; i++) {
-                        ItemStack existingItem = safeInventory.get(i);
-                        if (existingItem == null) {
-                            safeInventory.put(i, excessItem);
-                            merged = true;
-                            break;
-                        } else if (existingItem.isSimilar(excessItem) &&
-                                existingItem.getAmount() + excessItem.getAmount() <= existingItem.getMaxStackSize()) {
-                            existingItem.setAmount(existingItem.getAmount() + excessItem.getAmount());
-                            merged = true;
-                            break;
-                        }
-                    }
-
-                    if (!merged && !stop) {
-                        languageManager.sendMessage(player, "messages.items-lost");
-                        stop = true;
-                    }
-                }
-
-                // Cập nhật stackSize và tạo inventory mới
-                this.stackSize = stackSize;
-                loadConfigValues();
-                this.lastSpawnTime = System.currentTimeMillis() + (long) this.spawnDelay;
-                this.virtualInventory = new VirtualInventory(this.maxSpawnerLootSlots);
-                this.virtualInventory.setItems(safeInventory);
-
-            } else {
-                // Nếu không có items bị ảnh hưởng, cập nhật bình thường
-                this.stackSize = stackSize;
-                loadConfigValues();
-                this.lastSpawnTime = System.currentTimeMillis() + (long) this.spawnDelay;
-                this.virtualInventory = new VirtualInventory(this.maxSpawnerLootSlots);
-                this.virtualInventory.setItems(oldInventory);
-            }
+            return;
         }
+
+        // Get current consolidated items
+        Map<OptimizedVirtualInventory.ItemSignature, Long> currentItems = virtualInventory.getConsolidatedItems();
+
+        // Calculate new max slots
+        int maxStoragePages = configManager.getMaxStoragePages();
+        int newMaxSlots = (45 * maxStoragePages) * stackSize;
+
+        // Calculate total items currently stored
+        long totalItems = virtualInventory.getTotalItems();
+        long newCapacity = (long) newMaxSlots * 64; // Assuming 64 is max stack size
+
+        // Check if we'll lose items
+        if (totalItems > newCapacity) {
+            languageManager.sendMessage(player, "messages.items-lost");
+        }
+
+        // Create new inventory with new size
+        OptimizedVirtualInventory newInventory = new OptimizedVirtualInventory(newMaxSlots);
+
+        // Convert consolidated items to ItemStack list for adding to new inventory
+        List<ItemStack> itemsToTransfer = new ArrayList<>();
+        currentItems.forEach((signature, amount) -> {
+            ItemStack template = signature.getTemplate();
+            while (amount > 0) {
+                int batchSize = (int) Math.min(amount, Integer.MAX_VALUE);
+                ItemStack batch = template.clone();
+                batch.setAmount(batchSize);
+                itemsToTransfer.add(batch);
+                amount -= batchSize;
+            }
+        });
+
+        // Update stack size and config values
+        this.stackSize = stackSize;
+        loadConfigValues();
+        this.lastSpawnTime = System.currentTimeMillis() + (long) this.spawnDelay;
+
+        // Add items to new inventory
+        newInventory.addItems(itemsToTransfer);
+        this.virtualInventory = newInventory;
+    }
+
+    public int getStackSize() {
+        return stackSize;
     }
 
     public void decreaseStackSizeByOne() {
@@ -303,6 +242,7 @@ public class SpawnerData {
     public Integer getMaxStoredExp(){
         return maxStoredExp;
     }
+
     public void setMaxStoredExp(int maxStoredExp) {
         this.maxStoredExp = maxStoredExp;
     }

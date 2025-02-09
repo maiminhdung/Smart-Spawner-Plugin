@@ -2,11 +2,9 @@ package me.nighter.smartSpawner.managers;
 
 import me.nighter.smartSpawner.SmartSpawner;
 import me.nighter.smartSpawner.utils.SpawnerData;
-import me.nighter.smartSpawner.utils.VirtualInventory;
 import org.bukkit.ChatColor;
 import org.bukkit.Material;
 import org.bukkit.configuration.ConfigurationSection;
-import org.bukkit.enchantments.Enchantment;
 import org.bukkit.entity.EntityType;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.Damageable;
@@ -17,6 +15,7 @@ import org.bukkit.potion.PotionEffectType;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.stream.Collectors;
 
 public class SpawnerLootGenerator {
     private final Random random;
@@ -174,7 +173,6 @@ public class SpawnerLootGenerator {
                             maxDurability = Integer.parseInt(durabilities[1]);
                         }
 
-                        // Xử lý thông tin potion nếu là Tipped Arrow
                         String potionEffectType = null;
                         Integer potionDuration = null;
                         Integer potionAmplifier = null;
@@ -214,74 +212,29 @@ public class SpawnerLootGenerator {
 
         if (config == null) {
             configManager.debug("No loot config found for entity type: " + entityName);
-            return new LootResult(new ArrayList<>(), 0);
+            return new LootResult(Collections.emptyList(), 0);
         }
 
         int mobCount = random.nextInt(maxMobs - minMobs + 1) + minMobs;
         List<ItemStack> totalLoot = new ArrayList<>();
         int totalExperience = config.experience * mobCount;
 
-        // Phân nhóm items thành 2 loại
-        List<LootItem> guaranteedItems = new ArrayList<>();    // Items với chance 100%
-        List<LootItem> randomItems = new ArrayList<>();        // Items với chance < 100%
+        // Pre-filter items based on equipment permission
+        List<LootItem> validItems = config.possibleItems.stream()
+                .filter(item -> spawner.isAllowEquipmentItems() ||
+                        (item.minDurability == null && item.maxDurability == null))
+                .collect(Collectors.toList());
 
-        // Phân loại items
-        for (LootItem item : config.possibleItems) {
-            if (item.chance >= 100) {
-                guaranteedItems.add(item);
-            } else {
-                randomItems.add(item);
-            }
-        }
-
-        // Xử lý guaranteed items một lần cho tất cả mobs
-        for (LootItem lootItem : guaranteedItems) {
-            if (!spawner.isAllowEquipmentItems() && lootItem.minDurability != null && lootItem.maxDurability != null) {
-                continue;
-            }
-
-            for (int j = 0; j < mobCount; j++) {
-                int amount = random.nextInt(lootItem.maxAmount - lootItem.minAmount + 1) + lootItem.minAmount;
-                if (amount > 0) {
-                    // Sử dụng phương thức createItemStack của chính LootItem
-                    ItemStack item = lootItem.createItemStack(random);
-                    if (item != null) {
-                        item.setAmount(amount);
-                        totalLoot.add(item);
-                    }
-                }
-            }
-        }
-
-        final int BATCH_SIZE = configManager.getBatchSize();
-        for (int mobStart = 0; mobStart < mobCount; mobStart += BATCH_SIZE) {
-            int currentBatchSize = Math.min(BATCH_SIZE, mobCount - mobStart);
-
-            // Tạo random values cho batch này
-            double[] batchRandomValues = new double[randomItems.size()];
-            for (int i = 0; i < batchRandomValues.length; i++) {
-                batchRandomValues[i] = random.nextDouble() * 100;
-            }
-
-            // Xử lý từng item trong batch
-            for (int i = 0; i < randomItems.size(); i++) {
-                LootItem lootItem = randomItems.get(i);
-
-                if (!spawner.isAllowEquipmentItems() && lootItem.minDurability != null && lootItem.maxDurability != null) {
-                    continue;
-                }
-
-                // Dùng random value cho batch này
-                if (batchRandomValues[i] <= lootItem.chance) {
-                    for (int j = 0; j < currentBatchSize; j++) {
-                        int amount = random.nextInt(lootItem.maxAmount - lootItem.minAmount + 1) + lootItem.minAmount;
-                        if (amount > 0) {
-                            // Sử dụng phương thức createItemStack của chính LootItem
-                            ItemStack item = lootItem.createItemStack(random);
-                            if (item != null) {
-                                item.setAmount(amount);
-                                totalLoot.add(item);
-                            }
+        // Process each mob individually for accurate drop rates
+        for (int i = 0; i < mobCount; i++) {
+            for (LootItem lootItem : validItems) {
+                if (random.nextDouble() * 100 <= lootItem.chance) {
+                    int amount = random.nextInt(lootItem.maxAmount - lootItem.minAmount + 1) + lootItem.minAmount;
+                    if (amount > 0) {
+                        ItemStack item = lootItem.createItemStack(random);
+                        if (item != null) {
+                            item.setAmount(amount);
+                            totalLoot.add(item);
                         }
                     }
                 }
@@ -292,135 +245,10 @@ public class SpawnerLootGenerator {
     }
 
     public void addLootToSpawner(SpawnerData spawner, LootResult lootResult) {
-        VirtualInventory virtualInv = spawner.getVirtualInventory();
-        Map<Integer, ItemStack> inventoryMap = new HashMap<>(virtualInv.getAllItems());
-        int inventorySize = virtualInv.getSize();
-
-        int addedItems = 0;
-        int skippedItems = 0;
-
-        // Create a map of similar items for batch processing
-        Map<ItemSignature, List<ItemStack>> similarItems = new HashMap<>();
-        Map<ItemSignature, List<Integer>> availableSlots = new HashMap<>();
-
-        // Find all empty slots and sort them in ascending order
-        TreeSet<Integer> emptySlots = new TreeSet<>();
-        for (int i = 0; i < inventorySize; i++) {
-            if (!inventoryMap.containsKey(i)) {
-                emptySlots.add(i);
-            } else {
-                ItemStack item = inventoryMap.get(i);
-                if (item != null) {
-                    ItemSignature sig = new ItemSignature(item);
-                    similarItems.computeIfAbsent(sig, k -> new ArrayList<>()).add(item);
-                    availableSlots.computeIfAbsent(sig, k -> new ArrayList<>()).add(i);
-                }
-            }
-        }
-
-        // Process new items
-        for (ItemStack newItem : lootResult.getItems()) {
-            if (!spawner.isAllowEquipmentItems() && isEquipment(newItem)) {
-                skippedItems++;
-                continue;
-            }
-
-            ItemSignature newItemSig = new ItemSignature(newItem);
-            int remainingAmount = newItem.getAmount();
-            boolean itemAdded = false;
-
-            // First try to merge with existing similar items
-            if (similarItems.containsKey(newItemSig)) {
-                List<ItemStack> existingStacks = similarItems.get(newItemSig);
-                List<Integer> slots = availableSlots.get(newItemSig);
-
-                for (int i = 0; i < existingStacks.size() && remainingAmount > 0; i++) {
-                    ItemStack existingStack = existingStacks.get(i);
-                    int slot = slots.get(i);
-
-                    int spaceLeft = existingStack.getMaxStackSize() - existingStack.getAmount();
-                    if (spaceLeft > 0) {
-                        int amountToAdd = Math.min(spaceLeft, remainingAmount);
-                        existingStack.setAmount(existingStack.getAmount() + amountToAdd);
-                        inventoryMap.put(slot, existingStack);
-                        remainingAmount -= amountToAdd;
-                        itemAdded = true;
-                    }
-                }
-            }
-
-            // Use empty slots if needed
-            while (remainingAmount > 0 && !emptySlots.isEmpty()) {
-                int slot = emptySlots.pollFirst();
-                int maxStackSize = newItem.getMaxStackSize();
-                int amountToAdd = Math.min(maxStackSize, remainingAmount);
-
-                ItemStack newStack = newItem.clone();
-                newStack.setAmount(amountToAdd);
-                inventoryMap.put(slot, newStack);
-
-                // Update tracking maps
-                ItemSignature sig = new ItemSignature(newStack);
-                similarItems.computeIfAbsent(sig, k -> new ArrayList<>()).add(newStack);
-                availableSlots.computeIfAbsent(sig, k -> new ArrayList<>()).add(slot);
-
-                remainingAmount -= amountToAdd;
-                itemAdded = true;
-            }
-
-            if (itemAdded) {
-                addedItems++;
-            }
-            if (remainingAmount > 0) {
-                skippedItems++;
-            }
-        }
-
-        // Bulk update virtual inventory
-        virtualInv.setItems(inventoryMap);
-
-        // Update experience
-        int oldExp = spawner.getSpawnerExp();
-        int maxExp = spawner.getMaxStoredExp();
-        spawner.setSpawnerExp(Math.min(oldExp + lootResult.getExperience(), maxExp));
-
-        configManager.debug(String.format("Loot addition complete: Added=%d, Skipped=%d, XP: %d->%d",
-                addedItems, skippedItems, oldExp, spawner.getSpawnerExp()));
-    }
-
-    private static class ItemSignature {
-        private final Material type;
-        private final short durability;
-
-        public ItemSignature(ItemStack item) {
-            this.type = item.getType();
-            this.durability = item.getDurability();
-        }
-
-        @Override
-        public boolean equals(Object o) {
-            if (this == o) return true;
-            if (!(o instanceof ItemSignature)) return false;
-            ItemSignature that = (ItemSignature) o;
-            return durability == that.durability && type == that.type;
-        }
-
-        @Override
-        public int hashCode() {
-            return Objects.hash(type, durability);
-        }
-    }
-
-    private boolean isEquipment(ItemStack item) {
-        Material type = item.getType();
-        return type.name().endsWith("_HELMET") ||
-                type.name().endsWith("_CHESTPLATE") ||
-                type.name().endsWith("_LEGGINGS") ||
-                type.name().endsWith("_BOOTS") ||
-                type.name().endsWith("_SWORD") ||
-                type.name().endsWith("_AXE") ||
-                type.name().endsWith("_PICKAXE") ||
-                type.name().endsWith("_SHOVEL") ||
-                type.name().endsWith("_HOE");
+        spawner.getVirtualInventory().addItems(lootResult.getItems());
+        spawner.setSpawnerExp(Math.min(
+                spawner.getSpawnerExp() + lootResult.getExperience(),
+                spawner.getMaxStoredExp()
+        ));
     }
 }

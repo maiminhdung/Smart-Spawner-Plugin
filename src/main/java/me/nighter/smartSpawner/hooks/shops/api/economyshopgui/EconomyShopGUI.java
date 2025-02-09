@@ -7,15 +7,12 @@ import me.gypopo.economyshopgui.util.EcoType;
 import me.nighter.smartSpawner.hooks.shops.IShopIntegration;
 import me.nighter.smartSpawner.managers.ConfigManager;
 import me.nighter.smartSpawner.managers.LanguageManager;
+import me.nighter.smartSpawner.utils.OptimizedVirtualInventory;
 import me.nighter.smartSpawner.utils.SpawnerData;
-import me.nighter.smartSpawner.utils.VirtualInventory;
-import org.bukkit.Material;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 
-import java.util.HashMap;
-import java.util.Map;
-import java.util.UUID;
+import java.util.*;
 
 import me.nighter.smartSpawner.SmartSpawner;
 
@@ -45,8 +42,8 @@ public class EconomyShopGUI implements IShopIntegration {
     }
 
     public synchronized boolean sellAllItems(Player player, SpawnerData spawner) {
-        VirtualInventory virtualInv = spawner.getVirtualInventory();
-        Map<Integer, ItemStack> items = virtualInv.getAllItems();
+        OptimizedVirtualInventory virtualInv = spawner.getVirtualInventory();
+        Map<OptimizedVirtualInventory.ItemSignature, Long> items = virtualInv.getConsolidatedItems();
 
         // Prevent processing if inventory is empty
         if (items.isEmpty()) {
@@ -58,27 +55,33 @@ public class EconomyShopGUI implements IShopIntegration {
         boolean foundSellableItem = false;
         Map<ShopItem, Integer> soldItems = new HashMap<>();
         Map<EcoType, Double> prices = new HashMap<>();
+        List<ItemStack> itemsToRemove = new ArrayList<>();
 
-        // First pass: Calculate sellable items
-        synchronized (virtualInv) {
-            for (Map.Entry<Integer, ItemStack> entry : items.entrySet()) {
-                ItemStack item = entry.getValue();
-                if (item != null && item.getType() != Material.AIR) {
-                    ShopItem shopItem = EconomyShopGUIHook.getShopItem(player, item);
-                    if (shopItem == null || !EconomyShopGUIHook.isSellAble(shopItem)) continue;
+        // Calculate sellable items and prices
+        for (Map.Entry<OptimizedVirtualInventory.ItemSignature, Long> entry : items.entrySet()) {
+            ItemStack template = entry.getKey().getTemplate();
+            long amount = entry.getValue();
 
-                    foundSellableItem = true;
+            if (amount > 0) {
+                ShopItem shopItem = EconomyShopGUIHook.getShopItem(player, template);
+                if (shopItem == null || !EconomyShopGUIHook.isSellAble(shopItem)) continue;
 
-                    int limit = getSellLimit(shopItem, player.getUniqueId(), item.getAmount());
-                    if (limit == -1) continue;
+                foundSellableItem = true;
 
-                    limit = getMaxSell(shopItem, limit, soldItems.getOrDefault(shopItem, 0));
-                    if (limit == -1) continue;
+                int limit = getSellLimit(shopItem, player.getUniqueId(), (int)amount);
+                if (limit == -1) continue;
 
-                    calculateSellPrice(prices, shopItem, player, item, limit, totalAmount);
-                    totalAmount += limit;
-                    soldItems.put(shopItem, soldItems.getOrDefault(shopItem, 0) + limit);
-                }
+                limit = getMaxSell(shopItem, limit, soldItems.getOrDefault(shopItem, 0));
+                if (limit == -1) continue;
+
+                // Create ItemStack with correct amount for removal
+                ItemStack itemToRemove = template.clone();
+                itemToRemove.setAmount(limit);
+                itemsToRemove.add(itemToRemove);
+
+                calculateSellPrice(prices, shopItem, player, template, limit, totalAmount);
+                totalAmount += limit;
+                soldItems.put(shopItem, soldItems.getOrDefault(shopItem, 0) + limit);
             }
         }
 
@@ -95,35 +98,8 @@ public class EconomyShopGUI implements IShopIntegration {
                 afterTaxPrices = applyTax(prices);
             }
 
-            synchronized (virtualInv) {
-                for (Map.Entry<ShopItem, Integer> soldEntry : soldItems.entrySet()) {
-                    ShopItem shopItem = soldEntry.getKey();
-                    int remainingToRemove = soldEntry.getValue();
-
-                    for (Map.Entry<Integer, ItemStack> invEntry : new HashMap<>(items).entrySet()) {
-                        if (remainingToRemove <= 0) break;
-
-                        int slot = invEntry.getKey();
-                        ItemStack item = invEntry.getValue();
-
-                        if (item != null && item.getType() != Material.AIR) {
-                            ShopItem currentShopItem = EconomyShopGUIHook.getShopItem(player, item);
-                            if (currentShopItem != null && currentShopItem.equals(shopItem)) {
-                                int amountToRemove = Math.min(remainingToRemove, item.getAmount());
-                                remainingToRemove -= amountToRemove;
-
-                                if (amountToRemove >= item.getAmount()) {
-                                    virtualInv.setItem(slot, null);
-                                } else {
-                                    ItemStack newItem = item.clone();
-                                    newItem.setAmount(item.getAmount() - amountToRemove);
-                                    virtualInv.setItem(slot, newItem);
-                                }
-                            }
-                        }
-                    }
-                }
-            }
+            // Remove items all at once
+            virtualInv.removeItems(itemsToRemove);
 
             updateShopStats(soldItems, player.getUniqueId());
 

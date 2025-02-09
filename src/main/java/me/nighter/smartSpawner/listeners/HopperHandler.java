@@ -8,8 +8,8 @@ import me.nighter.smartSpawner.managers.LanguageManager;
 import me.nighter.smartSpawner.managers.SpawnerLootManager;
 import me.nighter.smartSpawner.managers.SpawnerManager;
 import me.nighter.smartSpawner.holders.PagedSpawnerLootHolder;
+import me.nighter.smartSpawner.utils.OptimizedVirtualInventory;
 import me.nighter.smartSpawner.utils.SpawnerData;
-import me.nighter.smartSpawner.utils.VirtualInventory;
 
 import org.bukkit.*;
 import org.bukkit.block.BlockState;
@@ -208,34 +208,38 @@ public class HopperHandler implements Listener {
     }
 
     private void transferItems(Location hopperLoc, Location spawnerLoc) {
-        // Lấy SpawnerData từ location
+        // Get SpawnerData from location
         SpawnerData spawner = spawnerManager.getSpawnerByLocation(spawnerLoc);
         if (spawner == null) return;
 
-        VirtualInventory virtualInv = spawner.getVirtualInventory();
+        OptimizedVirtualInventory virtualInv = spawner.getVirtualInventory();
         Hopper hopper = (Hopper) hopperLoc.getBlock().getState();
 
         int itemsPerTransfer = config.getHopperItemsPerTransfer();
         int transferred = 0;
         boolean inventoryChanged = false;
 
-        // Tìm slot có item trong virtual inventory
-        for (Map.Entry<Integer, ItemStack> entry : virtualInv.getAllItems().entrySet()) {
+        // Get current display inventory to work with
+        Map<Integer, ItemStack> displayItems = virtualInv.getDisplayInventory();
+        List<ItemStack> itemsToRemove = new ArrayList<>();
+
+        // Process items for transfer
+        for (Map.Entry<Integer, ItemStack> entry : displayItems.entrySet()) {
             if (transferred >= itemsPerTransfer) break;
 
             ItemStack item = entry.getValue();
             if (item == null || item.getType() == Material.AIR) continue;
 
-            // Tìm slot trống trong hopper
+            // Find empty slot in hopper
             ItemStack[] hopperContents = hopper.getInventory().getContents();
             for (int i = 0; i < hopperContents.length; i++) {
                 if (transferred >= itemsPerTransfer) break;
 
                 ItemStack hopperItem = hopperContents[i];
                 if (hopperItem == null || hopperItem.getType() == Material.AIR) {
-                    // Transfer whole stack if possible
+                    // Transfer whole stack
                     hopper.getInventory().setItem(i, item.clone());
-                    virtualInv.setItem(entry.getKey(), null);
+                    itemsToRemove.add(item);
                     transferred++;
                     inventoryChanged = true;
                     break;
@@ -247,18 +251,20 @@ public class HopperHandler implements Listener {
 
                     hopperItem.setAmount(hopperItem.getAmount() + toTransfer);
 
-                    if (toTransfer >= item.getAmount()) {
-                        virtualInv.setItem(entry.getKey(), null);
-                    } else {
-                        item.setAmount(item.getAmount() - toTransfer);
-                        virtualInv.setItem(entry.getKey(), item);
-                    }
+                    ItemStack toRemove = item.clone();
+                    toRemove.setAmount(toTransfer);
+                    itemsToRemove.add(toRemove);
 
                     transferred++;
                     inventoryChanged = true;
                     break;
                 }
             }
+        }
+
+        // Remove transferred items from virtual inventory
+        if (!itemsToRemove.isEmpty()) {
+            virtualInv.removeItems(itemsToRemove);
         }
 
         if (inventoryChanged) {

@@ -5,8 +5,9 @@ import me.nighter.smartSpawner.SmartSpawner;
 import me.nighter.smartSpawner.nms.ParticleWrapper;
 import me.nighter.smartSpawner.holders.SpawnerMenuHolder;
 import me.nighter.smartSpawner.holders.PagedSpawnerLootHolder;
+import me.nighter.smartSpawner.utils.OptimizedVirtualInventory;
 import me.nighter.smartSpawner.utils.SpawnerData;
-import me.nighter.smartSpawner.utils.VirtualInventory;
+import me.nighter.smartSpawner.nms.ParticleWrapper;
 
 import org.bukkit.*;
 import org.bukkit.configuration.ConfigurationSection;
@@ -23,8 +24,6 @@ import java.io.File;
 import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.TimeUnit;
-import java.util.stream.IntStream;
 
 public class SpawnerManager {
     private final SmartSpawner plugin;
@@ -136,7 +135,7 @@ public class SpawnerManager {
 
     public void saveSpawnerData() {
         try {
-            // Delete existing spawner data if necessary
+            // Clear existing data
             spawnerData.getKeys(false).forEach(key -> spawnerData.set(key, null));
 
             for (Map.Entry<String, SpawnerData> entry : spawners.entrySet()) {
@@ -145,37 +144,30 @@ public class SpawnerManager {
                 Location loc = spawner.getSpawnerLocation();
                 String path = "spawners." + spawnerId;
 
-                // Save spawner properties
-                spawnerData.set(path + ".world", loc.getWorld().getName());
-                spawnerData.set(path + ".x", loc.getBlockX());
-                spawnerData.set(path + ".y", loc.getBlockY());
-                spawnerData.set(path + ".z", loc.getBlockZ());
+                // Save basic spawner properties
+                spawnerData.set(path + ".location", String.format("%s,%d,%d,%d",
+                        loc.getWorld().getName(), loc.getBlockX(), loc.getBlockY(), loc.getBlockZ()));
                 spawnerData.set(path + ".entityType", spawner.getEntityType().name());
-                spawnerData.set(path + ".spawnerExp", spawner.getSpawnerExp());
-                spawnerData.set(path + ".spawnerActive", spawner.getSpawnerActive());
-                spawnerData.set(path + ".spawnerRange", spawner.getSpawnerRange());
-                spawnerData.set(path + ".spawnerStop", spawner.getSpawnerStop());
-                spawnerData.set(path + ".lastSpawnTime", spawner.getLastSpawnTime());
-                spawnerData.set(path + ".spawnDelay", spawner.getSpawnDelay());
-                spawnerData.set(path + ".maxSpawnerLootSlots", spawner.getMaxSpawnerLootSlots());
-                spawnerData.set(path + ".maxStoredExp", spawner.getMaxStoredExp());
-                spawnerData.set(path + ".minMobs", spawner.getMinMobs());
-                spawnerData.set(path + ".maxMobs", spawner.getMaxMobs());
-                spawnerData.set(path + ".stackSize", spawner.getStackSize());
-                spawnerData.set(path + ".allowEquipmentItems", spawner.isAllowEquipmentItems());
+                spawnerData.set(path + ".settings", String.format("%d,%b,%d,%b,%d,%d,%d,%d,%d,%d,%d,%b",
+                        spawner.getSpawnerExp(),
+                        spawner.getSpawnerActive(),
+                        spawner.getSpawnerRange(),
+                        spawner.getSpawnerStop(),
+                        spawner.getSpawnDelay(),
+                        spawner.getMaxSpawnerLootSlots(),
+                        spawner.getMaxStoredExp(),
+                        spawner.getMinMobs(),
+                        spawner.getMaxMobs(),
+                        spawner.getStackSize(),
+                        spawner.getLastSpawnTime(),
+                        spawner.isAllowEquipmentItems()));
 
-                VirtualInventory virtualInv = spawner.getVirtualInventory();
+                // Save OptimizedVirtualInventory
+                OptimizedVirtualInventory virtualInv = spawner.getVirtualInventory();
                 if (virtualInv != null) {
-                    List<String> serializedItems = IntStream.range(0, virtualInv.getSize())
-                            .mapToObj(slot -> {
-                                ItemStack item = virtualInv.getItem(slot);
-                                return item != null ? slot + ":" + ItemStackSerializer.itemStackToJson(item) : null;
-                            })
-                            .filter(Objects::nonNull)
-                            .toList();
-
-                    spawnerData.set(path + ".virtualInventory.size", virtualInv.getSize());
-                    spawnerData.set(path + ".virtualInventory.items", serializedItems);
+                    Map<OptimizedVirtualInventory.ItemSignature, Long> items = virtualInv.getConsolidatedItems();
+                    List<String> serializedItems = ItemStackSerializer.serializeInventory(items);
+                    spawnerData.set(path + ".inventory", serializedItems);
                 }
             }
 
@@ -187,100 +179,75 @@ public class SpawnerManager {
     }
 
     public void loadSpawnerData() {
-        // Clear existing spawner data and location index
         spawners.clear();
         locationIndex.clear();
 
-        // Get the spawners section from the configuration
         ConfigurationSection spawnersSection = spawnerData.getConfigurationSection("spawners");
         if (spawnersSection == null) return;
 
-        // Iterate through each spawner ID in the configuration
         for (String spawnerId : spawnersSection.getKeys(false)) {
             try {
                 String path = "spawners." + spawnerId;
 
-                // Load the world name and get the World object
-                String worldName = spawnerData.getString(path + ".world");
-                World world = Bukkit.getWorld(worldName);
-                if (world == null) {
-                    plugin.getLogger().warning("Could not load spawner " + spawnerId + ": world not found");
-                    continue;
-                }
+                // Load location
+                String[] locParts = spawnerData.getString(path + ".location").split(",");
+                World world = Bukkit.getWorld(locParts[0]);
+                if (world == null) continue;
 
-                // Load the spawner's location
-                Location location = new Location(
-                        world,
-                        spawnerData.getInt(path + ".x"),
-                        spawnerData.getInt(path + ".y"),
-                        spawnerData.getInt(path + ".z")
-                );
+                Location location = new Location(world,
+                        Integer.parseInt(locParts[1]),
+                        Integer.parseInt(locParts[2]),
+                        Integer.parseInt(locParts[3]));
 
-                // Load the entity type for the spawner
+                // Load entity type and create spawner
                 EntityType entityType = EntityType.valueOf(spawnerData.getString(path + ".entityType"));
-
-                // Create a new SpawnerData instance
                 SpawnerData spawner = new SpawnerData(spawnerId, location, entityType, plugin);
 
-                // Load basic spawner properties
-                spawner.setSpawnerExp(spawnerData.getInt(path + ".spawnerExp"));
-                spawner.setSpawnerActive(spawnerData.getBoolean(path + ".spawnerActive"));
-                spawner.setSpawnerRange(spawnerData.getInt(path + ".spawnerRange"));
-                spawner.setSpawnerStop(spawnerData.getBoolean(path + ".spawnerStop"));
-                spawner.setLastSpawnTime(spawnerData.getLong(path + ".lastSpawnTime"));
-                spawner.setSpawnDelay(spawnerData.getInt(path + ".spawnDelay"));
-                spawner.setMaxSpawnerLootSlots(spawnerData.getInt(path + ".maxSpawnerLootSlots"));
-                spawner.setMaxStoredExp(spawnerData.getInt(path + ".maxStoredExp"));
-                spawner.setMinMobs(spawnerData.getInt(path + ".minMobs"));
-                spawner.setMaxMobs(spawnerData.getInt(path + ".maxMobs"));
-                spawner.setStackSize(spawnerData.getInt(path + ".stackSize"));
-                spawner.setAllowEquipmentItems(spawnerData.getBoolean(path + ".allowEquipmentItems"));
+                // Load settings
+                String[] settings = spawnerData.getString(path + ".settings").split(",");
+                spawner.setSpawnerExp(Integer.parseInt(settings[0]));
+                spawner.setSpawnerActive(Boolean.parseBoolean(settings[1]));
+                spawner.setSpawnerRange(Integer.parseInt(settings[2]));
+                spawner.setSpawnerStop(Boolean.parseBoolean(settings[3]));
+                spawner.setSpawnDelay(Integer.parseInt(settings[4]));
+                spawner.setMaxSpawnerLootSlots(Integer.parseInt(settings[5]));
+                spawner.setMaxStoredExp(Integer.parseInt(settings[6]));
+                spawner.setMinMobs(Integer.parseInt(settings[7]));
+                spawner.setMaxMobs(Integer.parseInt(settings[8]));
+                spawner.setStackSize(Integer.parseInt(settings[9]));
+                spawner.setLastSpawnTime(Long.parseLong(settings[10]));
+                spawner.setAllowEquipmentItems(Boolean.parseBoolean(settings[11]));
 
-                // Load virtual inventory
-                int invSize = spawnerData.getInt(path + ".virtualInventory.size", spawner.getMaxSpawnerLootSlots());
-                VirtualInventory virtualInv = new VirtualInventory(invSize);
+                // Load inventory
+                OptimizedVirtualInventory virtualInv = new OptimizedVirtualInventory(spawner.getMaxSpawnerLootSlots());
+                List<String> inventoryData = spawnerData.getStringList(path + ".inventory");
 
-                // Deserialize and load items into the virtual inventory
-                List<String> serializedItems = spawnerData.getStringList(path + ".virtualInventory.items");
-                if (serializedItems != null) {
-                    for (String serialized : serializedItems) {
-                        try {
-                            String[] parts = serialized.split(":", 2);
-                            if (parts.length == 2) {
-                                int slot = Integer.parseInt(parts[0]);
-                                ItemStack item = ItemStackSerializer.itemStackFromJson(parts[1]);
-                                virtualInv.setItem(slot, item);
-                            }
-                        } catch (NumberFormatException e) {
-                            plugin.getLogger().warning("Invalid slot number for spawner " + spawnerId + ": " + e.getMessage());
-                        } catch (IllegalArgumentException e) {
-                            plugin.getLogger().warning("Failed to load item for spawner " + spawnerId + ": " + e.getMessage());
+                if (inventoryData != null) {
+                    Map<ItemStack, Integer> items = ItemStackSerializer.deserializeInventory(inventoryData);
+                    for (Map.Entry<ItemStack, Integer> entry : items.entrySet()) {
+                        ItemStack item = entry.getKey();
+                        int amount = entry.getValue();
+
+                        // Split into manageable stack sizes
+                        while (amount > 0) {
+                            int batchSize = Math.min(amount, item.getMaxStackSize());
+                            ItemStack batch = item.clone();
+                            batch.setAmount(batchSize);
+                            virtualInv.addItems(Collections.singletonList(batch));
+                            amount -= batchSize;
                         }
                     }
                 }
-                spawner.setVirtualInventory(virtualInv);
 
-                // Add the spawner to the maps
+                spawner.setVirtualInventory(virtualInv);
                 spawners.put(spawnerId, spawner);
                 locationIndex.put(new LocationKey(spawner.getSpawnerLocation()), spawner);
 
             } catch (Exception e) {
-                // Log any errors that occur while loading a spawner
                 plugin.getLogger().severe("Error loading spawner " + spawnerId);
                 e.printStackTrace();
             }
         }
-
-        // Log the total number of spawners loaded
-        plugin.getLogger().info("Loaded " + spawners.size() + " spawners from spawners_data.yml");
-    }
-
-    public Map<String, SpawnerData> getSpawners() {
-        return this.spawners;
-    }
-
-    public SpawnerData getSpawner(String id) {
-        return spawners.get(id);
     }
 
     public List<SpawnerData> getAllSpawners() {
@@ -295,127 +262,128 @@ public class SpawnerManager {
         }, 1, intervalSeconds, TimeUnit.SECONDS); // 5 phút
     }
 
-    public void backupSpawnerData() {
-        try {
-            File backupFile = new File(plugin.getDataFolder(), "spawners_data_backup_" +
-                    System.currentTimeMillis() + ".yml");
-            spawnerData.save(backupFile);
-        } catch (IOException e) {
-            plugin.getLogger().warning("Could not create backup of spawners_data.yml!");
-            e.printStackTrace();
-        }
-    }
-
-    public boolean saveSingleSpawner(String spawnerId) {
-        try {
-            SpawnerData spawner = spawners.get(spawnerId);
-            if (spawner == null) {
-                plugin.getLogger().warning("Could not save spawner " + spawnerId + ": spawner not found");
-                return false;
-            }
-
-            String path = "spawners." + spawnerId;
-            Location loc = spawner.getSpawnerLocation();
-
-            // Lưu thông tin location
-            spawnerData.set(path + ".world", loc.getWorld().getName());
-            spawnerData.set(path + ".x", loc.getBlockX());
-            spawnerData.set(path + ".y", loc.getBlockY());
-            spawnerData.set(path + ".z", loc.getBlockZ());
-
-            // Lưu các thuộc tính cơ bản
-            spawnerData.set(path + ".entityType", spawner.getEntityType().name());
-            spawnerData.set(path + ".spawnerExp", spawner.getSpawnerExp());
-            spawnerData.set(path + ".spawnerActive", spawner.getSpawnerActive());
-            spawnerData.set(path + ".spawnerRange", spawner.getSpawnerRange());
-            spawnerData.set(path + ".spawnerStop", spawner.getSpawnerStop());
-            spawnerData.set(path + ".lastSpawnTime", spawner.getLastSpawnTime());
-            spawnerData.set(path + ".spawnDelay", spawner.getSpawnDelay());
-            spawnerData.set(path + ".maxSpawnerLootSlots", spawner.getMaxSpawnerLootSlots());
-            spawnerData.set(path + ".maxStoredExp", spawner.getMaxStoredExp());
-            spawnerData.set(path + ".minMobs", spawner.getMinMobs());
-            spawnerData.set(path + ".maxMobs", spawner.getMaxMobs());
-            spawnerData.set(path + ".stackSize", spawner.getStackSize());
-            spawnerData.set(path + ".allowEquipmentItems", spawner.isAllowEquipmentItems());
-
-            // Lưu virtual inventory nếu có
-            VirtualInventory virtualInv = spawner.getVirtualInventory();
-            if (virtualInv != null) {
-                List<String> serializedItems = new ArrayList<>();
-
-                for (int slot = 0; slot < virtualInv.getSize(); slot++) {
-                    ItemStack item = virtualInv.getItem(slot);
-                    if (item != null) {
-                        String serialized = slot + ":" + ItemStackSerializer.itemStackToJson(item);
-                        serializedItems.add(serialized);
-                    }
-                }
-
-                spawnerData.set(path + ".virtualInventory.size", virtualInv.getSize());
-                spawnerData.set(path + ".virtualInventory.items", serializedItems);
-            }
-
-            // Lưu file
-            spawnerData.save(spawnerDataFile);
-            return true;
-
-        } catch (IOException e) {
-            plugin.getLogger().severe("Could not save spawner " + spawnerId + " to spawners_data.yml!");
-            e.printStackTrace();
-            return false;
-        }
-    }
-
-
-
     public void spawnLoot(SpawnerData spawner) {
         if (System.currentTimeMillis() - spawner.getLastSpawnTime() >= spawner.getSpawnDelay()) {
-            LootResult loot = spawnerLootGenerator.generateLoot(
-                    spawner.getEntityType(),
-                    spawner.getMinMobs(),
-                    spawner.getMaxMobs(),
-                    spawner
-            );
+            // Run heavy calculations async
+            Bukkit.getAsyncScheduler().runTaskAsynchronously(plugin task -> {
+                LootResult loot = spawnerLootGenerator.generateLoot(
+                        spawner.getEntityType(),
+                        spawner.getMinMobs(),
+                        spawner.getMaxMobs(),
+                        spawner
+                );
 
-            Location loc = spawner.getSpawnerLocation();
-            World world = loc.getWorld();
-            world.spawnParticle(ParticleWrapper.VILLAGER_HAPPY,
-                    loc.clone().add(0.5, 0.5, 0.5),
-                    10, 0.3, 0.3, 0.3, 0);
+                // Switch back to main thread for Bukkit API calls
+                Bukkit.getScheduler().runTask(plugin, () -> {
+                    Location loc = spawner.getSpawnerLocation();
+                    World world = loc.getWorld();
+                    world.spawnParticle(ParticleWrapper.VILLAGER_HAPPY,
+                            loc.clone().add(0.5, 0.5, 0.5),
+                            10, 0.3, 0.3, 0.3, 0);
 
-            // Add loot to virtual inventory
-            spawnerLootGenerator.addLootToSpawner(spawner, loot);
-            spawner.setLastSpawnTime(System.currentTimeMillis());
+                    // Calculate pages before adding new loot
+                    int oldTotalPages = calculateTotalPages(spawner);
 
-            // Update for all players viewing the spawner
-            Bukkit.getGlobalRegionScheduler().run(plugin, task -> {
-                for (HumanEntity viewer : getViewersForSpawner(spawner)) {
-                    if (viewer instanceof Player) {
-                        Player player = (Player) viewer;
-                        Inventory currentInv = player.getOpenInventory().getTopInventory();
-                        if (currentInv.getHolder() instanceof PagedSpawnerLootHolder) {
-                                PagedSpawnerLootHolder holder = (PagedSpawnerLootHolder) currentInv.getHolder();
-                            int currentPage = holder.getCurrentPage();
-                            // Create new inventory with the latest data
-                            Inventory newInv = lootManager.createLootInventory(spawner, languageManager.getGuiTitle("gui-title.loot-menu"), currentPage);
-                            // Copy items from new inventory to the current inventory
-                            for (int i = 0; i < newInv.getSize(); i++) {
-                                currentInv.setItem(i, newInv.getItem(i));
-                            }
-                            player.updateInventory();
-                        }
+                    spawnerLootGenerator.addLootToSpawner(spawner, loot);
+                    spawner.setLastSpawnTime(System.currentTimeMillis());
+
+                    // Calculate pages after adding new loot
+                    int newTotalPages = calculateTotalPages(spawner);
+
+                    updateLootInventoryViewers(spawner, oldTotalPages, newTotalPages);
+                    updateSpawnerGuiViewers(spawner);
+                });
+            });
+        }
+    }
+
+    private int calculateTotalPages(SpawnerData spawner) {
+        OptimizedVirtualInventory virtualInv = spawner.getVirtualInventory();
+        int totalItems = virtualInv.getDisplayInventory().size();
+        return Math.max(1, (int) Math.ceil((double) totalItems / 45));
+    }
+
+    private record UpdateAction(Player player, SpawnerData spawner, int page, boolean requiresNewInventory) {
+    }
+
+    private void updateLootInventoryViewers(SpawnerData spawner, int oldTotalPages, int newTotalPages) {
+        // Check if total pages changed
+        boolean pagesChanged = oldTotalPages != newTotalPages;
+
+        // Batch all viewers that need updates
+        List<UpdateAction> updateQueue = new ArrayList<>();
+
+        for (HumanEntity viewer : getViewersForSpawner(spawner)) {
+            if (viewer instanceof Player) {
+                Player player = (Player) viewer;
+                Inventory currentInv = player.getOpenInventory().getTopInventory();
+                if (currentInv.getHolder() instanceof PagedSpawnerLootHolder) {
+                    PagedSpawnerLootHolder holder = (PagedSpawnerLootHolder) currentInv.getHolder();
+                    int currentPage = holder.getCurrentPage();
+
+                    boolean needsNewInventory = false;
+                    int targetPage = currentPage;
+
+                    // Determine if we need a new inventory
+                    if (currentPage > newTotalPages) {
+                        targetPage = newTotalPages;
+                        needsNewInventory = true;
+                    } else if (pagesChanged) {
+                        // If total pages changed but current page is still valid,
+                        // we need new inventory just to update the title
+                        needsNewInventory = true;
                     }
-                }
 
-                for (Map.Entry<UUID, SpawnerData> entry : openSpawnerGuis.entrySet()) {
-                    if (entry.getValue().getSpawnerId().equals(spawner.getSpawnerId())) {
-                        Player viewer = Bukkit.getPlayer(entry.getKey());
-                        if (viewer != null && viewer.isOnline()) {
-                            updateSpawnerGui(viewer, spawner, true);
-                        }
+                    updateQueue.add(new UpdateAction(player, spawner, targetPage, needsNewInventory));
+                }
+            }
+        }
+
+        // Process all updates in one server tick
+        if (!updateQueue.isEmpty()) {
+            Bukkit.getScheduler().runTask(plugin, () -> {
+                for (UpdateAction action : updateQueue) {
+                    if (action.requiresNewInventory) {
+                        // Need new inventory for title update
+                        Inventory newInv = lootManager.createLootInventory(
+                                action.spawner,
+                                languageManager.getGuiTitle("gui-title.loot-menu"),
+                                action.page
+                        );
+                        action.player.closeInventory();
+                        action.player.openInventory(newInv);
+                    } else {
+                        // Just update contents of current inventory
+                        Inventory currentInv = action.player.getOpenInventory().getTopInventory();
+                        lootManager.updateInventoryContents(currentInv, action.spawner, action.page);
+                        action.player.updateInventory();
                     }
                 }
             });
+        }
+    }
+
+    private void updateSpawnerGuiViewers(SpawnerData spawner) {
+        for (Map.Entry<UUID, SpawnerData> entry : openSpawnerGuis.entrySet()) {
+            if (entry.getValue().getSpawnerId().equals(spawner.getSpawnerId())) {
+                Player viewer = Bukkit.getPlayer(entry.getKey());
+                if (viewer != null && viewer.isOnline()) {
+                    updateSpawnerGui(viewer, spawner, true);
+                }
+            }
+        }
+    }
+
+    public void updateSpawnerGui(Player player, SpawnerData spawner, boolean forceUpdate) {
+        Inventory openInv = player.getOpenInventory().getTopInventory();
+        if (openInv.getHolder() instanceof SpawnerMenuHolder) {
+            SpawnerMenuHolder holder = (SpawnerMenuHolder) openInv.getHolder();
+            if (holder.getSpawnerData().getSpawnerId().equals(spawner.getSpawnerId()) || forceUpdate) {
+                updateSpawnerInfoItem(openInv, spawner);
+                updateExpItem(openInv, spawner);
+                updateChestItem(openInv, spawner);
+                player.updateInventory();
+            }
         }
     }
 
@@ -433,27 +401,12 @@ public class SpawnerManager {
         return viewers;
     }
 
-
-    // Thêm method để track GUI đang mở
     public void trackOpenGui(UUID playerId, SpawnerData spawner) {
         openSpawnerGuis.put(playerId, spawner);
     }
 
     public void untrackOpenGui(UUID playerId) {
         openSpawnerGuis.remove(playerId);
-    }
-
-    // Method để update GUI cho người chơi đang xem
-    public void updateSpawnerGui(Player player, SpawnerData spawner, boolean forceUpdate) {
-        Inventory openInv = player.getOpenInventory().getTopInventory();
-        if (openInv.getHolder() instanceof SpawnerMenuHolder) {
-            SpawnerMenuHolder holder = (SpawnerMenuHolder) openInv.getHolder();
-            if (holder.getSpawnerData().getSpawnerId().equals(spawner.getSpawnerId()) || forceUpdate) {
-                updateSpawnerInfoItem(openInv, spawner);
-                updateExpItem(openInv, spawner);
-                updateChestItem(openInv, spawner);
-            }
-        }
     }
 
     private void updateChestItem(Inventory inventory, SpawnerData spawner) {
@@ -464,8 +417,8 @@ public class SpawnerManager {
         chestMeta.setDisplayName(languageManager.getMessage("spawner-loot-item.name"));
 
         List<String> chestLore = new ArrayList<>();
-        VirtualInventory virtualInventory = spawner.getVirtualInventory();
-        int currentItems = virtualInventory.getAllItems().size();
+        OptimizedVirtualInventory virtualInventory = spawner.getVirtualInventory();
+        int currentItems = virtualInventory.getUsedSlots();
         int maxSlots = spawner.getMaxSpawnerLootSlots();
         int percentStorage = (int) ((double) currentItems / maxSlots * 100);
         String loreMessageChest = languageManager.getMessage("spawner-loot-item.lore.chest")

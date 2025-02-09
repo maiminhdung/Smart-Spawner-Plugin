@@ -1,6 +1,7 @@
 package me.nighter.smartSpawner.listeners;
 
 import me.nighter.smartSpawner.*;
+import me.nighter.smartSpawner.nms.ParticleWrapper;
 import me.nighter.smartSpawner.utils.*;
 import me.nighter.smartSpawner.managers.*;
 import me.nighter.smartSpawner.nms.ParticleWrapper;
@@ -194,13 +195,11 @@ public class SpawnerListener implements Listener {
         EntityType entityType = cs.getSpawnedType();
         spawner.setEntityType(entityType == null || entityType == EntityType.UNKNOWN ?
                 configManager.getDefaultEntityType() : entityType);
-        spawnerManager.saveSingleSpawner(spawner.getSpawnerId());
     }
 
     private void handleSpawnerStacking(Player player, Block block, SpawnerData spawner, ItemStack itemInHand) {
         boolean success = stackHandler.handleSpawnerStack(player, spawner, itemInHand, player.isSneaking());
         if (success) {
-            spawnerManager.saveSingleSpawner(spawner.getSpawnerId());
             if (player.isSneaking()) {
                 player.playSound(player.getLocation(), Sound.ENTITY_EXPERIENCE_ORB_PICKUP, 1.0f, 1.0f);
                 block.getWorld().spawnParticle(ParticleWrapper.VILLAGER_HAPPY,
@@ -229,8 +228,8 @@ public class SpawnerListener implements Listener {
         chestMeta.setDisplayName(languageManager.getMessage("spawner-loot-item.name"));
 
         List<String> chestLore = new ArrayList<>();
-        VirtualInventory virtualInventory = spawner.getVirtualInventory();
-        int currentItems = virtualInventory.getAllItems().size();
+        OptimizedVirtualInventory virtualInventory = spawner.getVirtualInventory();
+        int currentItems = virtualInventory.getUsedSlots();
         int maxSlots = spawner.getMaxSpawnerLootSlots();
         int percentStorage = (int) ((double) currentItems / maxSlots * 100);
         String loreMessageChest = languageManager.getMessage("spawner-loot-item.lore.chest")
@@ -790,7 +789,6 @@ public class SpawnerListener implements Listener {
             spawnerData.setEntityType(newType);
             spawner.setSpawnedType(newType);
             spawner.update();
-            spawnerManager.saveSingleSpawner(spawnerData.getSpawnerId());
 
             languageManager.sendMessage(player, "messages.changed",
                     "%type%", languageManager.getFormattedMobName(newType));

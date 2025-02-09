@@ -84,14 +84,6 @@ hopper:
   check-interval: 20
 
 # ===============================================================
-#                   Performance Optimizations
-# ===============================================================
-performance:
-  # Batch Processing for Mob Drops
-  # Higher values = more consistent, lower resource usage
-  batch-size: 3
-
-# ===============================================================
 #                     Plugin Update Checker
 # ===============================================================
 update-checker:

@@ -1,5 +1,6 @@
 package me.nighter.smartSpawner.managers;
 
+import me.nighter.smartSpawner.nms.TextureWrapper;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.entity.EntityType;

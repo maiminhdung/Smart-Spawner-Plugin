@@ -63,8 +63,6 @@ public class SmartSpawner extends JavaPlugin {
     @Override
     public void onEnable() {
         instance = this;
-        String currentVersion = this.getDescription().getVersion();
-        ComponentLogger prefixedLogger = ComponentLogger.logger(Bukkit.getLogger().getName());
         initializeVersionSpecificComponents();
         initializeComponents();
         setupCommand();
@@ -236,6 +234,7 @@ public class SmartSpawner extends JavaPlugin {
     // Version specific implementations
     private void initializeVersionSpecificComponents() {
         String version = Bukkit.getServer().getBukkitVersion();
+        
         String[][] versionSpecificComponents = {
                 {"Particles", "me.nighter.smartSpawner.v1_20.ParticleInitializer", "me.nighter.smartSpawner.v1_21.ParticleInitializer"},
                 {"Textures", "me.nighter.smartSpawner.v1_20.TextureInitializer", "me.nighter.smartSpawner.v1_21.TextureInitializer"},
@@ -261,7 +260,7 @@ public class SmartSpawner extends JavaPlugin {
             }
         }
     }
-
+    
     // Getters for kyori/adventure
     public static ComponentLogger prefixedlogger() { return prefixedlogger; }
 }

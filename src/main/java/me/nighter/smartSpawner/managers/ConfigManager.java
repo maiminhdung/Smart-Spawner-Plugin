@@ -571,18 +571,6 @@ public class ConfigManager {
     }
 
     // ===============================================================
-    //                  Performance Optimizations
-    // ===============================================================
-
-    public int getBatchSize() {
-        return (int) configCache.computeIfAbsent("performance.batch-size", key -> {
-            int defaultValue = 3;
-            setDefaultIfNotExists(key, defaultValue);
-            return config.getInt(key, defaultValue);
-        });
-    }
-
-    // ===============================================================
     //                    Plugin Update Checker
     // ===============================================================
 

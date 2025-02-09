@@ -5,6 +5,7 @@ import me.nighter.smartSpawner.managers.ConfigManager;
 import me.nighter.smartSpawner.managers.LanguageManager;
 import me.nighter.smartSpawner.managers.SpawnerLootManager;
 import me.nighter.smartSpawner.holders.PagedSpawnerLootHolder;
+import me.nighter.smartSpawner.utils.OptimizedVirtualInventory;
 import me.nighter.smartSpawner.utils.SpawnerData;
 
 import org.bukkit.Material;
@@ -84,7 +85,9 @@ public class GUIClickHandler implements Listener {
         int amountToMove = singleItem ? 1 : item.getAmount();
         int amountMoved = 0;
         PlayerInventory playerInv = player.getInventory();
+        OptimizedVirtualInventory virtualInv = spawner.getVirtualInventory();
 
+        // Try to add to player inventory
         for (int i = 0; i < 36 && amountToMove > 0; i++) {
             ItemStack current = playerInv.getItem(i);
 
@@ -108,6 +111,7 @@ public class GUIClickHandler implements Listener {
         }
 
         if (amountMoved > 0) {
+            // Update source inventory display
             if (amountMoved == item.getAmount()) {
                 sourceInv.setItem(slot, null);
             } else {
@@ -116,8 +120,10 @@ public class GUIClickHandler implements Listener {
                 sourceInv.setItem(slot, remaining);
             }
 
-            plugin.getLootManager().saveItems(spawner, sourceInv);
-            refreshSpawnerMenuForAllPlayers(spawner);
+            // Remove from virtual inventory
+            ItemStack itemToRemove = item.clone();
+            itemToRemove.setAmount(amountMoved);
+            virtualInv.removeItems(Collections.singletonList(itemToRemove));
         } else {
             languageManager.sendMessage(player, "messages.inventory-full");
         }
@@ -125,7 +131,9 @@ public class GUIClickHandler implements Listener {
 
     private void takeAllSimilarItems(Player player, Inventory sourceInv, ItemStack targetItem, SpawnerData spawner) {
         Map<Integer, ItemStack> similarItems = new HashMap<>();
+        OptimizedVirtualInventory virtualInv = spawner.getVirtualInventory();
 
+        // Find all similar items
         for (int i = 0; i < 45; i++) {
             ItemStack invItem = sourceInv.getItem(i);
             if (invItem != null && invItem.isSimilar(targetItem)) {
@@ -137,6 +145,7 @@ public class GUIClickHandler implements Listener {
 
         PlayerInventory playerInv = player.getInventory();
         int totalMoved = 0;
+        List<ItemStack> itemsToRemove = new ArrayList<>();
 
         for (Map.Entry<Integer, ItemStack> entry : similarItems.entrySet()) {
             ItemStack itemToMove = entry.getValue();
@@ -165,6 +174,7 @@ public class GUIClickHandler implements Listener {
 
             if (amountMoved > 0) {
                 totalMoved += amountMoved;
+                // Update display inventory
                 if (amountMoved == itemToMove.getAmount()) {
                     sourceInv.setItem(entry.getKey(), null);
                 } else {
@@ -172,6 +182,11 @@ public class GUIClickHandler implements Listener {
                     remaining.setAmount(itemToMove.getAmount() - amountMoved);
                     sourceInv.setItem(entry.getKey(), remaining);
                 }
+
+                // Track items to remove from virtual inventory
+                ItemStack movedItem = itemToMove.clone();
+                movedItem.setAmount(amountMoved);
+                itemsToRemove.add(movedItem);
             }
 
             if (amountToMove > 0) {
@@ -180,9 +195,9 @@ public class GUIClickHandler implements Listener {
             }
         }
 
-        if (totalMoved > 0) {
-            plugin.getLootManager().saveItems(spawner, sourceInv);
-            refreshSpawnerMenuForAllPlayers(spawner);
+        if (!itemsToRemove.isEmpty()) {
+            virtualInv.removeItems(itemsToRemove);
+            player.updateInventory();
         }
     }
 
@@ -263,7 +278,11 @@ public class GUIClickHandler implements Listener {
         player.openInventory(pageInventory);
     }
 
-    private void handleTakeAllItems(Player player, Inventory sourceInventory) {
+    public void handleTakeAllItems(Player player, Inventory sourceInventory) {
+        PagedSpawnerLootHolder holder = (PagedSpawnerLootHolder) sourceInventory.getHolder();
+        SpawnerData spawner = holder.getSpawnerData();
+        OptimizedVirtualInventory virtualInv = spawner.getVirtualInventory();
+
         // Collect all non-null and non-air items
         Map<Integer, ItemStack> sourceItems = new HashMap<>();
         for (int i = 0; i < 45; i++) {
@@ -283,6 +302,9 @@ public class GUIClickHandler implements Listener {
         boolean inventoryFull = false;
         PlayerInventory playerInv = player.getInventory();
         int totalAmountMoved = 0;
+
+        // Track items that were successfully moved
+        List<ItemStack> itemsToRemove = new ArrayList<>();
 
         // Process each source slot
         for (Map.Entry<Integer, ItemStack> entry : sourceItems.entrySet()) {
@@ -319,9 +341,16 @@ public class GUIClickHandler implements Listener {
                 }
             }
 
-            // Update or remove source item based on how much was moved
+            // Update tracking of items to remove
             if (amountMoved > 0) {
                 totalAmountMoved += amountMoved;
+
+                // Create an item stack for the amount that was actually moved
+                ItemStack movedItem = itemToMove.clone();
+                movedItem.setAmount(amountMoved);
+                itemsToRemove.add(movedItem);
+
+                // Update source inventory
                 if (amountMoved == itemToMove.getAmount()) {
                     sourceInventory.setItem(sourceSlot, null);
                 } else {
@@ -337,10 +366,10 @@ public class GUIClickHandler implements Listener {
             }
         }
 
-        // Get the spawner data and save the inventory state
-        PagedSpawnerLootHolder holder = (PagedSpawnerLootHolder) sourceInventory.getHolder();
-        SpawnerData spawner = holder.getSpawnerData();
-        plugin.getLootManager().saveItems(spawner, sourceInventory);
+        // Remove successfully moved items from virtual inventory
+        if (!itemsToRemove.isEmpty()) {
+            virtualInv.removeItems(itemsToRemove);
+        }
 
         // Send appropriate message
         if (!anyItemMoved) {
@@ -365,4 +394,5 @@ public class GUIClickHandler implements Listener {
             }
         }
     }
+
 }
