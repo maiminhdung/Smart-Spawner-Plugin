@@ -24,6 +24,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.TimeUnit;
 
 public class SpawnerManager {
     private final SmartSpawner plugin;
@@ -265,7 +266,7 @@ public class SpawnerManager {
     public void spawnLoot(SpawnerData spawner) {
         if (System.currentTimeMillis() - spawner.getLastSpawnTime() >= spawner.getSpawnDelay()) {
             // Run heavy calculations async
-            Bukkit.getAsyncScheduler().runTaskAsynchronously(plugin task -> {
+            Bukkit.getAsyncScheduler().runNow(plugin, task -> {
                 LootResult loot = spawnerLootGenerator.generateLoot(
                         spawner.getEntityType(),
                         spawner.getMinMobs(),
@@ -273,10 +274,10 @@ public class SpawnerManager {
                         spawner
                 );
 
+                Location loc = spawner.getSpawnerLocation();
+                World world = loc.getWorld();
                 // Switch back to main thread for Bukkit API calls
-                Bukkit.getScheduler().runTask(plugin, () -> {
-                    Location loc = spawner.getSpawnerLocation();
-                    World world = loc.getWorld();
+                Bukkit.getRegionScheduler().execute(plugin, world, loc.getBlockX() >> 4, loc.getBlockZ() >> 4, () -> {
                     world.spawnParticle(ParticleWrapper.VILLAGER_HAPPY,
                             loc.clone().add(0.5, 0.5, 0.5),
                             10, 0.3, 0.3, 0.3, 0);
@@ -341,7 +342,7 @@ public class SpawnerManager {
 
         // Process all updates in one server tick
         if (!updateQueue.isEmpty()) {
-            Bukkit.getScheduler().runTask(plugin, () -> {
+            Bukkit.getGlobalRegionScheduler().execute(plugin, () -> {
                 for (UpdateAction action : updateQueue) {
                     if (action.requiresNewInventory) {
                         // Need new inventory for title update

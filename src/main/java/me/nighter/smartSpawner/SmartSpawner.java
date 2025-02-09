@@ -13,8 +13,6 @@ import me.ryanhamshire.GriefPrevention.GriefPrevention;
 import me.nighter.smartSpawner.hooks.protections.api.Lands;
 import me.nighter.smartSpawner.commands.SmartSpawnerCommand;
 
-import net.kyori.adventure.text.Component;
-import net.kyori.adventure.text.format.TextColor;
 import net.kyori.adventure.text.logger.slf4j.ComponentLogger;
 
 import org.bukkit.Bukkit;
@@ -63,6 +61,8 @@ public class SmartSpawner extends JavaPlugin {
     @Override
     public void onEnable() {
         instance = this;
+        ComponentLogger prefixedLogger = ComponentLogger.logger(Bukkit.getLogger().getName());
+        String currentVersion = Bukkit.getServer().getVersion();
         initializeVersionSpecificComponents();
         initializeComponents();
         setupCommand();
