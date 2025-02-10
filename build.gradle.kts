@@ -10,7 +10,7 @@ plugins {
 runPaper.folia.registerTask()
 
 group = "me.nighter"
-version = "1.2.1-DEV"
+version = "1.2.2-DEV"
 
 repositories {
     mavenCentral()
@@ -83,7 +83,7 @@ tasks.processResources {
 
 tasks.jar {
     archiveBaseName.set("SmartSpawner")
-    archiveVersion.set("Paper-$version-SNAPSHOT")
+    archiveVersion.set("Paper-$version")
     //destinationDirectory.set(file("C:\\Users\\ADMIN\\OneDrive\\Desktop\\TestServer\\plugins\\"))
 
     // Combine subprojects
