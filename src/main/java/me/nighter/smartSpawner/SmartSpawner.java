@@ -1,5 +1,7 @@
 package me.nighter.smartSpawner;
 
+import io.papermc.paper.threadedregions.scheduler.ScheduledTask;
+
 import me.nighter.smartSpawner.dataMigration.SpawnerDataMigration;
 import me.nighter.smartSpawner.hooks.shops.IShopIntegration;
 import me.nighter.smartSpawner.hooks.shops.ShopIntegrationManager;
@@ -25,9 +27,10 @@ import com.sk89q.worldguard.WorldGuard;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.function.Consumer;
+import java.util.stream.Stream;
 
 public class SmartSpawner extends JavaPlugin {
-    private static SmartSpawner instance;
 
     // Managers
     private ConfigManager configManager;
@@ -58,7 +61,6 @@ public class SmartSpawner extends JavaPlugin {
 
     @Override
     public void onEnable() {
-        instance = this;
         ComponentLogger prefixedLogger = ComponentLogger.logger(Bukkit.getLogger().getName());
         String currentVersion = Bukkit.getServer().getVersion();
         initializeVersionSpecificComponents();
@@ -78,6 +80,8 @@ public class SmartSpawner extends JavaPlugin {
                 "╔══════════════════════════════════════════════════════════════╗",
                 "║                                                              ║",
                 " SmartSpawner " + currentVersion,
+                " This server is using " + Bukkit.getVersion(),
+                "",
                 " You are using Beta version of SmartSpawner,",
                 " please report any bugs to the developer.",
                 " ",
@@ -192,8 +196,6 @@ public class SmartSpawner extends JavaPlugin {
         if (eventHandlers != null) eventHandlers.cleanup();
     }
 
-    // Getters
-    public static SmartSpawner getInstance() { return instance; }
     public ConfigManager getConfigManager() { return configManager; }
     public LanguageManager getLanguageManager() { return languageManager; }
     public SpawnerLootGenerator getLootGenerator() { return lootGenerator; }
@@ -276,7 +278,5 @@ public class SmartSpawner extends JavaPlugin {
             }
         }
     }
-    
-    // Getters for kyori/adventure
-    public static ComponentLogger prefixedlogger() { return prefixedlogger; }
+
 }

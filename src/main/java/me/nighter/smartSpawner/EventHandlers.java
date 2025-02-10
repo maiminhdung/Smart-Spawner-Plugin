@@ -1,7 +1,6 @@
 package me.nighter.smartSpawner;
 
 import me.nighter.smartSpawner.holders.PagedSpawnerLootHolder;
-import me.nighter.smartSpawner.holders.SpawnerHolder;
 import me.nighter.smartSpawner.holders.SpawnerMenuHolder;
 import me.nighter.smartSpawner.holders.SpawnerStackerHolder;
 import me.nighter.smartSpawner.managers.ConfigManager;
@@ -16,13 +15,11 @@ import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.entity.SpawnerSpawnEvent;
 import org.bukkit.event.inventory.InventoryCloseEvent;
-import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.inventory.InventoryHolder;
 import org.bukkit.inventory.InventoryView;
 
 
 import java.util.*;
-import java.util.concurrent.TimeUnit;
 
 public class EventHandlers implements Listener {
     private final SmartSpawner plugin;
@@ -65,16 +62,16 @@ public class EventHandlers implements Listener {
             return;
         }
 
-        // Schedule check for inventory reopen
-        Bukkit.getAsyncScheduler().runDelayed(plugin, task -> {
-            InventoryView view = player.getOpenInventory();
-            // If player opened another valid inventory, don't unlock
-            if (view != null && isValidHolder(view.getTopInventory().getHolder())) {
-                return;
-            }
+        // Chạy trên Main Thread để tránh lỗi truy cập Inventory Async
+        Bukkit.getGlobalRegionScheduler().runDelayed(plugin, task -> {
+            // Kiểm tra nếu player không còn mở GUI nào nữa
+            if (player == null || !player.isOnline()) return;
 
-            playerCurrentMenu.remove(player);
-        }, 1L, TimeUnit.SECONDS);
+            InventoryView view = player.getOpenInventory();
+            if (view == null || !isValidHolder(view.getTopInventory().getHolder())) {
+                playerCurrentMenu.remove(player);
+            }
+        }, 20L); // 1 giây = 20 ticks
     }
 
     private boolean isValidHolder(InventoryHolder holder) {

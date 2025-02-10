@@ -8,6 +8,7 @@ import me.nighter.smartSpawner.holders.PagedSpawnerLootHolder;
 import me.nighter.smartSpawner.utils.OptimizedVirtualInventory;
 import me.nighter.smartSpawner.utils.SpawnerData;
 
+import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.Sound;
 import org.bukkit.entity.Player;
@@ -120,10 +121,16 @@ public class GUIClickHandler implements Listener {
                 sourceInv.setItem(slot, remaining);
             }
 
-            // Remove from virtual inventory
+            // Xóa vật phẩm khỏi Virtual Inventory
             ItemStack itemToRemove = item.clone();
             itemToRemove.setAmount(amountMoved);
             virtualInv.removeItems(Collections.singletonList(itemToRemove));
+
+            // Đảm bảo dữ liệu được cập nhật ngay lập tức
+            spawner.setVirtualInventory(virtualInv);
+
+            // Cập nhật GUI cho tất cả người chơi
+            refreshSpawnerMenuForAllPlayers(spawner);
         } else {
             languageManager.sendMessage(player, "messages.inventory-full");
         }
@@ -199,6 +206,8 @@ public class GUIClickHandler implements Listener {
             virtualInv.removeItems(itemsToRemove);
             player.updateInventory();
         }
+
+        refreshSpawnerMenuForAllPlayers(spawner);
     }
 
     //---------------------------------------------------
@@ -394,5 +403,4 @@ public class GUIClickHandler implements Listener {
             }
         }
     }
-
 }

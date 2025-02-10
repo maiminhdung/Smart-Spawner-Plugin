@@ -33,7 +33,7 @@ import java.util.concurrent.locks.ReentrantLock;
 
 public class HopperHandler implements Listener {
     private final SmartSpawner plugin;
-    private final Map<Location, BukkitTask> activeHoppers = new ConcurrentHashMap<>();
+    private final Map<Location, ScheduledTask> activeHoppers = new ConcurrentHashMap<>();
     private final SpawnerManager spawnerManager;
     private final SpawnerLootManager lootManager;
     private final LanguageManager languageManager;
@@ -48,9 +48,7 @@ public class HopperHandler implements Listener {
         this.config = plugin.getConfigManager();
 
         plugin.getServer().getPluginManager().registerEvents(this, plugin);
-        Bukkit.getGlobalRegionScheduler().runDelayed(plugin, task -> {
-            this.restartAllHoppers();
-        }, 40L);
+        Bukkit.getGlobalRegionScheduler().runDelayed(plugin, task -> this.restartAllHoppers(), 40L);
     }
 
     public void restartAllHoppers() {
@@ -130,25 +128,22 @@ public class HopperHandler implements Listener {
     public void startHopperTask(Location hopperLoc, Location spawnerLoc) {
         if (!config.isHopperEnabled()) return;
         if (activeHoppers.containsKey(hopperLoc)) return;
-        Consumer<ScheduledTask> taskConsumer = task -> {
-            Runnable runnable = new Runnable() {
-                @Override
-                public void run() {
-                    if (!isValidSetup(hopperLoc, spawnerLoc)) {
-                        stopHopperTask(hopperLoc);
-                        return;
-                    }
 
-                    // Kiểm tra trạng thái pause
-                    if (hopperPaused.getOrDefault(hopperLoc, false)) {
-                        return;
-                    }
+        ScheduledTask task = Bukkit.getRegionScheduler().runAtFixedRate(plugin, hopperLoc.getWorld(),
+                hopperLoc.getBlockX() >> 4, hopperLoc.getBlockZ() >> 4, scheduledTask -> {
 
-                    transferItems(hopperLoc, spawnerLoc);
-                }
-                transferItems(hopperLoc, spawnerLoc);
-            }
-        }.runTaskTimer(plugin, 0L, config.getHopperCheckInterval());
+                    Bukkit.getRegionScheduler().execute(plugin, hopperLoc.getWorld(),
+                            hopperLoc.getBlockX() >> 4, hopperLoc.getBlockZ() >> 4, () -> {
+
+                                if (!isValidSetup(hopperLoc, spawnerLoc)) {
+                                    stopHopperTask(hopperLoc);
+                                    scheduledTask.cancel(); // Hủy task nếu không hợp lệ
+                                    return;
+                                }
+                                transferItems(hopperLoc, spawnerLoc);
+                            });
+
+                }, 1L, config.getHopperCheckInterval());
 
         activeHoppers.put(hopperLoc, task);
     }
@@ -195,7 +190,6 @@ public class HopperHandler implements Listener {
 
                 ItemStack[] hopperContents = hopper.getInventory().getContents();
                 for (int i = 0; i < hopperContents.length; i++) {
-                    if (transferred >= itemsPerTransfer) break;
 
                     ItemStack hopperItem = hopperContents[i];
                     if (hopperItem == null || hopperItem.getType() == Material.AIR) {
@@ -235,34 +229,38 @@ public class HopperHandler implements Listener {
     }
 
     private void updateOpenGuis(SpawnerData spawner) {
-        Bukkit.getGlobalRegionScheduler().run(plugin, task -> {
-            // Cập nhật cho người chơi đang xem inventory
-            for (HumanEntity viewer : getViewersForSpawner(spawner)) {
-                if (viewer instanceof Player) {
-                    Player player = (Player) viewer;
-                    Inventory currentInv = player.getOpenInventory().getTopInventory();
-                    if (currentInv.getHolder() instanceof PagedSpawnerLootHolder) {
-                        PagedSpawnerLootHolder holder = (PagedSpawnerLootHolder) currentInv.getHolder();
-                        int currentPage = holder.getCurrentPage();
-                        Inventory newInv = lootManager.createLootInventory(spawner,
-                                languageManager.getGuiTitle("gui-title.loot-menu"), currentPage);
-                        for (int i = 0; i < newInv.getSize(); i++) {
-                            currentInv.setItem(i, newInv.getItem(i));
-                        }
-                        player.updateInventory();
-                    }
-                }
-            }
+        Location spawnerLoc = spawner.getSpawnerLocation();
+        World world = spawnerLoc.getWorld();
 
-            Map<UUID, SpawnerData> openGuis = spawnerManager.getOpenSpawnerGuis();
-            for (Map.Entry<UUID, SpawnerData> entry : openGuis.entrySet()) {
-                if (entry.getValue().getSpawnerId().equals(spawner.getSpawnerId())) {
-                    Player viewer = Bukkit.getPlayer(entry.getKey());
-                    if (viewer != null && viewer.isOnline()) {
-                        spawnerManager.updateSpawnerGui(viewer, spawner, true);
+        if (world == null) return;
+
+        Bukkit.getRegionScheduler().runDelayed(plugin, world,
+                spawnerLoc.getBlockX() >> 4, spawnerLoc.getBlockZ() >> 4, task -> {
+
+                for (HumanEntity viewer : getViewersForSpawner(spawner)) {
+                    if (viewer instanceof Player player) {
+                        Inventory currentInv = player.getOpenInventory().getTopInventory();
+                        if (currentInv.getHolder() instanceof PagedSpawnerLootHolder holder) {
+                            int currentPage = holder.getCurrentPage();
+                            Inventory newInv = lootManager.createLootInventory(spawner,
+                                    languageManager.getGuiTitle("gui-title.loot-menu"), currentPage);
+                            for (int i = 0; i < newInv.getSize(); i++) {
+                                currentInv.setItem(i, newInv.getItem(i));
+                            }
+                            player.updateInventory();
+                        }
                     }
                 }
-            }
+
+                Map<UUID, SpawnerData> openGuis = spawnerManager.getOpenSpawnerGuis();
+                for (Map.Entry<UUID, SpawnerData> entry : openGuis.entrySet()) {
+                    if (entry.getValue().getSpawnerId().equals(spawner.getSpawnerId())) {
+                        Player viewer = Bukkit.getPlayer(entry.getKey());
+                        if (viewer != null && viewer.isOnline()) {
+                            spawnerManager.updateSpawnerGui(viewer, spawner, true);
+                        }
+                    }
+                }
         }, 2L);
     }
 
@@ -270,8 +268,7 @@ public class HopperHandler implements Listener {
         List<HumanEntity> viewers = new ArrayList<>();
         for (Player player : Bukkit.getOnlinePlayers()) {
             Inventory openInv = player.getOpenInventory().getTopInventory();
-            if (openInv.getHolder() instanceof PagedSpawnerLootHolder) {
-                PagedSpawnerLootHolder holder = (PagedSpawnerLootHolder) openInv.getHolder();
+            if (openInv.getHolder() instanceof PagedSpawnerLootHolder holder) {
                 if (holder.getSpawnerData().getSpawnerId().equals(spawner.getSpawnerId())) {
                     viewers.add(player);
                 }
