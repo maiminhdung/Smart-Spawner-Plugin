@@ -22,6 +22,8 @@ import org.bukkit.inventory.meta.ItemMeta;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.StandardOpenOption;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
@@ -46,6 +48,7 @@ public class SpawnerManager {
         this.spawnerLootGenerator = plugin.getLootGenerator();
         this.lootManager = plugin.getLootManager();
         setupSpawnerDataFile();
+        loadSpawnerData();
         startSaveTask();
     }
 
@@ -125,20 +128,53 @@ public class SpawnerManager {
         return spawners.get(id);
     }
 
-    public void setupSpawnerDataFile() {
-        // Tạo file spawners_data.yml nếu chưa tồn tại
-        spawnerDataFile = new File(plugin.getDataFolder(), "spawners_data.yml");
-        if (!spawnerDataFile.exists()) {
-            plugin.saveResource("spawners_data.yml", false);
+    private void setupSpawnerDataFile() {
+        if (!plugin.getDataFolder().exists()) {
+            plugin.getDataFolder().mkdirs();
         }
+
+        spawnerDataFile = new File(plugin.getDataFolder(), "spawners_data.yml");
+
+        if (!spawnerDataFile.exists()) {
+            try {
+                spawnerDataFile.createNewFile();
+                // Tạo template comments
+                String header = """
+                # File Format Example:
+                #  spawners:
+                #    spawnerId:
+                #      location: world,x,y,z
+                #      entityType: ENTITY_TYPE
+                #      settings: exp,active,range,stop,delay,slots,maxExp,minMobs,maxMobs,stack,time,equipment
+                #      inventory:
+                #        - ITEM_TYPE:amount
+                #        - ITEM_TYPE;durability:amount,durability:amount,...
+                """;
+
+                Files.write(spawnerDataFile.toPath(), header.getBytes(), StandardOpenOption.WRITE);
+            } catch (IOException e) {
+                plugin.getLogger().severe("Could not create spawners_data.yml!");
+                e.printStackTrace();
+            }
+        }
+
         spawnerData = YamlConfiguration.loadConfiguration(spawnerDataFile);
+
+        spawnerData.options().header("""
+        File Format Example:
+         spawners:
+           spawnerId:
+             location: world,x,y,z
+             entityType: ENTITY_TYPE
+             settings: exp,active,range,stop,delay,slots,maxExp,minMobs,maxMobs,stack,time,equipment
+             inventory:
+               - ITEM_TYPE:amount
+               - ITEM_TYPE;durability:amount,durability:amount,...
+        """);
     }
 
     public void saveSpawnerData() {
         try {
-            // Clear existing data
-            spawnerData.getKeys(false).forEach(key -> spawnerData.set(key, null));
-
             for (Map.Entry<String, SpawnerData> entry : spawners.entrySet()) {
                 String spawnerId = entry.getKey();
                 SpawnerData spawner = entry.getValue();
@@ -170,6 +206,15 @@ public class SpawnerManager {
                     List<String> serializedItems = ItemStackSerializer.serializeInventory(items);
                     spawnerData.set(path + ".inventory", serializedItems);
                 }
+            }
+
+            // Delete any spawners that were removed from memory
+            ConfigurationSection spawnersSection = spawnerData.getConfigurationSection("spawners");
+            if (spawnersSection != null) {
+                Set<String> savedSpawnerIds = spawnersSection.getKeys(false);
+                savedSpawnerIds.stream()
+                        .filter(id -> !spawners.containsKey(id))
+                        .forEach(id -> spawnerData.set("spawners." + id, null));
             }
 
             spawnerData.save(spawnerDataFile);
@@ -251,16 +296,16 @@ public class SpawnerManager {
         }
     }
 
-    public List<SpawnerData> getAllSpawners() {
-        return new ArrayList<>(spawners.values());
-    }
-
     private void startSaveTask() {
         configManager.debug("Starting spawner data save task");
         int intervalSeconds = configManager.getSaveInterval();
         Bukkit.getAsyncScheduler().runAtFixedRate(plugin, task -> {
             this.saveSpawnerData();
         }, 1, intervalSeconds, TimeUnit.SECONDS); // 5 phút
+    }
+
+    public List<SpawnerData> getAllSpawners() {
+        return new ArrayList<>(spawners.values());
     }
 
     public void spawnLoot(SpawnerData spawner) {

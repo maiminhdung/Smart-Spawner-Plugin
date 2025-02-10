@@ -2,6 +2,7 @@ package me.nighter.smartSpawner.managers;
 
 import me.nighter.smartSpawner.*;
 import me.nighter.smartSpawner.holders.PagedSpawnerLootHolder;
+import me.nighter.smartSpawner.listeners.HopperHandler;
 import me.nighter.smartSpawner.utils.OptimizedVirtualInventory;
 import me.nighter.smartSpawner.utils.SpawnerData;
 import org.bukkit.inventory.Inventory;

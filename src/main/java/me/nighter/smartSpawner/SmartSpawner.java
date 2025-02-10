@@ -1,7 +1,6 @@
 package me.nighter.smartSpawner;
 
-import io.papermc.paper.threadedregions.scheduler.ScheduledTask;
-
+import me.nighter.smartSpawner.dataMigration.SpawnerDataMigration;
 import me.nighter.smartSpawner.hooks.shops.IShopIntegration;
 import me.nighter.smartSpawner.hooks.shops.ShopIntegrationManager;
 import me.nighter.smartSpawner.hooks.shops.api.shopguiplus.SpawnerHook;
@@ -24,9 +23,8 @@ import org.geysermc.floodgate.api.FloodgateApi;
 import com.palmergames.bukkit.towny.TownyAPI;
 import com.sk89q.worldguard.WorldGuard;
 
-import java.util.function.Consumer;
-import java.util.stream.Stream;
-
+import java.util.HashMap;
+import java.util.Map;
 
 public class SmartSpawner extends JavaPlugin {
     private static SmartSpawner instance;
@@ -64,10 +62,17 @@ public class SmartSpawner extends JavaPlugin {
         ComponentLogger prefixedLogger = ComponentLogger.logger(Bukkit.getLogger().getName());
         String currentVersion = Bukkit.getServer().getVersion();
         initializeVersionSpecificComponents();
+
+        // Data migration
+        SpawnerDataMigration migration = new SpawnerDataMigration(this);
+        if (migration.checkAndMigrateData()) {
+            getLogger().info("Data migration completed. Loading with new format...");
+        }
+
         initializeComponents();
         setupCommand();
         checkDependencies();
-        loadData();
+        new UpdateChecker(this, "9tQwxSFr").initialize();
         registerListeners();
         Stream.of(
                 "╔══════════════════════════════════════════════════════════════╗",
@@ -100,7 +105,6 @@ public class SmartSpawner extends JavaPlugin {
 
         if (configManager.isHopperEnabled()) {
             this.hopperHandler = new HopperHandler(this);
-            this.hopperHandler.checkAllHoppers();
         } else {
             this.hopperHandler = null;
         }
@@ -157,11 +161,6 @@ public class SmartSpawner extends JavaPlugin {
             //getLogger().info(pluginName + " not detected, continuing without it");
         }
         return false;
-    }
-
-    private void loadData() {
-        spawnerManager.loadSpawnerData();
-        new UpdateChecker(this, "9tQwxSFr").initialize();
     }
 
     private void registerListeners() {
@@ -234,28 +233,45 @@ public class SmartSpawner extends JavaPlugin {
     // Version specific implementations
     private void initializeVersionSpecificComponents() {
         String version = Bukkit.getServer().getBukkitVersion();
-        
-        String[][] versionSpecificComponents = {
-                {"Particles", "me.nighter.smartSpawner.v1_20.ParticleInitializer", "me.nighter.smartSpawner.v1_21.ParticleInitializer"},
-                {"Textures", "me.nighter.smartSpawner.v1_20.TextureInitializer", "me.nighter.smartSpawner.v1_21.TextureInitializer"},
-                {"Spawners", "me.nighter.smartSpawner.v1_20.SpawnerInitializer", "me.nighter.smartSpawner.v1_21.SpawnerInitializer"}
+        String basePackage = "me.nighter.smartSpawner";
+
+        // Define supported versions and their package names
+        Map<String, String> supportedVersions = new HashMap<>();
+        supportedVersions.put("1.20", "v1_20");
+        supportedVersions.put("1.21", "v1_21");
+
+        // Define components that need version-specific implementation
+        String[][] components = {
+                {"Particles", "ParticleInitializer"},
+                {"Textures", "TextureInitializer"},
+                {"Spawners", "SpawnerInitializer"}
         };
-        for (String[] component : versionSpecificComponents) {
+
+        // Find the matching version path
+        String versionPath = null;
+        for (Map.Entry<String, String> entry : supportedVersions.entrySet()) {
+            if (version.contains(entry.getKey())) {
+                versionPath = entry.getValue();
+                break;
+            }
+        }
+
+        if (versionPath == null) {
+            getLogger().severe("Unsupported server version: " + version);
+            return;
+        }
+
+        // Initialize components for the detected version
+        for (String[] component : components) {
             try {
-                String componentName = component[0];
-                String v1_20Class = component[1];
-                String v1_21Class = component[2];
-                if (version.contains("1.20")) {
-                    Class.forName(v1_20Class)
-                            .getMethod("init")
-                            .invoke(null);
-                } else if (version.contains("1.21")) {
-                    Class.forName(v1_21Class)
-                            .getMethod("init")
-                            .invoke(null);
-                }
+                String className = String.format("%s.%s.%s", basePackage, versionPath, component[1]);
+                Class.forName(className)
+                        .getMethod("init")
+                        .invoke(null);
+                //getLogger().info(String.format("Successfully initialized %s for version %s", component[0], version));
             } catch (Exception e) {
-                getLogger().severe("Failed to initialize " + component[0] + " for version " + version);
+                getLogger().severe(String.format("Failed to initialize %s for version %s: %s",
+                        component[0], version, e.getMessage()));
                 e.printStackTrace();
             }
         }

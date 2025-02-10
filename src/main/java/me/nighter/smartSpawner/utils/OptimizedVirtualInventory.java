@@ -5,17 +5,44 @@ import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class OptimizedVirtualInventory {
-    private final Map<ItemSignature, Long> consolidatedItems; // Store total quantities
+    private final Map<ItemSignature, Long> consolidatedItems;
     private final int maxSlots;
-    private final Map<Integer, DisplayItem> displayCache; // Cache for display purposes
+    private final Map<Integer, DisplayItem> displayCache;
     private boolean displayCacheDirty;
+    private final Comparator<Map.Entry<ItemSignature, Long>> itemComparator;
 
     public OptimizedVirtualInventory(int maxSlots) {
         this.maxSlots = maxSlots;
         this.consolidatedItems = new ConcurrentHashMap<>();
         this.displayCache = new ConcurrentHashMap<>();
         this.displayCacheDirty = true;
+
+        // Create a comparator for sorting items
+        this.itemComparator = (e1, e2) -> {
+            ItemStack item1 = e1.getKey().getTemplate();
+            ItemStack item2 = e2.getKey().getTemplate();
+
+            // First, compare if items have durability
+            boolean hasDurability1 = hasDurability(item1);
+            boolean hasDurability2 = hasDurability(item2);
+
+            if (hasDurability1 != hasDurability2) {
+                return hasDurability1 ? 1 : -1;
+            }
+
+            // Then sort by material name
+            int nameCompare = item1.getType().name().compareTo(item2.getType().name());
+            if (nameCompare != 0) return nameCompare;
+
+            // If same material, sort by amount (descending)
+            return e2.getValue().compareTo(e1.getValue());
+        };
     }
+
+    private boolean hasDurability(ItemStack item) {
+        return item.getType().getMaxDurability() > 0;
+    }
+
 
     public static class ItemSignature {
         private final ItemStack template;
@@ -65,10 +92,19 @@ public class OptimizedVirtualInventory {
 
     // Add items in bulk
     public void addItems(List<ItemStack> items) {
+        if (items.isEmpty()) return;
+
+        // Batch process items
+        Map<ItemSignature, Long> batchUpdates = new HashMap<>();
         for (ItemStack item : items) {
             ItemSignature sig = new ItemSignature(item);
-            consolidatedItems.merge(sig, (long) item.getAmount(), Long::sum);
+            batchUpdates.merge(sig, (long) item.getAmount(), Long::sum);
         }
+
+        // Apply batch updates atomically
+        batchUpdates.forEach((sig, amount) ->
+                consolidatedItems.merge(sig, amount, Long::sum));
+
         displayCacheDirty = true;
     }
 
@@ -76,13 +112,14 @@ public class OptimizedVirtualInventory {
     public boolean removeItems(List<ItemStack> items) {
         Map<ItemSignature, Long> toRemove = new HashMap<>();
 
-        // Calculate total amounts to remove
+        // Calculate total amounts to remove in a single pass
         for (ItemStack item : items) {
+            if (item == null) continue;
             ItemSignature sig = new ItemSignature(item);
             toRemove.merge(sig, (long) item.getAmount(), Long::sum);
         }
 
-        // Check if we have enough of each item
+        // Verify amounts in a single atomic check
         for (Map.Entry<ItemSignature, Long> entry : toRemove.entrySet()) {
             Long currentAmount = consolidatedItems.getOrDefault(entry.getKey(), 0L);
             if (currentAmount < entry.getValue()) {
@@ -90,14 +127,12 @@ public class OptimizedVirtualInventory {
             }
         }
 
-        // Remove the items
+        // Perform removals in batch
         toRemove.forEach((sig, amount) -> {
-            Long newAmount = consolidatedItems.get(sig) - amount;
-            if (newAmount <= 0) {
-                consolidatedItems.remove(sig);
-            } else {
-                consolidatedItems.put(sig, newAmount);
-            }
+            consolidatedItems.computeIfPresent(sig, (key, current) -> {
+                long newAmount = current - amount;
+                return newAmount <= 0 ? null : newAmount;
+            });
         });
 
         displayCacheDirty = true;
@@ -106,38 +141,29 @@ public class OptimizedVirtualInventory {
 
     // Get display inventory
     public Map<Integer, ItemStack> getDisplayInventory() {
-        if (!displayCacheDirty) {
+        if (!displayCacheDirty && !displayCache.isEmpty()) {
             return convertDisplayCacheToItemStacks();
         }
 
         displayCache.clear();
-        Map<ItemSignature, Long> remainingItems = new HashMap<>(consolidatedItems);
-        Random random = new Random();
+
+        // Sort items using our custom comparator
+        List<Map.Entry<ItemSignature, Long>> sortedItems = new ArrayList<>(consolidatedItems.entrySet());
+        sortedItems.sort(itemComparator);
+
         int currentSlot = 0;
+        for (Map.Entry<ItemSignature, Long> entry : sortedItems) {
+            if (currentSlot >= maxSlots) break;
 
-        while (!remainingItems.isEmpty() && currentSlot < maxSlots) {
-            // Randomly select an item type
-            List<ItemSignature> availableTypes = new ArrayList<>(remainingItems.keySet());
-            ItemSignature selectedType = availableTypes.get(random.nextInt(availableTypes.size()));
-            Long totalAmount = remainingItems.get(selectedType);
+            ItemSignature sig = entry.getKey();
+            long totalAmount = entry.getValue();
 
-            // Calculate how much to put in this slot
-            ItemStack template = selectedType.getTemplate();
-            int maxStackSize = template.getMaxStackSize();
-            int amountForThisSlot = Math.min(maxStackSize, totalAmount.intValue());
-
-            // Update the display cache
-            displayCache.put(currentSlot, new DisplayItem(selectedType, amountForThisSlot));
-
-            // Update remaining amount
-            long newAmount = totalAmount - amountForThisSlot;
-            if (newAmount <= 0) {
-                remainingItems.remove(selectedType);
-            } else {
-                remainingItems.put(selectedType, newAmount);
+            while (totalAmount > 0 && currentSlot < maxSlots) {
+                int stackSize = (int) Math.min(totalAmount, sig.getTemplate().getMaxStackSize());
+                displayCache.put(currentSlot, new DisplayItem(sig, stackSize));
+                totalAmount -= stackSize;
+                currentSlot++;
             }
-
-            currentSlot++;
         }
 
         displayCacheDirty = false;

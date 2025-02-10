@@ -165,9 +165,6 @@ public class ConfigManager {
         put("hopper.items-per-transfer", 1);
         put("hopper.check-interval", 20);
 
-        // Performance
-        put("performance.batch-size", 3);
-
         // Update Checker
         put("update-checker.enabled", true);
         put("update-checker.check-interval", 24);
@@ -501,7 +498,6 @@ public class ConfigManager {
             };
         }
     }
-
     public ShopType getShopType() {
         String shopType = (String) configCache.computeIfAbsent("shop-integration",
                 key -> config.getString(key, "economyshopgui"));

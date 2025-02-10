@@ -304,11 +304,11 @@ public class LanguageManager {
 
         // Page Indicator
         put("page-indicator.name", "&#f4d842Page %current_page%/&#f4d842%total_pages%");
-        put("page-indicator.lore", "&#f4d842Total slots: %total_slots%");
+        put("page-indicator.lore", "&7Total Items: &a%current_items%&7/&f%max_slots%");
 
         // Shop Page Indicator
         put("shop-page-indicator.name", "&#ffd700Sell All Items");
-        put("shop-page-indicator.lore", "\n&8▪ &#ffd700Total Items: &f%current_items%&7/&f%max_slots%\n&8▪ &#ffd700Storage: &a%percent_storage%&a%&f full\n\n&#ffd700➜ &7Click to sell all items");
+        put("shop-page-indicator.lore", "\n&8▪ &#ffd700Total Items: &a%current_items%&7/&f%max_slots%\n&8▪ &#ffd700Storage: &a%percent_storage%&a%&f full\n\n&#ffd700➜ &7Click to sell all items");
 
         // Other GUI Buttons
         put("return-button.name", "&#ff6b6b Return to Main Menu");

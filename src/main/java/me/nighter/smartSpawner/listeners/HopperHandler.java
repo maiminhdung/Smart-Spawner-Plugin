@@ -22,24 +22,23 @@ import org.bukkit.block.BlockFace;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.block.BlockBreakEvent;
 import org.bukkit.event.block.BlockPlaceEvent;
-import org.bukkit.event.inventory.InventoryCloseEvent;
-import org.bukkit.event.inventory.InventoryOpenEvent;
 import org.bukkit.event.world.ChunkLoadEvent;
 import org.bukkit.event.world.ChunkUnloadEvent;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 
 import java.util.*;
-import java.util.function.Consumer;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.locks.ReentrantLock;
 
 public class HopperHandler implements Listener {
     private final SmartSpawner plugin;
-    private final Map<Location, ScheduledTask> activeHoppers = new HashMap<>();
-    private final Map<Location, Boolean> hopperPaused = new HashMap<>();
-    private SpawnerManager spawnerManager;
-    private SpawnerLootManager lootManager;
-    private LanguageManager languageManager;
-    private ConfigManager config;
+    private final Map<Location, BukkitTask> activeHoppers = new ConcurrentHashMap<>();
+    private final SpawnerManager spawnerManager;
+    private final SpawnerLootManager lootManager;
+    private final LanguageManager languageManager;
+    private final ConfigManager config;
+    private final Map<String, ReentrantLock> spawnerLocks = new ConcurrentHashMap<>();
 
     public HopperHandler(SmartSpawner plugin) {
         this.plugin = plugin;
@@ -79,7 +78,6 @@ public class HopperHandler implements Listener {
 
     @EventHandler
     public void onChunkLoad(ChunkLoadEvent event) {
-        // Khởi động lại hopper trong chunk mới load
         Chunk chunk = event.getChunk();
         for (BlockState state : chunk.getTileEntities()) {
             if (state.getType() == Material.HOPPER) {
@@ -94,7 +92,6 @@ public class HopperHandler implements Listener {
 
     @EventHandler
     public void onChunkUnload(ChunkUnloadEvent event) {
-        // Dừng hopper trong chunk bị unload
         Chunk chunk = event.getChunk();
         for (BlockState state : chunk.getTileEntities()) {
             if (state.getType() == Material.HOPPER) {
@@ -106,43 +103,7 @@ public class HopperHandler implements Listener {
     public void cleanup() {
         activeHoppers.values().forEach(ScheduledTask::cancel);
         activeHoppers.clear();
-        hopperPaused.clear();
-    }
-
-    @EventHandler
-    public void onInventoryOpen(InventoryOpenEvent event) {
-        if (event.getInventory().getHolder() instanceof PagedSpawnerLootHolder) {
-            PagedSpawnerLootHolder holder = (PagedSpawnerLootHolder) event.getInventory().getHolder();
-            SpawnerData spawner = holder.getSpawnerData();
-            Location spawnerLoc = spawner.getSpawnerLocation();
-            Location hopperLoc = spawnerLoc.getBlock().getRelative(BlockFace.DOWN).getLocation();
-
-            if (activeHoppers.containsKey(hopperLoc)) {
-                hopperPaused.put(hopperLoc, true);
-                if (event.getPlayer() instanceof Player) {
-                    Player player = (Player) event.getPlayer();
-                    languageManager.sendMessage(player, "messages.hopper-paused");
-                }
-            }
-        }
-    }
-
-    @EventHandler
-    public void onInventoryClose(InventoryCloseEvent event) {
-        if (event.getInventory().getHolder() instanceof PagedSpawnerLootHolder) {
-            PagedSpawnerLootHolder holder = (PagedSpawnerLootHolder) event.getInventory().getHolder();
-            SpawnerData spawner = holder.getSpawnerData();
-            Location spawnerLoc = spawner.getSpawnerLocation();
-            Location hopperLoc = spawnerLoc.getBlock().getRelative(BlockFace.DOWN).getLocation();
-
-            if (activeHoppers.containsKey(hopperLoc)) {
-                hopperPaused.put(hopperLoc, false);
-                if (event.getPlayer() instanceof Player) {
-                    Player player = (Player) event.getPlayer();
-                    languageManager.sendMessage(player, "messages.hopper-resumed");
-                }
-            }
-        }
+        spawnerLocks.clear();
     }
 
     @EventHandler
@@ -159,14 +120,15 @@ public class HopperHandler implements Listener {
     public void onHopperBreak(BlockBreakEvent event) {
         if (event.getBlock().getType() == Material.HOPPER) {
             stopHopperTask(event.getBlock().getLocation());
-            hopperPaused.remove(event.getBlock().getLocation());
         }
+    }
+
+    private ReentrantLock getOrCreateLock(SpawnerData spawner) {
+        return spawnerLocks.computeIfAbsent(spawner.getSpawnerId(), k -> new ReentrantLock());
     }
 
     public void startHopperTask(Location hopperLoc, Location spawnerLoc) {
         if (!config.isHopperEnabled()) return;
-
-        // Nếu đã có task đang chạy thì không cần tạo mới
         if (activeHoppers.containsKey(hopperLoc)) return;
         Consumer<ScheduledTask> taskConsumer = task -> {
             Runnable runnable = new Runnable() {
@@ -184,10 +146,10 @@ public class HopperHandler implements Listener {
 
                     transferItems(hopperLoc, spawnerLoc);
                 }
-            };
-            runnable.run();
-        };
-        ScheduledTask task = Bukkit.getGlobalRegionScheduler().runAtFixedRate(plugin, taskConsumer, 1L, config.getHopperCheckInterval());
+                transferItems(hopperLoc, spawnerLoc);
+            }
+        }.runTaskTimer(plugin, 0L, config.getHopperCheckInterval());
+
         activeHoppers.put(hopperLoc, task);
     }
 
@@ -208,84 +170,68 @@ public class HopperHandler implements Listener {
     }
 
     private void transferItems(Location hopperLoc, Location spawnerLoc) {
-        // Get SpawnerData from location
         SpawnerData spawner = spawnerManager.getSpawnerByLocation(spawnerLoc);
         if (spawner == null) return;
 
-        OptimizedVirtualInventory virtualInv = spawner.getVirtualInventory();
-        Hopper hopper = (Hopper) hopperLoc.getBlock().getState();
+        ReentrantLock lock = getOrCreateLock(spawner);
+        if (!lock.tryLock()) return; // Skip this tick if we can't get the lock
 
-        int itemsPerTransfer = config.getHopperItemsPerTransfer();
-        int transferred = 0;
-        boolean inventoryChanged = false;
+        try {
+            OptimizedVirtualInventory virtualInv = spawner.getVirtualInventory();
+            Hopper hopper = (Hopper) hopperLoc.getBlock().getState();
 
-        // Get current display inventory to work with
-        Map<Integer, ItemStack> displayItems = virtualInv.getDisplayInventory();
-        List<ItemStack> itemsToRemove = new ArrayList<>();
+            int itemsPerTransfer = config.getHopperItemsPerTransfer();
+            int transferred = 0;
+            boolean inventoryChanged = false;
 
-        // Process items for transfer
-        for (Map.Entry<Integer, ItemStack> entry : displayItems.entrySet()) {
-            if (transferred >= itemsPerTransfer) break;
+            Map<Integer, ItemStack> displayItems = virtualInv.getDisplayInventory();
+            List<ItemStack> itemsToRemove = new ArrayList<>();
 
-            ItemStack item = entry.getValue();
-            if (item == null || item.getType() == Material.AIR) continue;
-
-            // Find empty slot in hopper
-            ItemStack[] hopperContents = hopper.getInventory().getContents();
-            for (int i = 0; i < hopperContents.length; i++) {
+            for (Map.Entry<Integer, ItemStack> entry : displayItems.entrySet()) {
                 if (transferred >= itemsPerTransfer) break;
 
-                ItemStack hopperItem = hopperContents[i];
-                if (hopperItem == null || hopperItem.getType() == Material.AIR) {
-                    // Transfer whole stack
-                    hopper.getInventory().setItem(i, item.clone());
-                    itemsToRemove.add(item);
-                    transferred++;
-                    inventoryChanged = true;
-                    break;
-                } else if (hopperItem.isSimilar(item) &&
-                        hopperItem.getAmount() < hopperItem.getMaxStackSize()) {
-                    // Stack with existing items
-                    int space = hopperItem.getMaxStackSize() - hopperItem.getAmount();
-                    int toTransfer = Math.min(space, item.getAmount());
+                ItemStack item = entry.getValue();
+                if (item == null || item.getType() == Material.AIR) continue;
 
-                    hopperItem.setAmount(hopperItem.getAmount() + toTransfer);
+                ItemStack[] hopperContents = hopper.getInventory().getContents();
+                for (int i = 0; i < hopperContents.length; i++) {
+                    if (transferred >= itemsPerTransfer) break;
 
-                    ItemStack toRemove = item.clone();
-                    toRemove.setAmount(toTransfer);
-                    itemsToRemove.add(toRemove);
+                    ItemStack hopperItem = hopperContents[i];
+                    if (hopperItem == null || hopperItem.getType() == Material.AIR) {
+                        hopper.getInventory().setItem(i, item.clone());
+                        itemsToRemove.add(item);
+                        transferred++;
+                        inventoryChanged = true;
+                        break;
+                    } else if (hopperItem.isSimilar(item) &&
+                            hopperItem.getAmount() < hopperItem.getMaxStackSize()) {
+                        int space = hopperItem.getMaxStackSize() - hopperItem.getAmount();
+                        int toTransfer = Math.min(space, item.getAmount());
 
-                    transferred++;
-                    inventoryChanged = true;
-                    break;
-                }
-            }
-        }
+                        hopperItem.setAmount(hopperItem.getAmount() + toTransfer);
 
-        // Remove transferred items from virtual inventory
-        if (!itemsToRemove.isEmpty()) {
-            virtualInv.removeItems(itemsToRemove);
-        }
+                        ItemStack toRemove = item.clone();
+                        toRemove.setAmount(toTransfer);
+                        itemsToRemove.add(toRemove);
 
-        if (inventoryChanged) {
-            updateOpenGuis(spawner);
-        }
-    }
-
-    // Optional: Method to manually start/stop hopper tasks (useful for reloads)
-    public void checkAllHoppers() {
-        plugin.getServer().getWorlds().forEach(world -> {
-            for (Chunk chunk : world.getLoadedChunks()) {
-                for (BlockState state : chunk.getTileEntities()) {
-                    if (state instanceof Hopper) {
-                        Block above = state.getBlock().getRelative(BlockFace.UP);
-                        if (above.getType() == Material.SPAWNER) {
-                            startHopperTask(state.getLocation(), above.getLocation());
-                        }
+                        transferred++;
+                        inventoryChanged = true;
+                        break;
                     }
                 }
             }
-        });
+
+            if (!itemsToRemove.isEmpty()) {
+                virtualInv.removeItems(itemsToRemove);
+            }
+
+            if (inventoryChanged) {
+                updateOpenGuis(spawner);
+            }
+        } finally {
+            lock.unlock();
+        }
     }
 
     private void updateOpenGuis(SpawnerData spawner) {
@@ -298,10 +244,8 @@ public class HopperHandler implements Listener {
                     if (currentInv.getHolder() instanceof PagedSpawnerLootHolder) {
                         PagedSpawnerLootHolder holder = (PagedSpawnerLootHolder) currentInv.getHolder();
                         int currentPage = holder.getCurrentPage();
-                        // Tạo inventory mới với data mới nhất
                         Inventory newInv = lootManager.createLootInventory(spawner,
                                 languageManager.getGuiTitle("gui-title.loot-menu"), currentPage);
-                        // Copy items từ inventory mới sang inventory cũ
                         for (int i = 0; i < newInv.getSize(); i++) {
                             currentInv.setItem(i, newInv.getItem(i));
                         }
@@ -310,7 +254,6 @@ public class HopperHandler implements Listener {
                 }
             }
 
-            // Cập nhật cho người chơi đang xem GUI spawner
             Map<UUID, SpawnerData> openGuis = spawnerManager.getOpenSpawnerGuis();
             for (Map.Entry<UUID, SpawnerData> entry : openGuis.entrySet()) {
                 if (entry.getValue().getSpawnerId().equals(spawner.getSpawnerId())) {
@@ -320,7 +263,7 @@ public class HopperHandler implements Listener {
                     }
                 }
             }
-        });
+        }, 2L);
     }
 
     private List<HumanEntity> getViewersForSpawner(SpawnerData spawner) {

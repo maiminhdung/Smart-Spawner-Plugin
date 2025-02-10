@@ -258,21 +258,6 @@ messages:
     sound: block.note_block.chime
 
   #---------------------------------------------------
-  # Hopper Interaction
-  #---------------------------------------------------
-  hopper-paused:
-    message: "&cHopper has been paused while interacting with the spawner!"
-    prefix: true
-    type: CHAT
-    sound: block.note_block.pling
-
-  hopper-resumed:
-    message: "&aHopper has been resumed!"
-    prefix: true
-    type: CHAT
-    sound: block.note_block.chime
-
-  #---------------------------------------------------
   # Spawner List Teleport Message
   #---------------------------------------------------
   teleported:
@@ -382,13 +367,13 @@ navigation-button:
 page-indicator:
   name: "&#ffd700Page [%current_page%/&#ffd700%total_pages%]"
   lore: |
-    &7Total Items: &f%current_items%&7/&f%max_slots%
+    &7Total Items: &a%current_items%&7/&f%max_slots%
 
 shop-page-indicator:
   name: "&#ffd700Sell All Items"
   lore: |
     
-    &8▪ &#ffd700Total Items: &f%current_items%&7/&f%max_slots%
+    &8▪ &#ffd700Total Items: &a%current_items%&7/&f%max_slots%
     &8▪ &#ffd700Storage: &a%percent_storage%&a%&f full
     
     &#ffd700➜ &7Click to sell all items

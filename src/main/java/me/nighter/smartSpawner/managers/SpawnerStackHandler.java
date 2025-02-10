@@ -62,6 +62,7 @@ public class SpawnerStackHandler {
         // Support for stacking spawners with Spawner from EconomyShopGUI
         if (handEntityType == null) {
             String displayName = meta.getDisplayName();
+            // Check for custom format from EconomyShopGUI
             if (displayName.matches("§9§l[A-Za-z]+(?: [A-Za-z]+)? §rSpawner")) {
                 String entityName = displayName
                         .replaceAll("§9§l", "")
@@ -69,6 +70,17 @@ public class SpawnerStackHandler {
                         .replace(" ", "_")
                         .toUpperCase();
                 handEntityType = EntityType.valueOf(entityName.toUpperCase());
+            }
+            // Check for spawner name format from languageManager
+            else {
+                for (EntityType entityType : EntityType.values()) {
+                    String entityTypeName = entityType.name();
+                    String expectedName = languageManager.getMessage("spawner-name", "%entity%", entityTypeName);
+                    if (displayName.equals(expectedName)) {
+                        handEntityType = entityType;
+                        break;
+                    }
+                }
             }
         }
 

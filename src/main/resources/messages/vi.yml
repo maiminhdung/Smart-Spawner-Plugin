@@ -257,21 +257,6 @@ messages:
     sound: block.note_block.chime
 
   #---------------------------------------------------
-  # Hopper Interaction
-  #---------------------------------------------------
-  hopper-paused:
-    message: "&cHopper đã bị tạm dừng! Do đang tương tác với kho chứa."
-    prefix: true
-    type: CHAT
-    sound: block.note_block.pling
-
-  hopper-resumed:
-    message: "&aHopper đã được khôi phục!"
-    prefix: true
-    type: CHAT
-    sound: block.note_block.chime
-
-  #---------------------------------------------------
   # Tin nhắn khi dịch chuyển bằng lệnh /ss list
   #---------------------------------------------------
   teleported:
@@ -381,13 +366,13 @@ navigation-button:
 page-indicator:
   name: "&#ffd700Trang [%current_page%/&#ffd700%total_pages%]"
   lore: |
-    &7Vật phẩm: &f%current_items%&7/&f%max_slots%
+    &7Vật phẩm: &a%current_items%&7/&f%max_slots%
 
 shop-page-indicator:
   name: "&#ffd700Trang [%current_page%/&#ffd700%total_pages%]"
   lore: |
 
-    &8▪ &#ffd700Vật phẩm: &f%current_items%&7/&f%max_slots%
+    &8▪ &#ffd700Vật phẩm: &a%current_items%&7/&f%max_slots%
     &8▪ &#ffd700Kho: &a%percent_storage%&a%&f đầy
 
     &#ffd700➜ &7Nhấn để bán tất cả items
