@@ -26,6 +26,8 @@ import org.bukkit.event.world.ChunkLoadEvent;
 import org.bukkit.event.world.ChunkUnloadEvent;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.scheduler.BukkitRunnable;
+import org.bukkit.scheduler.BukkitTask;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
@@ -129,16 +131,14 @@ public class HopperHandler implements Listener {
         if (!configManager.isHopperEnabled()) return;
         if (activeHoppers.containsKey(hopperLoc)) return;
 
-        BukkitTask task = new BukkitRunnable() {
-            @Override
-            public void run() {
-                if (!isValidSetup(hopperLoc, spawnerLoc)) {
-                    stopHopperTask(hopperLoc);
-                    return;
-                }
-                transferItems(hopperLoc, spawnerLoc);
+        ScheduledTask task = Bukkit.getGlobalRegionScheduler().runAtFixedRate(plugin, scheduledTask -> {
+            if (!isValidSetup(hopperLoc, spawnerLoc)) {
+                stopHopperTask(hopperLoc);
+                scheduledTask.cancel(); // Hủy task nếu không hợp lệ
+                return;
             }
-        }.runTaskTimer(plugin, 0L, configManager.getHopperCheckInterval());
+            transferItems(hopperLoc, spawnerLoc);
+        }, 1L, configManager.getHopperCheckInterval());
 
         activeHoppers.put(hopperLoc, task);
     }
