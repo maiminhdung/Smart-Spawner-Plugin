@@ -61,7 +61,23 @@ mob_names:
 #---------------------------------------------------
 # Tên lồng spawn có mob
 #---------------------------------------------------
-spawner-name: "&6Lồng Spawn %entity%"
+spawner-name: "&dLồng Spawn %entity%"
+
+spawner-hologram:
+  # Các placeholder có sẵn:
+  # %stack_size% - Số lượng spawner xếp chồng
+  # %entity% - Tên loại quái
+  # %current_exp% - Kinh nghiệm hiện tại được lưu trữ
+  # %max_exp% - Dung lượng kinh nghiệm tối đa
+  # %current_items% - Số ô vật phẩm hiện đang lưu trữ
+  # %max_slots% - Số ô lưu trữ tối đa
+  format:
+    # Dòng đầu tiên - Tiêu đề với các yếu tố trang trí
+    - "&#FCD05C◆  [&fx%stack_size%&#FCD05C] &d%entity%  &#FCD05C◆"
+    # Dòng thứ hai - Hiển thị kinh nghiệm
+    - "&#00E689&lExp: &e%current_exp%&7/&e%max_exp% &7KN"
+    # Dòng thứ ba - Thông tin lưu trữ
+    - "&#FCD05C&lKho chứa: &f%current_items%&7/&f%max_slots% &7ô"
 
 #---------------------------------------------------
 # Tương tác với lồng spawn
@@ -378,7 +394,7 @@ shop-page-indicator:
     &#ffd700➜ &7Nhấn để bán tất cả items
 
 return-button:
-  name: "&#ff6b6b Quay Lại Menu Chính"
+  name: "&#ff6b6bQuay Lại Menu Chính"
 
 take-all-button:
   name: "&#00E689Lấy Tất Cả Vật Phẩm"
@@ -447,6 +463,7 @@ command:
     &f/ss reload &7- Tải lại cấu hình plugin
     &f/ss list &7- Xem danh sách spawner (dành cho admin)
     &f/ss give <người chơi> <loại mob> <số lượng> &7- Tặng spawner cho người chơi
+    &f/ss hologram &7- Bật/Tắt hologram của spawner
   reload:
     usage: "&cSử dụng: /smartspawner reload"
     success: "&aĐã tải lại plugin thành công!"
@@ -461,6 +478,9 @@ command:
     spawner-received: "&aBạn đã nhận được %amount% lồng spawn %entity%!"
     spawner-given: "&aBạn đã cho %player% %amount% lồng spawn %entity%!"
     spawner-given-dropped: "&eBạn đã cho %player% %amount% lồng spawn %entity% (một số đã rơi xuống đất)"
+  hologram:
+    enabled: "&#00E689Hologram đã được &aBẬT&7!"
+    disabled: "&#00E689Hologram đã được &cTẮT&7!"
 
 no-permission:
   message: "&cBạn không có quyền thực hiện điều này!"

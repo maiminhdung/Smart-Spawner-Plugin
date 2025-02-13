@@ -188,7 +188,10 @@ public class SmartSpawner extends JavaPlugin {
     }
 
     private void saveAndCleanup() {
-        if (spawnerManager != null) spawnerManager.saveSpawnerData();
+        if (spawnerManager != null) {
+            spawnerManager.saveSpawnerData();
+            spawnerManager.cleanupAllSpawners();
+        }
         if (rangeChecker != null) rangeChecker.cleanup();
         if (configManager != null) configManager.saveConfigs();
         if (spawnerGuiListener != null) spawnerGuiListener.onDisable();

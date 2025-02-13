@@ -60,10 +60,25 @@ mob_names:
   ZOMBIFIED_PIGLIN: "Zombified Piglin"
 
 #---------------------------------------------------
-# Spawner Item Name With Entity
+# Spawner Item Name & Hologram Format
 #---------------------------------------------------
-spawner-name: "&6%entity% Spawner"
+spawner-name: "&d%entity% Spawner"
 
+spawner-hologram:
+  # Available placeholders:
+  # %stack_size% - Number of stacked spawners
+  # %entity% - Mob type name
+  # %current_exp% - Current stored XP
+  # %max_exp% - Maximum XP capacity
+  # %current_items% - Current stored item slots
+  # %max_slots% - Maximum storage slots
+  format:
+    # First line - Title with decorative elements
+    - "&#FCD05C◆  [&fx%stack_size%&#FCD05C] &d%entity%  &#FCD05C◆"
+    # Second line - Experience display
+    - "&#00E689&lExp: &e%current_exp%&7/&e%max_exp% &7XP"
+    # Third line - Storage information
+    - "&#FCD05C&lStorage: &f%current_items%&7/&f%max_slots% &7slots"
 #---------------------------------------------------
 # Spawner Interaction
 #---------------------------------------------------
@@ -447,6 +462,7 @@ command:
     &f/smartspawner reload &7- Reload the plugin configuration
     &f/smartspawner list &7- Open the spawner list (for admin management)
     &f/smartspawner give <player> <mobtype> <amount> &7- Give spawners to a player
+    &f/smartspawner hologram &7- Toggle hologram visibility
   reload:
     usage: "&cUsage: /smartspawner reload"
     success: "&aPlugin reloaded successfully!"
@@ -461,6 +477,9 @@ command:
     spawner-received: "&aYou have received %amount% %entity% spawner(s)!"
     spawner-given: "&aYou have given %player% %amount% %entity% spawner(s)!"
     spawner-given-dropped: "&eYou have given %player% %amount% %entity% spawner(s) (some items were dropped on the ground)"
+  hologram:
+    enabled: "&#00E689Holograms have been &aenabled&7!"
+    disabled: "&#00E689Holograms have been &cdisabled&7!"
 
 no-permission:
   message: "&cYou do not have permission to do that!"

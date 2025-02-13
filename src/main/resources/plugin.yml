@@ -33,6 +33,7 @@ permissions:
       smartspawner.break: true
       smartspawner.sellall: true
       smartspawner.list: true
+      smartspawner.hologram: true
   smartspawner.reload:
     description: Permission to reload SmartSpawner plugin
     default: op
@@ -42,11 +43,14 @@ permissions:
   smartspawner.list:
     description: Allow viewing list of spawners and teleporting to them
     default: op
-  smartspawner.stack:
-    description: Allow stacking spawners
-    default: true
+  smartspawner.hologram:
+    description: Allow toggling hologram for spawners
+    default: op
   smartspawner.changetype:
     description: Allow changing spawner type with spawn egg
+    default: op
+  smartspawner.stack:
+    description: Allow stacking spawners
     default: true
   smartspawner.break:
     description: Allow breaking spawners

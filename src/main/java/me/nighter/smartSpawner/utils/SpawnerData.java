@@ -33,6 +33,7 @@ public class SpawnerData {
     private static final Logger logger = Logger.getLogger("SmartSpawnerConfig");
     private final LanguageManager languageManager;
     private final ConfigManager configManager;
+    private SpawnerHologram hologram;
 
     public SpawnerData(String id, Location location, EntityType type, SmartSpawner plugin) {
         this.plugin = plugin;
@@ -49,6 +50,46 @@ public class SpawnerData {
         this.languageManager = plugin.getLanguageManager();
         loadConfigValues();
         this.virtualInventory = new OptimizedVirtualInventory(maxSpawnerLootSlots);
+        if (configManager.isHologramEnabled()) {
+            this.hologram = new SpawnerHologram(location);
+            this.hologram.createHologram();
+            updateHologramData();
+        }
+    }
+
+    public void updateHologramData() {
+        if (hologram != null) {
+            hologram.updateData(
+                    stackSize,
+                    entityType,
+                    spawnerExp,
+                    maxStoredExp,
+                    virtualInventory.getUsedSlots(),
+                    maxSpawnerLootSlots
+            );
+        }
+    }
+
+    public void refreshHologram() {
+        if (configManager.isHologramEnabled()) {
+            if (hologram == null) {
+                this.hologram = new SpawnerHologram(spawnerLocation);
+                this.hologram.createHologram();
+                updateHologramData();
+            }
+        } else {
+            if (hologram != null) {
+                hologram.remove();
+                hologram = null;
+            }
+        }
+    }
+
+    public void cleanup() {
+        if (hologram != null) {
+            hologram.remove();
+            hologram = null;
+        }
     }
 
     public OptimizedVirtualInventory getVirtualInventory() {
@@ -155,6 +196,7 @@ public class SpawnerData {
         // Add items to new inventory
         newInventory.addItems(itemsToTransfer);
         this.virtualInventory = newInventory;
+        updateHologramData();
     }
 
     public void setStackSize(int stackSize, Player player) {
@@ -211,6 +253,7 @@ public class SpawnerData {
         // Add items to new inventory
         newInventory.addItems(itemsToTransfer);
         this.virtualInventory = newInventory;
+        updateHologramData();
     }
 
     public int getStackSize() {
@@ -237,6 +280,7 @@ public class SpawnerData {
 
     public void setSpawnerExp(int exp) {
         this.spawnerExp = Math.min(exp, maxStoredExp);
+        updateHologramData();
     }
 
     public Integer getMaxStoredExp(){

@@ -13,6 +13,7 @@ public class SmartSpawnerCommand implements CommandExecutor, TabCompleter {
     private final ReloadCommand reloadCommand;
     private final GiveSpawnerCommand giveCommand;
     private final SpawnerListCommand listCommand;
+    private final HologramCommand hologramCommand;
     private final SmartSpawner plugin;
 
     public SmartSpawnerCommand(SmartSpawner plugin) {
@@ -20,6 +21,7 @@ public class SmartSpawnerCommand implements CommandExecutor, TabCompleter {
         this.reloadCommand = new ReloadCommand(plugin);
         this.giveCommand = new GiveSpawnerCommand(plugin);
         this.listCommand = new SpawnerListCommand(plugin);
+        this.hologramCommand = new HologramCommand(plugin);
     }
 
     @Override
@@ -50,6 +52,8 @@ public class SmartSpawnerCommand implements CommandExecutor, TabCompleter {
             case "list":
                 listCommand.openWorldSelectionGUI(player);
                 return true;
+            case "hologram":
+                return hologramCommand.onCommand(sender, command, label, args);
             default:
                 sender.sendMessage(plugin.getLanguageManager().getMessageWithPrefix("command.usage"));
                 return true;
@@ -68,6 +72,9 @@ public class SmartSpawnerCommand implements CommandExecutor, TabCompleter {
             }
             if (sender.hasPermission("smartspawner.list")) {
                 completions.add("list");
+            }
+            if (sender.hasPermission("smartspawner.hologram")) {
+                completions.add("hologram");
             }
             return completions.stream()
                     .filter(s -> s.toLowerCase().startsWith(args[0].toLowerCase()))

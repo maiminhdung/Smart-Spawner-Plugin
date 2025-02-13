@@ -2,7 +2,6 @@ package me.nighter.smartSpawner.managers;
 
 import me.nighter.smartSpawner.*;
 import me.nighter.smartSpawner.holders.PagedSpawnerLootHolder;
-import me.nighter.smartSpawner.listeners.HopperHandler;
 import me.nighter.smartSpawner.utils.OptimizedVirtualInventory;
 import me.nighter.smartSpawner.utils.SpawnerData;
 import org.bukkit.inventory.Inventory;
@@ -166,8 +165,8 @@ public class SpawnerLootManager {
         // Calculate storage percentage based on actual items vs maximum possible
         int percentStorage = (int) ((double) totalActualItems / maxPossibleItems * 100);
 
-        String formattedMaxPossibleItems = languageManager.formatNumber(maxPossibleItems);
-        String formattedTotalActualItems = languageManager.formatNumber(totalActualItems);
+        String formattedMaxPossibleItems = languageManager.formatNumberTenThousand(maxPossibleItems);
+        String formattedTotalActualItems = languageManager.formatNumberTenThousand(totalActualItems);
 
         if (plugin.hasShopIntegration()) {
             material = Material.GOLD_INGOT;

@@ -1,8 +1,10 @@
 package me.nighter.smartSpawner.managers;
 import me.nighter.smartSpawner.utils.SupportedLanguage;
+
 import net.md_5.bungee.api.ChatColor;
 import net.md_5.bungee.api.ChatMessageType;
 import net.md_5.bungee.api.chat.TextComponent;
+
 import org.bukkit.NamespacedKey;
 import org.bukkit.Registry;
 import org.bukkit.Sound;
@@ -18,6 +20,7 @@ import java.util.*;
 import java.util.logging.Logger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 public class LanguageManager {
     private final Plugin plugin;
@@ -91,7 +94,12 @@ public class LanguageManager {
         put("mob_names.ZOMBIFIED_PIGLIN", "Zombified Piglin");
 
         // Spawner Name With Entity
-        put("spawner-name", "&6%entity% Spawner");
+        put("spawner-name", "&d%entity% Spawner");
+        put("spawner-hologram.format", Arrays.asList(
+                "&#FCD05C◆  [&fx%stack_size%&#FCD05C] &d%entity%  &#FCD05C◆",
+                "&#00E689&lExp: &e%current_exp%&7/&e%max_exp% &7XP",
+                "&#FCD05C&lStorage: &f%current_items%&7/&f%max_slots% &7slots"
+        ));
 
         // Spawner Interaction Messages
         put("messages.activated.message", "&#d6e7edSpawner &#3287A9activated&#d6e7ed! Mobs won’t spawn naturally, collect loot and XP through the GUI instead.");
@@ -239,17 +247,6 @@ public class LanguageManager {
         put("messages.take-all-items.type", "CHAT");
         put("messages.take-all-items.sound", "block.note_block.chime");
 
-        // Hopper Interaction
-        put("messages.hopper-paused.message", "&cHopper has been paused while interacting with the spawner!");
-        put("messages.hopper-paused.prefix", true);
-        put("messages.hopper-paused.type", "CHAT");
-        put("messages.hopper-paused.sound", "block.note_block.pling");
-
-        put("messages.hopper-resumed.message", "&aHopper has been resumed!");
-        put("messages.hopper-resumed.prefix", true);
-        put("messages.hopper-resumed.type", "CHAT");
-        put("messages.hopper-resumed.sound", "block.note_block.chime");
-
         // Spawner List Teleport Message
         put("messages.teleported.message", "&aSuccessfully teleported to &6Spawner #%spawnerId%");
         put("messages.teleported.prefix", true);
@@ -269,11 +266,27 @@ public class LanguageManager {
 
         // GUI Items - Spawner Loot
         put("spawner-loot-item.name", "&#FCD05C&lLoot Storage");
-        put("spawner-loot-item.lore.chest", "\n&8▪ &#FCD05CSlots: &f%current_items%&7/&f%max_slots%\n&8▪ &#FCD05CStorage: &a%percent_storage%&a%&f full\n\n&#FCD05C➜ &7Click to open");
+        put("spawner-loot-item.lore.chest", Arrays.asList(
+                "",
+                "&8▪ &#FCD05CSlots: &f%current_items%&7/&f%max_slots%",
+                "&8▪ &#FCD05CStorage: &a%percent_storage%&a%&f full",
+                "",
+                "&#FCD05C➜ &7Click to open"
+        ));
 
         // GUI Items - Spawner Info
         put("spawner-info-item.name", "&#4fc3f7&lSpawner Info");
-        put("spawner-info-item.lore.spawner-info", "\n&8▪ &#81d4faEntity: &f%entity%\n&8▪ &#81d4faRange: &f%range% &7blocks\n&8▪ &#81d4faStack Size: &f%stack_size%\n&8▪ &#81d4faMob Rate: &f%min_mobs% &7- &f%max_mobs%\n&8▪ &#81d4faSpawn Delay: &f%delay%&7s\n&8▪ &#81d4faNext Spawn: &e\n&8&m\n&#81d4fa➜ &7Click to open stack menu");
+        put("spawner-info-item.lore.spawner-info", Arrays.asList(
+                "",
+                "&8▪ &#81d4faEntity: &f%entity%",
+                "&8▪ &#81d4faRange: &f%range% &7blocks",
+                "&8▪ &#81d4faStack Size: &f%stack_size%",
+                "&8▪ &#81d4faMob Rate: &f%min_mobs% &7- &f%max_mobs%",
+                "&8▪ &#81d4faSpawn Delay: &f%delay%&7s",
+                "&8▪ &#81d4faNext Spawn: &e",
+                "&8&m",
+                "&#81d4fa➜ &7Click to open stack menu"
+        ));
         put("spawner-info-item.lore-change", "&8▪ &#81d4faNext Spawn: &e");
         put("spawner-info-item.lore-inactive", "&cSpawner is inactive!");
         put("spawner-info-item.lore-now", "&cNow!");
@@ -281,7 +294,13 @@ public class LanguageManager {
 
         // Experience Info
         put("exp-info-item.name", "&#00F898&lStored Exp: &e%current_exp%&#00F898");
-        put("exp-info-item.lore.exp-bottle", "\n&8▪ &#00E689Current: &e%current_exp%&7/&e%max_exp% XP\n&8▪ &#00E689Stored: &e%percent_exp%&e%&7 XP\n\n&#00E689➜ &7Click to collect XP");
+        put("exp-info-item.lore.exp-bottle", Arrays.asList(
+                "",
+                "&8▪ &#00E689Current: &e%current_exp%&7/&e%max_exp% XP",
+                "&8▪ &#00E689Stored: &e%percent_exp%&e%&7 XP",
+                "",
+                "&#00E689➜ &7Click to collect XP"
+        ));
 
         // Stacker GUI Buttons
         put("button.name.spawner", "&#4fc3f7%entity% Spawner");
@@ -292,9 +311,26 @@ public class LanguageManager {
         put("button.name.increase-16", "&a+16 Spawners");
         put("button.name.increase-1", "&a+1 Spawner");
 
-        put("button.lore.remove", "&7Click to remove %amount% spawner\n&7from the stack\n&7Current stack: &e%stack_size%");
-        put("button.lore.add", "&7Click to add %amount% spawner\n&7to the stack\n&7Current stack: &e%stack_size%");
-        put("button.lore.spawner", "\n&8▪ &#81d4faEntity: &f%entity%\n&8▪ &#81d4faStack Size: &f%stack_size%\n&8▪ &#81d4faMax Stack Size: &f%max_stack_size%\n\n&#81d4fa➜ &7Click to return main menu");
+        put("button.lore.remove", Arrays.asList(
+                "&7Click to remove %amount% spawner",
+                "&7from the stack",
+                "&7Current stack: &e%stack_size%"
+        ));
+
+        put("button.lore.add", Arrays.asList(
+                "&7Click to add %amount% spawner",
+                "&7to the stack",
+                "&7Current stack: &e%stack_size%"
+        ));
+
+        put("button.lore.spawner", Arrays.asList(
+                "",
+                "&8▪ &#81d4faEntity: &f%entity%",
+                "&8▪ &#81d4faStack Size: &f%stack_size%",
+                "&8▪ &#81d4faMax Stack Size: &f%max_stack_size%",
+                "",
+                "&#81d4fa➜ &7Click to return main menu"
+        ));
 
         // Navigation Buttons
         put("navigation-button.previous.name", "&#81d4faPrevious Page");
@@ -308,7 +344,13 @@ public class LanguageManager {
 
         // Shop Page Indicator
         put("shop-page-indicator.name", "&#ffd700Sell All Items");
-        put("shop-page-indicator.lore", "\n&8▪ &#ffd700Total Items: &a%current_items%&7/&f%max_slots%\n&8▪ &#ffd700Storage: &a%percent_storage%&a%&f full\n\n&#ffd700➜ &7Click to sell all items");
+        put("shop-page-indicator.lore", Arrays.asList(
+                "",
+                "&8▪ &#ffd700Total Items: &a%current_items%&7/&f%max_slots%",
+                "&8▪ &#ffd700Storage: &a%percent_storage%&a%&f full",
+                "",
+                "&#ffd700➜ &7Click to sell all items"
+        ));
 
         // Other GUI Buttons
         put("return-button.name", "&#ff6b6b Return to Main Menu");
@@ -318,7 +360,13 @@ public class LanguageManager {
         put("equipment-toggle.lore.disabled", "&7Status: &c&lBlocked");
 
         // Command Messages
-        put("command.usage", "&#00E689SmartSpawner Commands:\n&f/smartspawner reload &7- Reload the plugin configuration\n&f/smartspawner list &7- Open the spawner list (for admin management)\n&f/smartspawner give <player> <mobtype> <amount> &7- Give spawners to a player");
+        put("command.usage", Arrays.asList(
+                "&#00E689SmartSpawner Commands:",
+                "&f/smartspawner reload &7- Reload the plugin configuration",
+                "&f/smartspawner list &7- Open the spawner list (for admin management)",
+                "&f/smartspawner give <player> <mobtype> <amount> &7- Give spawners to a player",
+                "&f/smartspawner hologram &7- Toggle hologram visibility"
+        ));
         put("command.reload.usage", "&cUsage: /smartspawner reload");
         put("command.reload.success", "&aPlugin reloaded successfully!");
         put("command.reload.error", "&cError reloading plugin. Check console for details.");
@@ -332,6 +380,9 @@ public class LanguageManager {
         put("command.give.spawner-received", "&aYou have received %amount% %entity% spawner(s)!");
         put("command.give.spawner-given", "&aYou have given %player% %amount% %entity% spawner(s)!");
         put("command.give.spawner-given-dropped", "&eYou have given %player% %amount% %entity% spawner(s) (some items were dropped on the ground)");
+
+        put("command.hologram.enabled", "&#00E689Holograms have been &aenabled&7!");
+        put("command.hologram.disabled", "&cHolograms have been &cdisabled&7!");
 
         // No Permission Message
         put("no-permission.message", "&cYou do not have permission to do that!");
@@ -522,8 +573,38 @@ public class LanguageManager {
         return message;
     }
     // get message from path with replacements map
+//    public String getMessage(String path, Map<String, String> replacements) {
+//        String message = getMessage(path);
+//
+//        // Create cache key from path and all replacements
+//        StringBuilder cacheKey = new StringBuilder(path);
+//        for (Map.Entry<String, String> entry : replacements.entrySet()) {
+//            cacheKey.append(entry.getKey()).append(entry.getValue());
+//        }
+//
+//        String cachedMessage = messageCache.get(cacheKey.toString());
+//        if (cachedMessage != null) {
+//            return cachedMessage;
+//        }
+//
+//        // Apply all replacements
+//        for (Map.Entry<String, String> entry : replacements.entrySet()) {
+//            message = message.replace(entry.getKey(), entry.getValue());
+//        }
+//
+//        messageCache.put(cacheKey.toString(), message);
+//        return message;
+//    }
+
+    // Get message from path with Map replacements
     public String getMessage(String path, Map<String, String> replacements) {
-        String message = getMessage(path);
+        // Check if the message is a list format
+        if (messages.isList(path)) {
+            List<String> messageList = messages.getStringList(path);
+            return colorize(String.join("\n", messageList.stream()
+                    .map(line -> applyReplacements(line, replacements))
+                    .collect(Collectors.toList())));
+        }
 
         // Create cache key from path and all replacements
         StringBuilder cacheKey = new StringBuilder(path);
@@ -536,19 +617,27 @@ public class LanguageManager {
             return cachedMessage;
         }
 
-        // Apply all replacements
-        for (Map.Entry<String, String> entry : replacements.entrySet()) {
-            message = message.replace(entry.getKey(), entry.getValue());
-        }
+        String message = getMessage(path);
+        message = applyReplacements(message, replacements);
+        message = colorize(message);
 
         messageCache.put(cacheKey.toString(), message);
         return message;
     }
 
+    // Helper method to apply replacements
+    private String applyReplacements(String message, Map<String, String> replacements) {
+        String result = message;
+        for (Map.Entry<String, String> entry : replacements.entrySet()) {
+            result = result.replace(entry.getKey(), entry.getValue());
+        }
+        return result;
+    }
+
     public String getConsoleMessage(String path) {
         String cachedMessage = messageCache.get(path + "_" + currentLanguage.getCode());
         if (cachedMessage != null) {
-            return applyColorToConsole(cachedMessage);  // Chuyển đổi màu nếu đã có trong cache
+            return applyColorToConsole(cachedMessage);
         }
 
         String message = messages.getString(path);
@@ -874,6 +963,21 @@ public class LanguageManager {
         } else if (number >= 1_000_000) {
             return String.format(getMessage(formatNumberPath + "million"), formatNumberWithDecimals(number / 1_000_000D));
         } else if (number >= 1_000) {
+            return String.format(getMessage(formatNumberPath + "thousand"), formatNumberWithDecimals(number / 1_000D));
+        } else {
+            return String.format(getMessage(formatNumberPath + "default"), number);
+        }
+    }
+
+    public String formatNumberTenThousand(long number) {
+        String formatNumberPath = "format-number.";
+        if (number >= 1_000_000_000_000L) {
+            return String.format(getMessage(formatNumberPath + "trillion"), formatNumberWithDecimals(number / 1_000_000_000_000D));
+        } else if (number >= 1_000_000_000) {
+            return String.format(getMessage(formatNumberPath + "billion"), formatNumberWithDecimals(number / 1_000_000_000D));
+        } else if (number >= 1_000_000) {
+            return String.format(getMessage(formatNumberPath + "million"), formatNumberWithDecimals(number / 1_000_000D));
+        } else if (number >= 10_000) {
             return String.format(getMessage(formatNumberPath + "thousand"), formatNumberWithDecimals(number / 1_000D));
         } else {
             return String.format(getMessage(formatNumberPath + "default"), number);

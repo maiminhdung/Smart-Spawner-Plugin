@@ -154,6 +154,10 @@ public class ConfigManager {
         put("spawner-break.silk-touch.level", 1);
         put("spawner-break.drop-stack.amount", 64);
 
+        // Hologram Settings
+        put("hologram.enabled", true);
+        put("hologram.see-through", false);
+
         // Economic Integration
         put("shop-integration", "EconomyShopGUI");
         put("formated-price", true);
@@ -200,6 +204,10 @@ public class ConfigManager {
         configCache.put("spawner-break.silk-touch.required", config.getBoolean("spawner-break.silk-touch.required"));
         configCache.put("spawner-break.silk-touch.level", config.getInt("spawner-break.silk-touch.level"));
         configCache.put("spawner-break.drop-stack.amount", config.getInt("spawner-break.drop-stack.amount"));
+
+        // Cache hologram settings
+        configCache.put("hologram.enabled", config.getBoolean("hologram.enabled"));
+        configCache.put("hologram.see-through", config.getBoolean("hologram.see-through"));
 
         // Cache shop config
         configCache.put("shop-integration", config.getString("shop-integration"));
@@ -463,6 +471,25 @@ public class ConfigManager {
             int defaultValue = 64;
             setDefaultIfNotExists(key, defaultValue);
             return config.getInt(key, defaultValue);
+        });
+    }
+
+    // ===============================================================
+    //                   Spawner Hologram Settings
+    // ===============================================================
+
+    public boolean isHologramEnabled() {
+        return (boolean) configCache.computeIfAbsent("hologram.enabled", key -> {
+            boolean defaultValue = true;
+            setDefaultIfNotExists(key, defaultValue);
+            return config.getBoolean(key, defaultValue);
+        });
+    }
+
+    public boolean isHologramSeeThrough() {
+        return (boolean) configCache.computeIfAbsent("hologram.see-through", key -> {
+            setDefaultIfNotExists(key, defaultConfig.get(key));
+            return config.getBoolean(key, (boolean) defaultConfig.get(key));
         });
     }
 

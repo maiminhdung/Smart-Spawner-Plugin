@@ -61,6 +61,15 @@ spawner-break:
     amount: 64  # Maximum dropped items per break
 
 # ===============================================================
+#                      Spawner Hologram
+# ===============================================================
+
+# Hologram might cause performance issues on large servers use with caution
+hologram:
+  enabled: true
+  see-through: false  # Whether hologram should be visible through blocks
+
+# ===============================================================
 #                     Economic Integration
 # ===============================================================
 
