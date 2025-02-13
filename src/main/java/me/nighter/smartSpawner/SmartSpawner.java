@@ -32,6 +32,8 @@ import java.util.stream.Stream;
 
 public class SmartSpawner extends JavaPlugin {
 
+    private static SmartSpawner instance;
+
     // Managers
     private ConfigManager configManager;
     private LanguageManager languageManager;
@@ -61,6 +63,8 @@ public class SmartSpawner extends JavaPlugin {
 
     @Override
     public void onEnable() {
+        instance = this;
+
         ComponentLogger prefixedLogger = ComponentLogger.logger(Bukkit.getLogger().getName());
         String currentVersion = Bukkit.getServer().getVersion();
         initializeVersionSpecificComponents();
@@ -199,6 +203,8 @@ public class SmartSpawner extends JavaPlugin {
         if (eventHandlers != null) eventHandlers.cleanup();
     }
 
+    // Getters
+    public static SmartSpawner getInstance() { return instance; }
     public ConfigManager getConfigManager() { return configManager; }
     public LanguageManager getLanguageManager() { return languageManager; }
     public SpawnerLootGenerator getLootGenerator() { return lootGenerator; }
