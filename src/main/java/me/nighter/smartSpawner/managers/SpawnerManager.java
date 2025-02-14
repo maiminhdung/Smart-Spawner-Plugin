@@ -26,7 +26,6 @@ import java.nio.file.Files;
 import java.nio.file.StandardOpenOption;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.TimeUnit;
 
 public class SpawnerManager {
     private final SmartSpawner plugin;
@@ -373,7 +372,7 @@ public class SpawnerManager {
 
         if (hologramEnabled && loadedCount > 0) {
             removeAllGhostsHolograms();
-            Bukkit.getScheduler().runTask(plugin, () -> {
+            Bukkit.getAsyncScheduler().runNow(plugin, task -> {
                 plugin.getLogger().info("Updating holograms for all spawners...");
                 spawners.values().forEach(SpawnerData::updateHologramData);
             });
