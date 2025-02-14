@@ -417,11 +417,13 @@ public class SpawnerBreakHandler implements Listener {
         spawnerManager.saveSpawnerData();
 
         // Visual effect
-        block.getWorld().spawnParticle(
-                ParticleWrapper.SPELL_WITCH,
-                block.getLocation().clone().add(0.5, 0.5, 0.5),
-                50, 0.5, 0.5, 0.5, 0
-        );
+        if (configManager.isSpawnerCreateParticlesEnabled()) {
+            block.getWorld().spawnParticle(
+                    ParticleWrapper.SPELL_WITCH,
+                    block.getLocation().clone().add(0.5, 0.5, 0.5),
+                    50, 0.5, 0.5, 0.5, 0
+            );
+        }
 
         languageManager.sendMessage(player, "messages.activated");
         configManager.debug("Created new spawner with ID: " + newSpawnerId + " at " + block.getLocation());

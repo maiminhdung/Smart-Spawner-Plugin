@@ -123,14 +123,15 @@ public class SpawnerStackHandler {
     }
 
     private void showStackAnimation(SpawnerData spawner, int newStack, Player player) {
-        Location loc = spawner.getSpawnerLocation();
-        World world = loc.getWorld();
-        if (world == null) return;
+        if (configManager.isSpawnerStackParticlesEnabled()) {
+            Location loc = spawner.getSpawnerLocation();
+            World world = loc.getWorld();
+            if (world == null) return;
 
-        world.spawnParticle(ParticleWrapper.VILLAGER_HAPPY,
-                loc.clone().add(0.5, 0.5, 0.5),
-                10, 0.3, 0.3, 0.3, 0);
-
+            world.spawnParticle(ParticleWrapper.VILLAGER_HAPPY,
+                    loc.clone().add(0.5, 0.5, 0.5),
+                    10, 0.3, 0.3, 0.3, 0);
+        }
         languageManager.sendMessage(player, "messages.hand-stack", "%amount%", String.valueOf(newStack));
     }
 }

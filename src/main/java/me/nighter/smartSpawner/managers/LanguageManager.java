@@ -98,7 +98,7 @@ public class LanguageManager {
         put("spawner-hologram.format", Arrays.asList(
                 "&#FCD05C◆  [&fx%stack_size%&#FCD05C] &d%entity%  &#FCD05C◆",
                 "&#00E689&lExp: &e%current_exp%&7/&e%max_exp% &7XP",
-                "&#FCD05C&lStorage: &f%current_items%&7/&f%max_slots% &7slots"
+                "&#FCD05C&lStorage: &f%used_slots%&7/&f%max_slots% &7slots"
         ));
 
         // Spawner Interaction Messages
@@ -368,6 +368,7 @@ public class LanguageManager {
                 "&f/smartspawner hologram &7- Toggle hologram visibility"
         ));
         put("command.reload.usage", "&cUsage: /smartspawner reload");
+        put("command.reload.wait", "&eReloading plugin please wait...");
         put("command.reload.success", "&aPlugin reloaded successfully!");
         put("command.reload.error", "&cError reloading plugin. Check console for details.");
 

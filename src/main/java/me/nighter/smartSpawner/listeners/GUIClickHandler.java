@@ -378,6 +378,7 @@ public class GUIClickHandler implements Listener {
         // Remove successfully moved items from virtual inventory
         if (!itemsToRemove.isEmpty()) {
             virtualInv.removeItems(itemsToRemove);
+            spawner.updateHologramData();
         }
 
         // Send appropriate message

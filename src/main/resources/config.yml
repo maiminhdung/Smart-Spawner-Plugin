@@ -61,13 +61,25 @@ spawner-break:
     amount: 64  # Maximum dropped items per break
 
 # ===============================================================
-#                      Spawner Hologram
+#                     Aesthetic Features
 # ===============================================================
+# Aesthetic features may impact server performance, turn off if you want maximum performance
 
-# Hologram might cause performance issues on large servers use with caution
+# Hologram Configuration
 hologram:
-  enabled: true
-  see-through: false  # Whether hologram should be visible through blocks
+  enabled: false
+  see-through: false      # Whether hologram should be visible through blocks
+  shadowed-text: true     # Whether hologram text is shadowed
+  height: 1.6             # Height of the hologram above the spawner
+  offset:                 # Offset of the hologram from the spawner
+    x: 0.5
+    z: 0.5
+
+# Particle Configuration
+particles:
+  loot-spawn: true        # Particle effect when spawner loot is spawned
+  spawner-stack: true     # Particle effect when spawners are stacked
+  spawner-activate: true  # Particle effect when spawner is activated
 
 # ===============================================================
 #                     Economic Integration

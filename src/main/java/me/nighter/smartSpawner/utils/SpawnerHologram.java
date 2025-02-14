@@ -6,6 +6,7 @@ import me.nighter.smartSpawner.managers.LanguageManager;
 
 import org.bukkit.Location;
 import org.bukkit.entity.Display;
+import org.bukkit.entity.Entity;
 import org.bukkit.entity.EntityType;
 import org.bukkit.entity.TextDisplay;
 import org.bukkit.util.Transformation;
@@ -27,6 +28,8 @@ public class SpawnerHologram {
     private int maxExp;
     private int currentItems;
     private int maxSlots;
+    private static final String HOLOGRAM_IDENTIFIER = "SmartSpawner-Holo";
+    private String uniqueIdentifier;
 
     private static final Vector3f SCALE = new Vector3f(1.0f, 1.0f, 1.0f);
     private static final Vector3f TRANSLATION = new Vector3f(0.0f, 0.0f, 0.0f);
@@ -37,21 +40,38 @@ public class SpawnerHologram {
         this.spawnerLocation = location;
         this.languageManager = plugin.getLanguageManager();
         this.configManager = plugin.getConfigManager();
+        this.uniqueIdentifier = generateUniqueIdentifier(location);
+    }
+
+    private String generateUniqueIdentifier(Location location) {
+        return HOLOGRAM_IDENTIFIER + "-" +
+                location.getWorld().getName() + "-" +
+                location.getBlockX() + "-" +
+                location.getBlockY() + "-" +
+                location.getBlockZ();
     }
 
     public void createHologram() {
         if (spawnerLocation == null || spawnerLocation.getWorld() == null) return;
-        Location holoLoc = spawnerLocation.clone().add(0.5, 1.6, 0.5);
+
+        double offsetX = configManager.getHologramOffsetX();
+        double offsetY = configManager.getHologramHeight();
+        double offsetZ = configManager.getHologramOffsetZ();
+
+        Location holoLoc = spawnerLocation.clone().add(offsetX, offsetY, offsetZ);
 
         try {
             textDisplay = spawnerLocation.getWorld().spawn(holoLoc, TextDisplay.class, display -> {
                 display.setBillboard(Display.Billboard.CENTER);
                 display.setAlignment(TextDisplay.TextAlignment.CENTER);
                 display.setViewRange(16.0f);
-                display.setShadowed(false);
+                display.setShadowed(configManager.isHologramShadowed());
                 display.setDefaultBackground(false);
                 display.setTransformation(new Transformation(TRANSLATION, ROTATION, SCALE, ROTATION));
                 display.setSeeThrough(configManager.isHologramSeeThrough());
+                // Add custom name for identification
+                display.setCustomName(uniqueIdentifier);
+                display.setCustomNameVisible(false);
             });
 
             updateText();
@@ -72,7 +92,7 @@ public class SpawnerHologram {
         replacements.put("%stack_size%", String.valueOf(stackSize));
         replacements.put("%current_exp%", languageManager.formatNumberTenThousand(currentExp));
         replacements.put("%max_exp%", languageManager.formatNumberTenThousand(maxExp));
-        replacements.put("%current_items%",languageManager.formatNumberTenThousand(currentItems));
+        replacements.put("%used_slots%",languageManager.formatNumberTenThousand(currentItems));
         replacements.put("%max_slots%", languageManager.formatNumberTenThousand(maxSlots));
 
         String hologramText = languageManager.getMessage("spawner-hologram.format", replacements);
@@ -93,6 +113,43 @@ public class SpawnerHologram {
         if (textDisplay != null && textDisplay.isValid()) {
             textDisplay.remove();
             textDisplay = null;
+        }
+    }
+
+    public void cleanupExistingHologram() {
+        if (spawnerLocation == null || spawnerLocation.getWorld() == null) return;
+
+        double offsetX = configManager.getHologramOffsetX();
+        double offsetY = configManager.getHologramHeight();
+        double offsetZ = configManager.getHologramOffsetZ();
+
+        // Calculate efficient search area
+        double searchRadius = Math.max(Math.max(Math.abs(offsetX), Math.abs(offsetY)), Math.abs(offsetZ)) + 1.0;
+
+        // Use efficient entity lookup
+        spawnerLocation.getWorld().getNearbyEntities(spawnerLocation, searchRadius, searchRadius, searchRadius)
+                .stream()
+                .filter(entity -> entity instanceof TextDisplay)
+                .filter(entity -> {
+                    String customName = entity.getCustomName();
+                    return customName != null &&
+                            customName.startsWith(HOLOGRAM_IDENTIFIER) &&
+                            (customName.equals(uniqueIdentifier) || isOldHologramForLocation(customName, spawnerLocation));
+                })
+                .forEach(Entity::remove);
+    }
+
+    private boolean isOldHologramForLocation(String hologramName, Location location) {
+        try {
+            String[] parts = hologramName.split("-");
+            if (parts.length != 6) return false;
+
+            return parts[2].equals(location.getWorld().getName()) &&
+                    Integer.parseInt(parts[3]) == location.getBlockX() &&
+                    Integer.parseInt(parts[4]) == location.getBlockY() &&
+                    Integer.parseInt(parts[5]) == location.getBlockZ();
+        } catch (Exception e) {
+            return false;
         }
     }
 }

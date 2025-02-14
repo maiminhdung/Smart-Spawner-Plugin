@@ -103,6 +103,10 @@ public class SpawnerLootManager {
             ItemStack durabilityToggle = createAllowEquipmentToggleButton(spawner.isAllowEquipmentItems());
             inventory.setItem(NAVIGATION_ROW * 9 + 1, durabilityToggle);
         }
+
+        if (configManager.isHologramEnabled()) {
+            spawner.updateHologramData();
+        }
     }
 
     private ItemStack createAllowEquipmentToggleButton(boolean currentState) {

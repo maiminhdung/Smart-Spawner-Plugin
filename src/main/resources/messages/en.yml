@@ -70,7 +70,7 @@ spawner-hologram:
   # %entity% - Mob type name
   # %current_exp% - Current stored XP
   # %max_exp% - Maximum XP capacity
-  # %current_items% - Current stored item slots
+  # %used_slots% - Number of used storage slots
   # %max_slots% - Maximum storage slots
   format:
     # First line - Title with decorative elements
@@ -78,7 +78,7 @@ spawner-hologram:
     # Second line - Experience display
     - "&#00E689&lExp: &e%current_exp%&7/&e%max_exp% &7XP"
     # Third line - Storage information
-    - "&#FCD05C&lStorage: &f%current_items%&7/&f%max_slots% &7slots"
+    - "&#FCD05C&lStorage: &f%used_slots%&7/&f%max_slots% &7slots"
 #---------------------------------------------------
 # Spawner Interaction
 #---------------------------------------------------
@@ -465,6 +465,7 @@ command:
     &f/smartspawner hologram &7- Toggle hologram visibility
   reload:
     usage: "&cUsage: /smartspawner reload"
+    wait: "&eReloading plugin please wait..."
     success: "&aPlugin reloaded successfully!"
     error: "&cError reloading plugin. Check console for details."
   give:

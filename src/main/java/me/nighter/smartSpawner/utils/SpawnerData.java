@@ -70,6 +70,22 @@ public class SpawnerData {
         }
     }
 
+    public void reloadHologramData() {
+        if (hologram != null) {
+            hologram.remove();
+            this.hologram = new SpawnerHologram(spawnerLocation);
+            this.hologram.createHologram();
+            hologram.updateData(
+                    stackSize,
+                    entityType,
+                    spawnerExp,
+                    maxStoredExp,
+                    virtualInventory.getUsedSlots(),
+                    maxSpawnerLootSlots
+            );
+        }
+    }
+
     public void refreshHologram() {
         if (configManager.isHologramEnabled()) {
             if (hologram == null) {
@@ -85,10 +101,16 @@ public class SpawnerData {
         }
     }
 
-    public void cleanup() {
+    public void removeHologram() {
         if (hologram != null) {
             hologram.remove();
             hologram = null;
+        }
+    }
+
+    public void removeGhostHologram() {
+        if (hologram != null && configManager.isHologramEnabled()) {
+            hologram.cleanupExistingHologram();
         }
     }
 

@@ -71,12 +71,14 @@ public class SpawnerListener implements Listener {
 
         creatureSpawner.setSpawnedType(entityType);
         creatureSpawner.update();
-        Location loc = block.getLocation();
-        loc.getWorld().spawnParticle(
-                ParticleWrapper.SPELL_WITCH,
-                loc.clone().add(0.5, 0.5, 0.5),
-                50, 0.5, 0.5, 0.5, 0
-        );
+        if (configManager.isSpawnerCreateParticlesEnabled()) {
+            Location loc = block.getLocation();
+            loc.getWorld().spawnParticle(
+                    ParticleWrapper.SPELL_WITCH,
+                    loc.clone().add(0.5, 0.5, 0.5),
+                    50, 0.5, 0.5, 0.5, 0
+            );
+        }
 
         // Create new spawner with default config values
         SpawnerData spawner = new SpawnerData(newSpawnerId, block.getLocation(), entityType, plugin);
@@ -202,9 +204,11 @@ public class SpawnerListener implements Listener {
         if (success) {
             if (player.isSneaking()) {
                 player.playSound(player.getLocation(), Sound.ENTITY_EXPERIENCE_ORB_PICKUP, 1.0f, 1.0f);
-                block.getWorld().spawnParticle(ParticleWrapper.VILLAGER_HAPPY,
-                        block.getLocation().add(0.5, 0.5, 0.5),
-                        10, 0.3, 0.3, 0.3, 0);
+                if (configManager.isSpawnerStackParticlesEnabled()) {
+                    block.getWorld().spawnParticle(ParticleWrapper.VILLAGER_HAPPY,
+                            block.getLocation().add(0.5, 0.5, 0.5),
+                            10, 0.3, 0.3, 0.3, 0);
+                }
             }
         }
     }
@@ -700,31 +704,25 @@ public class SpawnerListener implements Listener {
 
         int remainingExp = exp;
 
-        // Nếu allowExpMending = true, áp dụng exp cho các vật phẩm có enchant mending
         if (configManager.isAllowExpMending()) {
             PlayerInventory inventory = player.getInventory();
             ItemStack mainHand = inventory.getItemInMainHand();
             ItemStack offHand = inventory.getItemInOffHand();
             ItemStack armor = inventory.getChestplate();
 
-            // Danh sách các item cần check
             List<ItemStack> itemsToCheck = Arrays.asList(mainHand, offHand, armor);
 
             for (ItemStack item : itemsToCheck) {
                 if (item != null && !item.getType().equals(Material.AIR)) {
                     if (item.getEnchantments().containsKey(Enchantment.MENDING)) {
-                        // Kiểm tra độ bền của item
                         if (item.getDurability() > 0) {
-                            // Tính toán exp cần để sửa item
                             int durabilityToRepair = Math.min(item.getDurability(), remainingExp * 2);
                             int expNeeded = durabilityToRepair / 2;
 
                             if (expNeeded > 0 && remainingExp >= expNeeded) {
-                                // Sửa item và trừ exp
                                 item.setDurability((short) (item.getDurability() - durabilityToRepair));
                                 remainingExp -= expNeeded;
 
-                                // Hiệu ứng sửa chữa
                                 player.playSound(player.getLocation(), Sound.BLOCK_ANVIL_USE, 0.5f, 1.0f);
                                 player.spawnParticle(ParticleWrapper.VILLAGER_HAPPY, player.getLocation().add(0, 1, 0), 5);
                             }
@@ -734,7 +732,6 @@ public class SpawnerListener implements Listener {
             }
         }
 
-        // Cho player phần exp còn lại
         if (remainingExp > 0) {
             player.giveExp(remainingExp);
             player.playSound(player.getLocation(), Sound.ENTITY_EXPERIENCE_ORB_PICKUP, 1.0f, 1.0f);
@@ -745,12 +742,11 @@ public class SpawnerListener implements Listener {
         // Refresh spawner menu for all players who have it open
         refreshSpawnerMenuForAllPlayers(spawner);
 
-        // Thông báo kết quả
         if (remainingExp < exp) {
             languageManager.sendMessage(player, "messages.exp-collected-with-mending",
-                    "%exp-mending%", String.valueOf(exp-remainingExp), "%exp%", String.valueOf(remainingExp));
+                    "%exp-mending%", languageManager.formatNumberTenThousand(exp-remainingExp), "%exp%", languageManager.formatNumberTenThousand(remainingExp));
         } else {
-            languageManager.sendMessage(player, "messages.exp-collected", "%exp%", String.valueOf(exp));
+            languageManager.sendMessage(player, "messages.exp-collected", "%exp%", languageManager.formatNumberTenThousand(exp));
         }
     }
 

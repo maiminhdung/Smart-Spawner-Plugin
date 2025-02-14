@@ -155,8 +155,17 @@ public class ConfigManager {
         put("spawner-break.drop-stack.amount", 64);
 
         // Hologram Settings
-        put("hologram.enabled", true);
+        put("hologram.enabled", false);
         put("hologram.see-through", false);
+        put("hologram.shadowed-text", true);
+        put("hologram.height", 1.6);
+        put("hologram.offset.x", 0.5);
+        put("hologram.offset.z", 0.5);
+
+        // Particle Effect Settings
+        put("particles.loot-spawn", true);
+        put("particles.spawner-stack", true);
+        put("particles.spawner-activate", true);
 
         // Economic Integration
         put("shop-integration", "EconomyShopGUI");
@@ -208,6 +217,15 @@ public class ConfigManager {
         // Cache hologram settings
         configCache.put("hologram.enabled", config.getBoolean("hologram.enabled"));
         configCache.put("hologram.see-through", config.getBoolean("hologram.see-through"));
+        configCache.put("hologram.shadowed-text", config.getBoolean("hologram.shadowed-text"));
+        configCache.put("hologram.height", config.getDouble("hologram.height"));
+        configCache.put("hologram.offset.x", config.getDouble("hologram.offset.x"));
+        configCache.put("hologram.offset.z", config.getDouble("hologram.offset.z"));
+
+        // Cache particle settings
+        configCache.put("particles.loot-spawn", config.getBoolean("particles.loot-spawn"));
+        configCache.put("particles.spawner-stack", config.getBoolean("particles.spawner-stack"));
+        configCache.put("particles.spawner-activate", config.getBoolean("particles.spawner-activate"));
 
         // Cache shop config
         configCache.put("shop-integration", config.getString("shop-integration"));
@@ -491,6 +509,56 @@ public class ConfigManager {
             setDefaultIfNotExists(key, defaultConfig.get(key));
             return config.getBoolean(key, (boolean) defaultConfig.get(key));
         });
+    }
+
+    public boolean isHologramShadowed() {
+        return (boolean) configCache.computeIfAbsent("hologram.shadowed-text", key -> {
+            setDefaultIfNotExists(key, defaultConfig.get(key));
+            return config.getBoolean(key, (boolean) defaultConfig.get(key));
+        });
+    }
+
+    public double getHologramHeight() {
+        return (double) configCache.computeIfAbsent("hologram.height", key -> {
+            double defaultValue = 1.6;
+            setDefaultIfNotExists(key, defaultValue);
+            return config.getDouble(key, defaultValue);
+        });
+    }
+
+    public double getHologramOffsetX() {
+        return (double) configCache.computeIfAbsent("hologram.offset.x", key -> {
+            double defaultValue = 0.5;
+            setDefaultIfNotExists(key, defaultValue);
+            return config.getDouble(key, defaultValue);
+        });
+    }
+
+    public double getHologramOffsetZ() {
+        return (double) configCache.computeIfAbsent("hologram.offset.z", key -> {
+            double defaultValue = 0.5;
+            setDefaultIfNotExists(key, defaultValue);
+            return config.getDouble(key, defaultValue);
+        });
+    }
+
+    // ===============================================================
+    //                     Particle Settings
+    // ===============================================================
+
+    public boolean isLootSpawnParticlesEnabled() {
+        return (boolean) configCache.computeIfAbsent("particles.loot-spawn",
+                key -> config.getBoolean(key, (boolean) defaultConfig.get(key)));
+    }
+
+    public boolean isSpawnerStackParticlesEnabled() {
+        return (boolean) configCache.computeIfAbsent("particles.spawner-stack",
+                key -> config.getBoolean(key, (boolean) defaultConfig.get(key)));
+    }
+
+    public boolean isSpawnerCreateParticlesEnabled() {
+        return (boolean) configCache.computeIfAbsent("particles.spawner-activate",
+                key -> config.getBoolean(key, (boolean) defaultConfig.get(key)));
     }
 
     // ===============================================================

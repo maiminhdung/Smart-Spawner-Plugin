@@ -69,7 +69,7 @@ spawner-hologram:
   # %entity% - Tên loại quái
   # %current_exp% - Kinh nghiệm hiện tại được lưu trữ
   # %max_exp% - Dung lượng kinh nghiệm tối đa
-  # %current_items% - Số ô vật phẩm hiện đang lưu trữ
+  # %used_slots% - Số ô vật phẩm hiện đang lưu trữ
   # %max_slots% - Số ô lưu trữ tối đa
   format:
     # Dòng đầu tiên - Tiêu đề với các yếu tố trang trí
@@ -77,7 +77,7 @@ spawner-hologram:
     # Dòng thứ hai - Hiển thị kinh nghiệm
     - "&#00E689&lExp: &e%current_exp%&7/&e%max_exp% &7KN"
     # Dòng thứ ba - Thông tin lưu trữ
-    - "&#FCD05C&lKho chứa: &f%current_items%&7/&f%max_slots% &7ô"
+    - "&#FCD05C&lKho chứa: &f%used_slots%&7/&f%max_slots% &7ô"
 
 #---------------------------------------------------
 # Tương tác với lồng spawn
@@ -466,6 +466,7 @@ command:
     &f/ss hologram &7- Bật/Tắt hologram của spawner
   reload:
     usage: "&cSử dụng: /smartspawner reload"
+    wait: "&eĐang tải lại plugin..."
     success: "&aĐã tải lại plugin thành công!"
     error: "&cLỗi khi tải lại plugin. Kiểm tra console để biết chi tiết."
   give:

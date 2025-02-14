@@ -27,19 +27,59 @@ public class SpawnerDataMigration {
 
         if (!dataFile.exists()) {
             plugin.getLogger().info("No spawner data file found. Creating new one...");
+            try {
+                FileConfiguration newConfig = new YamlConfiguration();
+                newConfig.set(MIGRATION_FLAG, CURRENT_VERSION);
+                newConfig.save(dataFile);
+            } catch (IOException e) {
+                plugin.getLogger().severe("Failed to create new data file: " + e.getMessage());
+            }
             return false;
         }
 
         FileConfiguration config = YamlConfiguration.loadConfiguration(dataFile);
 
-        int dataVersion = config.getInt(MIGRATION_FLAG, 1);
+        // First, try to validate if the current format works
+        boolean needsMigration;
+        try {
+            needsMigration = false;
 
-        if (dataVersion >= CURRENT_VERSION) {
-            plugin.getLogger().info("Data format is up to date.");
-            return false;
+            // Check if data_version exists
+            if (!config.contains(MIGRATION_FLAG)) {
+                config.set(MIGRATION_FLAG, CURRENT_VERSION);
+                try {
+                    config.save(dataFile);
+                } catch (IOException e) {
+                    plugin.getLogger().warning("Could not save data_version flag: " + e.getMessage());
+                }
+            }
+
+            // Validate the spawners section
+            if (config.contains("spawners")) {
+                for (String spawnerId : config.getConfigurationSection("spawners").getKeys(false)) {
+                    String spawnerPath = "spawners." + spawnerId;
+                    // Check if the spawner data is in the new format
+                    if (!config.contains(spawnerPath + ".location") ||
+                            !config.contains(spawnerPath + ".settings") ||
+                            !config.contains(spawnerPath + ".inventory")) {
+                        needsMigration = true;
+                        break;
+                    }
+                }
+            }
+
+            if (!needsMigration) {
+                plugin.getLogger().info("Data format is up to date.");
+                return false;
+            }
+
+        } catch (Exception e) {
+            plugin.getLogger().warning("Error validating current data format: " + e.getMessage());
+            needsMigration = true;
         }
 
-        plugin.getLogger().info("Old data format detected. Starting migration process...");
+        // If we reach here, we need to migrate the data
+        plugin.getLogger().info("Starting data migration process...");
 
         try {
             if (!createBackup(dataFile)) {
@@ -50,7 +90,6 @@ public class SpawnerDataMigration {
             boolean success = migrateData(config, dataFile);
 
             if (success) {
-                plugin.getLogger().info("Data migration completed successfully!");
                 return true;
             } else {
                 restoreFromBackup(dataFile);

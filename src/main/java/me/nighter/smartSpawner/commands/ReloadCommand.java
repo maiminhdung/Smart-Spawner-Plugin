@@ -52,6 +52,7 @@ public class ReloadCommand implements CommandExecutor, TabCompleter {
 
     private void reloadAll(CommandSender sender) {
         try {
+            sender.sendMessage(languageManager.getMessageWithPrefix("command.reload.wait"));
             // Reload all configurations
             configManager.reloadConfigs();
 
@@ -59,7 +60,7 @@ public class ReloadCommand implements CommandExecutor, TabCompleter {
             languageManager.reload();
 
             // Refresh all holograms
-            spawnerManager.refreshAllHolograms();
+            spawnerManager.reloadAllHolograms();
 
             sender.sendMessage(languageManager.getMessageWithPrefix("command.reload.success"));
             configManager.debug("Plugin reloaded successfully by " + sender.getName());

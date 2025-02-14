@@ -1,5 +1,7 @@
 package me.nighter.smartSpawner.hooks.shops.api.economyshopgui;
+import me.nighter.smartSpawner.SmartSpawner;
 
+import static me.gypopo.economyshopgui.util.EconomyType.*;
 import me.gypopo.economyshopgui.api.EconomyShopGUIHook;
 import me.gypopo.economyshopgui.api.prices.AdvancedSellPrice;
 import me.gypopo.economyshopgui.objects.ShopItem;
@@ -13,10 +15,6 @@ import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 
 import java.util.*;
-
-import me.nighter.smartSpawner.SmartSpawner;
-
-import static me.gypopo.economyshopgui.util.EconomyType.*;
 
 public class EconomyShopGUI implements IShopIntegration {
     private final SmartSpawner plugin;
