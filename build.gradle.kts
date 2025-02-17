@@ -10,7 +10,7 @@ plugins {
 runPaper.folia.registerTask()
 
 group = "me.nighter"
-version = "1.2.2-DEV"
+version = "1.2.3"
 
 repositories {
     mavenCentral()
@@ -43,13 +43,18 @@ dependencies {
     paperweight.paperDevBundle("1.20.4-R0.1-SNAPSHOT")
 
     // Hooks plugin
-    compileOnly("org.geysermc.floodgate:api:2.2.3-SNAPSHOT")
+    compileOnly("org.geysermc.floodgate:api:2.2.4-SNAPSHOT")
     compileOnly("com.sk89q.worldguard:worldguard-bukkit:7.0.13-SNAPSHOT")
     compileOnly("com.sk89q.worldedit:worldedit-bukkit:7.4.0-SNAPSHOT")
     compileOnly("com.github.brcdev-minecraft:shopgui-api:3.0.0") {
         exclude(group = "org.spigotmc", module = "spigot-api")
     }
-    compileOnly("com.palmergames.bukkit.towny:towny:0.101.1.2")
+    compileOnly("com.palmergames.bukkit.towny:towny:0.101.1.3")
+    compileOnly("com.github.MilkBowl:VaultAPI:1.7.1")
+    implementation("org.bstats:bstats-bukkit:3.0.2")
+    implementation("net.kyori:adventure-api:4.19.0")
+    implementation("net.kyori:adventure-text-minimessage:4.19.0")
+    implementation("com.github.maiminhdung:zShop-API:9cb1b3e140")
     implementation("com.github.Gypopo:EconomyShopGUI-API:1.7.3")
     implementation("com.github.GriefPrevention:GriefPrevention:17.0.0")
     implementation("com.github.IncrediblePlugins:LandsAPI:7.10.13")

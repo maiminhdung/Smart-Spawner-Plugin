@@ -26,6 +26,7 @@ import java.nio.file.Files;
 import java.nio.file.StandardOpenOption;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.TimeUnit;
 
 public class SpawnerManager {
     private final SmartSpawner plugin;
@@ -216,7 +217,9 @@ public class SpawnerManager {
     private void startSaveTask() {
         configManager.debug("Starting spawner data save task");
         int intervalSeconds = configManager.getSaveInterval();
-        Bukkit.getScheduler().runTaskTimerAsynchronously(plugin, this::saveSpawnerData, 0, intervalSeconds); // 5 mins
+        Bukkit.getAsyncScheduler().runAtFixedRate(plugin, task -> {
+            saveSpawnerData();
+        }, 1L, intervalSeconds, TimeUnit.SECONDS); // 5 mins
     }
 
     public void saveSpawnerData() {

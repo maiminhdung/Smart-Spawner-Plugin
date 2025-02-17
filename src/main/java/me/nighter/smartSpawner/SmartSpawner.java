@@ -19,6 +19,7 @@ import me.ryanhamshire.GriefPrevention.GriefPrevention;
 import me.nighter.smartSpawner.hooks.protections.api.Lands;
 import me.nighter.smartSpawner.commands.CommandHandler;
 
+import net.kyori.adventure.text.logger.slf4j.ComponentLogger;
 import org.bukkit.Bukkit;
 import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.PluginManager;
@@ -69,9 +70,7 @@ public class SmartSpawner extends JavaPlugin {
     @Override
     public void onEnable() {
         instance = this;
-
         ComponentLogger prefixedLogger = ComponentLogger.logger(Bukkit.getLogger().getName());
-        String currentVersion = Bukkit.getServer().getVersion();
         initializeVersionSpecificComponents();
 
         // Data migration
@@ -88,10 +87,10 @@ public class SmartSpawner extends JavaPlugin {
         Stream.of(
                 "╔══════════════════════════════════════════════════════════════╗",
                 "║                                                              ║",
-                " SmartSpawner " + currentVersion,
+                " SmartSpawner-Paper " + SmartSpawner.getInstance().getPluginMeta().getVersion(),
                 " This server is using " + Bukkit.getVersion(),
                 "",
-                " You are using Beta version of SmartSpawner,",
+                " You are using Paper version of SmartSpawner,",
                 " please report any bugs to the developer.",
                 " ",
                 " Discord: https://discord.gg/k7Sn2aynK6",
