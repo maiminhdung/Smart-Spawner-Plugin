@@ -16,7 +16,6 @@ softdepend:
   - Lands
   - Towny
   - SuperiorSkyblock2
-  - BentoBox
 commands:
   smartspawner:
     description: Main command for SmartSpawner plugin

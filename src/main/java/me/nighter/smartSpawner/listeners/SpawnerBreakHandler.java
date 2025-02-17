@@ -308,6 +308,7 @@ public class SpawnerBreakHandler implements Listener {
         Player player = event.getPlayer();
         ItemStack item = event.getItemInHand();
         ItemMeta meta = item.getItemMeta();
+        Location location = event.getBlock().getLocation();
 
         Block block = event.getBlock();
         if (block.getType() != Material.SPAWNER) {
