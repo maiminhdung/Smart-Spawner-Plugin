@@ -308,13 +308,6 @@ public class SpawnerBreakHandler implements Listener {
         Player player = event.getPlayer();
         ItemStack item = event.getItemInHand();
         ItemMeta meta = item.getItemMeta();
-        Location location = event.getBlock().getLocation();
-
-        // Check WorldGuard restrictions
-        if (!CheckBreakBlock.CanPlayerBreakBlock(player.getUniqueId(), location)) {
-            event.setCancelled(true);
-            return;
-        }
 
         Block block = event.getBlock();
         if (block.getType() != Material.SPAWNER) {

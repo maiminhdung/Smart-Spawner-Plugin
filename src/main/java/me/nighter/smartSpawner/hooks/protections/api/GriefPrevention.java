@@ -12,7 +12,7 @@ import java.util.UUID;
 
 public class GriefPrevention {
 
-    public static boolean CanplayerBreakClaimBlock(@NotNull UUID pUUID, @NotNull Location location) {
+    public static boolean canPlayerBreakClaimBlock(@NotNull UUID pUUID, @NotNull Location location) {
         Claim claim = me.ryanhamshire.GriefPrevention.GriefPrevention.instance.dataStore.getClaimAt(location, true, null);
         if (claim == null) return true;
 
@@ -22,7 +22,7 @@ public class GriefPrevention {
         return claim.allowBreak(player, player.getLocation().getBlock().getType()) == null && claim.hasExplicitPermission(player, ClaimPermission.Build);
     }
 
-    public static boolean CanplayerPlaceClaimBlock(@NotNull UUID pUUID, @NotNull Location location) {
+    public static boolean canPlayerStackClaimBlock(@NotNull UUID pUUID, @NotNull Location location) {
         Claim claim = me.ryanhamshire.GriefPrevention.GriefPrevention.instance.dataStore.getClaimAt(location, true, null);
         if (claim == null) return true;
 
@@ -32,7 +32,7 @@ public class GriefPrevention {
         return claim.allowBuild(player, player.getLocation().getBlock().getType()) == null && claim.hasExplicitPermission(player, ClaimPermission.Build);
     }
 
-    public static boolean CanplayerOpenMenuOnClaim(@NotNull UUID pUUID, @NotNull Location location) {
+    public static boolean canPlayerOpenMenuOnClaim(@NotNull UUID pUUID, @NotNull Location location) {
         Claim claim = me.ryanhamshire.GriefPrevention.GriefPrevention.instance.dataStore.getClaimAt(location, true, null);
         if (claim == null) return true;
 

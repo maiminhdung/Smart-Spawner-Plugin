@@ -38,7 +38,7 @@ public class Lands {
         return true;
     }
 
-    public static boolean canPlayerPlaceClaimBlock(@NotNull UUID pUUID, @NotNull Location location) {
+    public static boolean canPlayerStackClaimBlock(@NotNull UUID pUUID, @NotNull Location location) {
         if (landsIntegration == null) {
             return true;
         }
