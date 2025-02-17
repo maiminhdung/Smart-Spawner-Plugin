@@ -3,13 +3,13 @@ package me.nighter.smartSpawner.listeners;
 import io.papermc.paper.threadedregions.scheduler.ScheduledTask;
 
 import me.nighter.smartSpawner.SmartSpawner;
-import me.nighter.smartSpawner.managers.ConfigManager;
-import me.nighter.smartSpawner.managers.LanguageManager;
+import me.nighter.smartSpawner.utils.ConfigManager;
+import me.nighter.smartSpawner.utils.LanguageManager;
 import me.nighter.smartSpawner.managers.SpawnerLootManager;
-import me.nighter.smartSpawner.managers.SpawnerManager;
+import me.nighter.smartSpawner.spawner.properties.SpawnerManager;
 import me.nighter.smartSpawner.holders.PagedSpawnerLootHolder;
-import me.nighter.smartSpawner.utils.OptimizedVirtualInventory;
-import me.nighter.smartSpawner.utils.SpawnerData;
+import me.nighter.smartSpawner.spawner.properties.VirtualInventory;
+import me.nighter.smartSpawner.spawner.properties.SpawnerData;
 
 import org.bukkit.*;
 import org.bukkit.block.BlockState;
@@ -167,7 +167,7 @@ public class HopperHandler implements Listener {
         if (!lock.tryLock()) return; // Skip this tick if we can't get the lock
 
         try {
-            OptimizedVirtualInventory virtualInv = spawner.getVirtualInventory();
+            VirtualInventory virtualInv = spawner.getVirtualInventory();
             Hopper hopper = (Hopper) hopperLoc.getBlock().getState();
 
             int itemsPerTransfer = configManager.getHopperItemsPerTransfer();

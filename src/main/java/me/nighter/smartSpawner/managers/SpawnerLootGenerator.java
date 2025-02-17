@@ -1,7 +1,8 @@
 package me.nighter.smartSpawner.managers;
 
 import me.nighter.smartSpawner.SmartSpawner;
-import me.nighter.smartSpawner.utils.SpawnerData;
+import me.nighter.smartSpawner.spawner.properties.SpawnerData;
+import me.nighter.smartSpawner.utils.ConfigManager;
 import org.bukkit.ChatColor;
 import org.bukkit.Material;
 import org.bukkit.configuration.ConfigurationSection;
@@ -147,8 +148,6 @@ public class SpawnerLootGenerator {
             ConfigurationSection entitySection = mobDropSection.getConfigurationSection(entityName);
             if (entitySection == null) continue;
 
-            configManager.debug("Loading loot configuration for entity: " + entityName);
-
             int experience = entitySection.getInt("experience", 0);
             List<LootItem> items = new ArrayList<>();
 
@@ -190,10 +189,6 @@ public class SpawnerLootGenerator {
                                 minDurability, maxDurability, potionEffectType,
                                 potionDuration, potionAmplifier));
 
-                        configManager.debug("Loaded item config: " + itemKey +
-                                " (Amount: " + minAmount + "-" + maxAmount +
-                                ", Chance: " + chance + "%)");
-
                     } catch (IllegalArgumentException e) {
                         configManager.debug("Error loading item config: " + entityName + " -> " + itemKey +
                                 " Error: " + e.getMessage());
@@ -202,7 +197,6 @@ public class SpawnerLootGenerator {
             }
 
             entityLootConfigs.put(entityName.toLowerCase(), new EntityLootConfig(experience, items));
-            configManager.debug("Completed loading " + items.size() + " items for " + entityName);
         }
     }
 

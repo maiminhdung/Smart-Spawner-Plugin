@@ -1,8 +1,8 @@
-package me.nighter.smartSpawner.utils;
+package me.nighter.smartSpawner.spawner.properties;
 
 import me.nighter.smartSpawner.SmartSpawner;
-import me.nighter.smartSpawner.managers.ConfigManager;
-import me.nighter.smartSpawner.managers.LanguageManager;
+import me.nighter.smartSpawner.utils.ConfigManager;
+import me.nighter.smartSpawner.utils.LanguageManager;
 
 import org.bukkit.Location;
 import org.bukkit.entity.EntityType;
@@ -28,7 +28,7 @@ public class SpawnerData {
     private int minMobs;
     private int maxMobs;
     private int stackSize;
-    private OptimizedVirtualInventory virtualInventory;
+    private VirtualInventory virtualInventory;
     private boolean allowEquipmentItems;
     private static final Logger logger = Logger.getLogger("SmartSpawnerConfig");
     private final LanguageManager languageManager;
@@ -49,7 +49,7 @@ public class SpawnerData {
         this.configManager = plugin.getConfigManager();
         this.languageManager = plugin.getLanguageManager();
         loadConfigValues();
-        this.virtualInventory = new OptimizedVirtualInventory(maxSpawnerLootSlots);
+        this.virtualInventory = new VirtualInventory(maxSpawnerLootSlots);
         if (configManager.isHologramEnabled()) {
             this.hologram = new SpawnerHologram(location);
             this.hologram.createHologram();
@@ -114,11 +114,11 @@ public class SpawnerData {
         }
     }
 
-    public OptimizedVirtualInventory getVirtualInventory() {
+    public VirtualInventory getVirtualInventory() {
         return virtualInventory;
     }
 
-    public void setVirtualInventory(OptimizedVirtualInventory inventory) {
+    public void setVirtualInventory(VirtualInventory inventory) {
         this.virtualInventory = inventory;
     }
 
@@ -188,14 +188,14 @@ public class SpawnerData {
         }
 
         // Get current consolidated items
-        Map<OptimizedVirtualInventory.ItemSignature, Long> currentItems = virtualInventory.getConsolidatedItems();
+        Map<VirtualInventory.ItemSignature, Long> currentItems = virtualInventory.getConsolidatedItems();
 
         // Calculate new max slots
         int maxStoragePages = configManager.getMaxStoragePages();
         int newMaxSlots = (45 * maxStoragePages) * stackSize;
 
         // Create new inventory with new size
-        OptimizedVirtualInventory newInventory = new OptimizedVirtualInventory(newMaxSlots);
+        VirtualInventory newInventory = new VirtualInventory(newMaxSlots);
 
         // Convert consolidated items to ItemStack list for adding to new inventory
         List<ItemStack> itemsToTransfer = new ArrayList<>();
@@ -236,7 +236,7 @@ public class SpawnerData {
         }
 
         // Get current consolidated items
-        Map<OptimizedVirtualInventory.ItemSignature, Long> currentItems = virtualInventory.getConsolidatedItems();
+        Map<VirtualInventory.ItemSignature, Long> currentItems = virtualInventory.getConsolidatedItems();
 
         // Calculate new max slots
         int maxStoragePages = configManager.getMaxStoragePages();
@@ -252,7 +252,7 @@ public class SpawnerData {
         }
 
         // Create new inventory with new size
-        OptimizedVirtualInventory newInventory = new OptimizedVirtualInventory(newMaxSlots);
+        VirtualInventory newInventory = new VirtualInventory(newMaxSlots);
 
         // Convert consolidated items to ItemStack list for adding to new inventory
         List<ItemStack> itemsToTransfer = new ArrayList<>();

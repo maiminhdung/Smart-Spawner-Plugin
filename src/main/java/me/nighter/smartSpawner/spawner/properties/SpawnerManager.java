@@ -1,13 +1,13 @@
-package me.nighter.smartSpawner.managers;
+package me.nighter.smartSpawner.spawner.properties;
 
-import me.nighter.smartSpawner.serializers.ItemStackSerializer;
+import me.nighter.smartSpawner.managers.*;
 import me.nighter.smartSpawner.SmartSpawner;
 import me.nighter.smartSpawner.nms.ParticleWrapper;
 import me.nighter.smartSpawner.holders.SpawnerMenuHolder;
 import me.nighter.smartSpawner.holders.PagedSpawnerLootHolder;
-import me.nighter.smartSpawner.utils.OptimizedVirtualInventory;
-import me.nighter.smartSpawner.utils.SpawnerData;
 import me.nighter.smartSpawner.nms.ParticleWrapper;
+import me.nighter.smartSpawner.utils.ConfigManager;
+import me.nighter.smartSpawner.utils.LanguageManager;
 
 import org.bukkit.*;
 import org.bukkit.configuration.ConfigurationSection;
@@ -39,6 +39,7 @@ public class SpawnerManager {
     private final Map<UUID, SpawnerData> openSpawnerGuis = new ConcurrentHashMap<>();
     private final ConfigManager configManager;
     private final LanguageManager languageManager;
+    private final Map<String, Set<SpawnerData>> worldIndex = new HashMap<>();
 
     public SpawnerManager(SmartSpawner plugin) {
         this.plugin = plugin;
@@ -83,6 +84,10 @@ public class SpawnerManager {
     public void addSpawner(String id, SpawnerData spawner) {
         spawners.put(id, spawner);
         locationIndex.put(new LocationKey(spawner.getSpawnerLocation()), spawner);
+
+        // Add to world index
+        String worldName = spawner.getSpawnerLocation().getWorld().getName();
+        worldIndex.computeIfAbsent(worldName, k -> new HashSet<>()).add(spawner);
     }
 
     public void removeSpawner(String id) {
@@ -90,9 +95,43 @@ public class SpawnerManager {
         if (spawner != null) {
             spawner.removeHologram();
             locationIndex.remove(new LocationKey(spawner.getSpawnerLocation()));
+
+            // Remove from world index
+            String worldName = spawner.getSpawnerLocation().getWorld().getName();
+            Set<SpawnerData> worldSpawners = worldIndex.get(worldName);
+            if (worldSpawners != null) {
+                worldSpawners.remove(spawner);
+                if (worldSpawners.isEmpty()) {
+                    worldIndex.remove(worldName);
+                }
+            }
+
             spawners.remove(id);
         }
         deleteSpawnerFromFile(id);
+    }
+
+    public int countSpawnersInWorld(String worldName) {
+        Set<SpawnerData> worldSpawners = worldIndex.get(worldName);
+        return worldSpawners != null ? worldSpawners.size() : 0;
+    }
+
+    public int countTotalSpawnersWithStacks(String worldName) {
+        Set<SpawnerData> worldSpawners = worldIndex.get(worldName);
+        if (worldSpawners == null) return 0;
+
+        return worldSpawners.stream()
+                .mapToInt(SpawnerData::getStackSize)
+                .sum();
+    }
+
+    // Method to handle world reloading or plugin reload
+    public void reindexWorlds() {
+        worldIndex.clear();
+        for (SpawnerData spawner : spawners.values()) {
+            String worldName = spawner.getSpawnerLocation().getWorld().getName();
+            worldIndex.computeIfAbsent(worldName, k -> new HashSet<>()).add(spawner);
+        }
     }
 
     public void deleteSpawnerFromFile(String spawnerId) {
@@ -230,10 +269,10 @@ public class SpawnerManager {
 
                 spawnerData.set(path + ".settings", settings);
 
-                // Save OptimizedVirtualInventory
-                OptimizedVirtualInventory virtualInv = spawner.getVirtualInventory();
+                // Save VirtualInventory
+                VirtualInventory virtualInv = spawner.getVirtualInventory();
                 if (virtualInv != null) {
-                    Map<OptimizedVirtualInventory.ItemSignature, Long> items = virtualInv.getConsolidatedItems();
+                    Map<VirtualInventory.ItemSignature, Long> items = virtualInv.getConsolidatedItems();
                     List<String> serializedItems = ItemStackSerializer.serializeInventory(items);
                     spawnerData.set(path + ".inventory", serializedItems);
                 }
@@ -332,7 +371,7 @@ public class SpawnerManager {
                 }
 
                 // Load inventory
-                OptimizedVirtualInventory virtualInv = new OptimizedVirtualInventory(spawner.getMaxSpawnerLootSlots());
+                VirtualInventory virtualInv = new VirtualInventory(spawner.getMaxSpawnerLootSlots());
                 List<String> inventoryData = spawnerData.getStringList(path + ".inventory");
 
                 if (inventoryData != null && !inventoryData.isEmpty()) {
@@ -377,6 +416,7 @@ public class SpawnerManager {
                 spawners.values().forEach(SpawnerData::updateHologramData);
             });
         }
+        reindexWorlds();
     }
 
     public void spawnLoot(SpawnerData spawner) {
@@ -419,7 +459,7 @@ public class SpawnerManager {
     }
 
     private int calculateTotalPages(SpawnerData spawner) {
-        OptimizedVirtualInventory virtualInv = spawner.getVirtualInventory();
+        VirtualInventory virtualInv = spawner.getVirtualInventory();
         int totalItems = virtualInv.getDisplayInventory().size();
         return Math.max(1, (int) Math.ceil((double) totalItems / 45));
     }
@@ -537,17 +577,21 @@ public class SpawnerManager {
         ItemMeta chestMeta = chestItem.getItemMeta();
         chestMeta.setDisplayName(languageManager.getMessage("spawner-loot-item.name"));
 
-        List<String> chestLore = new ArrayList<>();
-        OptimizedVirtualInventory virtualInventory = spawner.getVirtualInventory();
+        // Create replacements map
+        VirtualInventory virtualInventory = spawner.getVirtualInventory();
         int currentItems = virtualInventory.getUsedSlots();
         int maxSlots = spawner.getMaxSpawnerLootSlots();
         int percentStorage = (int) ((double) currentItems / maxSlots * 100);
-        String loreMessageChest = languageManager.getMessage("spawner-loot-item.lore.chest")
-                .replace("%max_slots%", String.valueOf(maxSlots))
-                .replace("%current_items%", String.valueOf(currentItems))
-                .replace("%percent_storage%", String.valueOf(percentStorage));
 
-        chestLore.addAll(Arrays.asList(loreMessageChest.split("\n")));
+        Map<String, String> replacements = new HashMap<>();
+        replacements.put("%max_slots%", String.valueOf(maxSlots));
+        replacements.put("%current_items%", String.valueOf(currentItems));
+        replacements.put("%percent_storage%", String.valueOf(percentStorage));
+
+        // Get lore from language file with replacements
+        String loreMessageChest = languageManager.getMessage("spawner-loot-item.lore.chest", replacements);
+
+        List<String> chestLore = Arrays.asList(loreMessageChest.split("\n"));
         chestMeta.setLore(chestLore);
         chestItem.setItemMeta(chestMeta);
         inventory.setItem(11, chestItem);

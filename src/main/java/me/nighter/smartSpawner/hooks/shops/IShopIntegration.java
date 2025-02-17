@@ -1,8 +1,8 @@
 package me.nighter.smartSpawner.hooks.shops;
 
-import me.nighter.smartSpawner.managers.LanguageManager;
+import me.nighter.smartSpawner.utils.LanguageManager;
 import org.bukkit.entity.Player;
-import me.nighter.smartSpawner.utils.SpawnerData;
+import me.nighter.smartSpawner.spawner.properties.SpawnerData;
 
 import java.text.DecimalFormat;
 import java.text.DecimalFormatSymbols;

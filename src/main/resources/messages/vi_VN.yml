@@ -1,4 +1,8 @@
-prefix: "SmartSpawner <dark_gray>|<reset>"
+#---------------------------------------------------
+# Language: Tiếng Việt (Vietnamese)
+# Plugin Version: 1.2.3
+#---------------------------------------------------
+prefix: "&8[&#3287A9&lSmartSpawner&8]&r"
 
 #---------------------------------------------------
 # Định dạng số
@@ -16,7 +20,7 @@ format-number:
 mob_names:
   BLAZE: "Quỷ Lửa"
   BOGGED: "Quái Vật Đầm Lầy"
-  BREEZE: "Qủy Gió"
+  BREEZE: "Quỷ Gió"
   CAVE_SPIDER: "Nhện Hang"
   CHICKEN: "Gà"
   COW: "Bò"
@@ -72,11 +76,8 @@ spawner-hologram:
   # %used_slots% - Số ô vật phẩm hiện đang lưu trữ
   # %max_slots% - Số ô lưu trữ tối đa
   format:
-    # Dòng đầu tiên - Tiêu đề với các yếu tố trang trí
     - "&#FCD05C◆  [&fx%stack_size%&#FCD05C] &d%entity%  &#FCD05C◆"
-    # Dòng thứ hai - Hiển thị kinh nghiệm
     - "&#00E689&lExp: &e%current_exp%&7/&e%max_exp% &7KN"
-    # Dòng thứ ba - Thông tin lưu trữ
     - "&#FCD05C&lKho chứa: &f%used_slots%&7/&f%max_slots% &7ô"
 
 #---------------------------------------------------
@@ -174,7 +175,7 @@ messages:
   # Chồng/Tách lồng spawn
   #---------------------------------------------------
   hand-stack:
-    message: "&#00E689[✔] Đã chồng thành công &6%amount%&#00E689 lồng spawn!"
+    message: "&#f[&#00E689✔&#f] &#fĐã chồng thành công &#00E689%amount%&#f lồng spawn!"
     prefix: false
     type: ACTION_BAR
     sound: entity.experience_orb.pickup
@@ -276,7 +277,7 @@ messages:
   # Tin nhắn khi dịch chuyển bằng lệnh /ss list
   #---------------------------------------------------
   teleported:
-    message: "&aDịch chuyển thành công đến &6Spawner #%spawnerId%"
+    message: "&aDịch chuyển thành công đến &dSpawner #%spawnerId%"
     prefix: true
     type: CHAT
     sound: entity.enderman.teleport
@@ -382,16 +383,16 @@ navigation-button:
 page-indicator:
   name: "&#ffd700Trang [%current_page%/&#ffd700%total_pages%]"
   lore: |
-    &7Vật phẩm: &a%current_items%&7/&f%max_slots%
+    &7Số ô chứa: &a%used_slots%&7/&f%max_slots%
 
 shop-page-indicator:
   name: "&#ffd700Trang [%current_page%/&#ffd700%total_pages%]"
   lore: |
-
-    &8▪ &#ffd700Vật phẩm: &a%current_items%&7/&f%max_slots%
+    
+    &8▪ &#ffd700Số ô chứa: &a%used_slots%&7/&f%max_slots%
     &8▪ &#ffd700Kho: &a%percent_storage%&a%&f đầy
-
-    &#ffd700➜ &7Nhấn để bán tất cả items
+    
+    &#ffd700➜ &7Nhấn để bán tất cả vật phẩm
 
 return-button:
   name: "&#ff6b6bQuay Lại Menu Chính"
@@ -412,47 +413,59 @@ equipment-toggle:
 #---------------------------------------------------
 spawner-list:
   gui-title:
-    world-selection: "&#3287A9&lDanh sách Spawner"
-    spawner-list: "&#4fc3f7✧ Spawners thế giới %world% &#4fc3f7✧ &7Trang %page%/%total%"
+    world-selection: "&#3287A9&lDanh Sách Spawner"
     page-title: "{world} &r- [{current}/{total}]"
 
+  navigation:
+    previous-page: "&e&lTrang Trước"
+    next-page: "&e&lTrang Tiếp"
+    back: "&c&lQuay lại Chọn Thế Giới"
+
   world-buttons:
+
     overworld:
       name: "&a&lOverworld"
       lore: |
-        &8▪ &7Tổng số spawner: &a{total}
-        
-        &a➜ &7Nhấn để xem các spawner ở Overworld
+        &8━━━━━━━━━━━━━━━━━━━━
+        &7⮞ &fTổng số Spawner: &a{total}
+        &7⮞ &fTổng đã Stack: &a{total_stacked}
+        &8━━━━━━━━━━━━━━━━━━━━
+        &a▶ &7Nhấp để xem!
+
     nether:
-      name: "&c&lNether"
+      name: "&c&lĐịa Ngục"
       lore: |
-        &8▪ &7Tổng số spawner: &c{total}
-        
-        &c➜ &7Nhấn để xem các spawner ở Nether
+        &8━━━━━━━━━━━━━━━━━━━━
+        &7⮞ &fTổng số Spawner: &c{total}
+        &7⮞ &fTổng đã Stack: &c{total_stacked}
+        &8━━━━━━━━━━━━━━━━━━━━
+        &c▶ &7Nhấp để xem!
+
     end:
-      name: "&5&lThe End"
+      name: "&5&lKết Thúc"
       lore: |
-        &8▪ &7Tổng số spawner: &5{total}
-        
-        &5➜ &7Nhấn để xem các spawner ở The End
+        &8━━━━━━━━━━━━━━━━━━━━
+        &7⮞ &fTổng số Spawner: &5{total}
+        &7⮞ &fTổng đã Stack: &5{total_stacked}
+        &8━━━━━━━━━━━━━━━━━━━━
+        &5▶ &7Nhấp để xem!
 
   spawner-item:
     name: "&#4fc3f7&lSpawner #{id}"
-    id_pattern: "Spawner #([A-Za-z0-9]+)"    # Mẫu để khớp ID spawner cho việc dịch chuyển
-    lore:
-      separator: "&8&m------------------------"
-      location: "&8▪ &7Vị trí: &f{x}, {y}, {z}"
-      entity: "&8▪ &7Thực thể: &f{entity}"
-      stack_size: "&8▪ &7Kích thước stack: &6{size}"
-      status:
-        active: "&8▪ &7Trạng thái: &a&lHOẠT ĐỘNG"
-        inactive: "&8▪ &7Trạng thái: &c&lKHÔNG HOẠT ĐỘNG"
-      teleport: "&#3287A9➜ &eNhấn để dịch chuyển"
+    id_pattern: "Spawner #([A-Za-z0-9]+)"
 
-  navigation:
-    previous-page: "&e&lTrang trước"
-    next-page: "&e&lTrang sau"
-    back: "&c&lQuay lại lựa chọn thế giới"
+    lore:
+      separator: "&7&m―――――――――――――――――――――――"
+      entity: "&f⮞ &7Thực thể: &f{entity}"
+      stack_size: "&f⮞ &7Kích thước Stack: &#4fc3f7{size}"
+
+      status:
+        active: "&f⮞ &7Trạng thái: &a&lHOẠT ĐỘNG"
+        inactive: "&f⮞ &7Trạng thái: &c&lKHÔNG HOẠT ĐỘNG"
+
+      location: "&f⮞ &7Vị trí: &#4fc3f7{x}, {y}, {z}"
+
+      teleport: "&#4fc3f7▶ &fNhấp để dịch chuyển"
 
 #---------------------------------------------------
 # Thông báo lệnh

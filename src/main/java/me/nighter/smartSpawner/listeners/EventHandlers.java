@@ -1,12 +1,13 @@
-package me.nighter.smartSpawner;
+package me.nighter.smartSpawner.listeners;
 
+import me.nighter.smartSpawner.SmartSpawner;
 import me.nighter.smartSpawner.holders.PagedSpawnerLootHolder;
 import me.nighter.smartSpawner.holders.SpawnerMenuHolder;
 import me.nighter.smartSpawner.holders.SpawnerStackerHolder;
-import me.nighter.smartSpawner.managers.ConfigManager;
-import me.nighter.smartSpawner.managers.LanguageManager;
-import me.nighter.smartSpawner.managers.SpawnerManager;
-import me.nighter.smartSpawner.utils.SpawnerData;
+import me.nighter.smartSpawner.utils.ConfigManager;
+import me.nighter.smartSpawner.utils.LanguageManager;
+import me.nighter.smartSpawner.spawner.properties.SpawnerManager;
+import me.nighter.smartSpawner.spawner.properties.SpawnerData;
 
 import org.bukkit.*;
 import org.bukkit.entity.Player;

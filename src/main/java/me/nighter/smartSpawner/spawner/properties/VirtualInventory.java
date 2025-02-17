@@ -1,17 +1,17 @@
-package me.nighter.smartSpawner.utils;
+package me.nighter.smartSpawner.spawner.properties;
 
 import org.bukkit.inventory.ItemStack;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
-public class OptimizedVirtualInventory {
+public class VirtualInventory {
     private final Map<ItemSignature, Long> consolidatedItems;
     private final int maxSlots;
     private final Map<Integer, DisplayItem> displayCache;
     private boolean displayCacheDirty;
     private final Comparator<Map.Entry<ItemSignature, Long>> itemComparator;
 
-    public OptimizedVirtualInventory(int maxSlots) {
+    public VirtualInventory(int maxSlots) {
         this.maxSlots = maxSlots;
         this.consolidatedItems = new ConcurrentHashMap<>();
         this.displayCache = new ConcurrentHashMap<>();

@@ -2,10 +2,11 @@ package me.nighter.smartSpawner.managers;
 
 import me.nighter.smartSpawner.SmartSpawner;
 import me.nighter.smartSpawner.nms.ParticleWrapper;
-import me.nighter.smartSpawner.utils.SpawnerData;
-import me.nighter.smartSpawner.nms.ParticleWrapper;
+import me.nighter.smartSpawner.spawner.properties.SpawnerData;
 import me.nighter.smartSpawner.hooks.protections.CheckPlaceBlock;
 
+import me.nighter.smartSpawner.utils.ConfigManager;
+import me.nighter.smartSpawner.utils.LanguageManager;
 import org.bukkit.*;
 import org.bukkit.block.CreatureSpawner;
 import org.bukkit.entity.EntityType;

@@ -2,14 +2,18 @@ package me.nighter.smartSpawner.listeners;
 
 import me.nighter.smartSpawner.*;
 import me.nighter.smartSpawner.nms.ParticleWrapper;
-import me.nighter.smartSpawner.utils.*;
+import me.nighter.smartSpawner.spawner.properties.VirtualInventory;
+import me.nighter.smartSpawner.spawner.properties.SpawnerData;
 import me.nighter.smartSpawner.managers.*;
 import me.nighter.smartSpawner.nms.ParticleWrapper;
 import me.nighter.smartSpawner.hooks.protections.CheckOpenMenu;
 import me.nighter.smartSpawner.holders.SpawnerMenuHolder;
-import me.nighter.smartSpawner.commands.SpawnerListCommand;
+import me.nighter.smartSpawner.commands.ListCommand;
 import me.nighter.smartSpawner.holders.SpawnerStackerHolder;
 
+import me.nighter.smartSpawner.spawner.properties.SpawnerManager;
+import me.nighter.smartSpawner.utils.ConfigManager;
+import me.nighter.smartSpawner.utils.LanguageManager;
 import org.bukkit.*;
 import org.bukkit.block.Block;
 import org.bukkit.block.CreatureSpawner;
@@ -37,7 +41,7 @@ public class SpawnerListener implements Listener {
     private final LanguageManager languageManager;
     private final SpawnerManager spawnerManager;
     private final SpawnerStackHandler stackHandler;
-    private final SpawnerListCommand listCommand;
+    private final ListCommand listCommand;
     private static final Set<Material> SPAWNER_MATERIALS = EnumSet.of(
             Material.PLAYER_HEAD, Material.SPAWNER, Material.ZOMBIE_HEAD,
             Material.SKELETON_SKULL, Material.WITHER_SKELETON_SKULL,
@@ -53,7 +57,7 @@ public class SpawnerListener implements Listener {
         this.languageManager = plugin.getLanguageManager();
         this.spawnerManager = plugin.getSpawnerManager();
         this.stackHandler = plugin.getSpawnerStackHandler();
-        this.listCommand = new SpawnerListCommand(plugin);
+        this.listCommand = new ListCommand(plugin);
 
         startCleanupTask();
     }
@@ -232,14 +236,17 @@ public class SpawnerListener implements Listener {
         chestMeta.setDisplayName(languageManager.getMessage("spawner-loot-item.name"));
 
         List<String> chestLore = new ArrayList<>();
-        OptimizedVirtualInventory virtualInventory = spawner.getVirtualInventory();
+        VirtualInventory virtualInventory = spawner.getVirtualInventory();
         int currentItems = virtualInventory.getUsedSlots();
         int maxSlots = spawner.getMaxSpawnerLootSlots();
         int percentStorage = (int) ((double) currentItems / maxSlots * 100);
-        String loreMessageChest = languageManager.getMessage("spawner-loot-item.lore.chest")
-                .replace("%max_slots%", String.valueOf(maxSlots))
-                .replace("%current_items%", String.valueOf(currentItems))
-                .replace("%percent_storage%", String.valueOf(percentStorage));
+
+        Map<String, String> replacements = new HashMap<>();
+        replacements.put("%max_slots%", String.valueOf(maxSlots));
+        replacements.put("%current_items%", String.valueOf(currentItems));
+        replacements.put("%percent_storage%", String.valueOf(percentStorage));
+
+        String loreMessageChest = languageManager.getMessage("spawner-loot-item.lore.chest", replacements);
 
         chestLore.addAll(Arrays.asList(loreMessageChest.split("\n")));
         chestMeta.setLore(chestLore);
@@ -249,15 +256,15 @@ public class SpawnerListener implements Listener {
         ItemStack spawnerItem = SpawnerHeadManager.getCustomHead(spawner.getEntityType(), player);
         ItemMeta spawnerMeta = spawnerItem.getItemMeta();
         spawnerMeta.setDisplayName(languageManager.getMessage("spawner-info-item.name"));
-        Map<String, String> replacements = new HashMap<>();
-        replacements.put("%entity%", entityName);
-        replacements.put("%stack_size%", String.valueOf(spawner.getStackSize()));
-        replacements.put("%range%", String.valueOf(spawner.getSpawnerRange()));
-        replacements.put("%delay%", String.valueOf(spawner.getSpawnDelay() / 20)); // Convert ticks to seconds
-        replacements.put("%min_mobs%", String.valueOf(spawner.getMinMobs()));
-        replacements.put("%max_mobs%", String.valueOf(spawner.getMaxMobs()));
+        Map<String, String> infoReplacements = new HashMap<>();
+        infoReplacements.put("%entity%", entityName);
+        infoReplacements.put("%stack_size%", String.valueOf(spawner.getStackSize()));
+        infoReplacements.put("%range%", String.valueOf(spawner.getSpawnerRange()));
+        infoReplacements.put("%delay%", String.valueOf(spawner.getSpawnDelay() / 20)); // Convert ticks to seconds
+        infoReplacements.put("%min_mobs%", String.valueOf(spawner.getMinMobs()));
+        infoReplacements.put("%max_mobs%", String.valueOf(spawner.getMaxMobs()));
         String lorePath = "spawner-info-item.lore.spawner-info";
-        String loreMessage = languageManager.getMessage(lorePath, replacements);
+        String loreMessage = languageManager.getMessage(lorePath, infoReplacements);
         List<String> lore = Arrays.asList(loreMessage.split("\n"));
         spawnerMeta.setLore(lore);
         spawnerItem.setItemMeta(spawnerMeta);
@@ -799,7 +806,7 @@ public class SpawnerListener implements Listener {
 
     @EventHandler
     public void onWorldSelectionClick(InventoryClickEvent event) {
-        if (!(event.getInventory().getHolder() instanceof SpawnerListCommand.WorldSelectionHolder)) return;
+        if (!(event.getInventory().getHolder() instanceof ListCommand.WorldSelectionHolder)) return;
         if (!(event.getWhoClicked() instanceof Player player)) return;
 
         if (!player.hasPermission("smartspawner.list")) {
@@ -817,7 +824,7 @@ public class SpawnerListener implements Listener {
 
     @EventHandler
     public void onSpawnerListClick(InventoryClickEvent event) {
-        if (!(event.getInventory().getHolder() instanceof SpawnerListCommand.SpawnerListHolder holder)) return;
+        if (!(event.getInventory().getHolder() instanceof ListCommand.SpawnerListHolder holder)) return;
         if (!(event.getWhoClicked() instanceof Player player)) return;
 
         if (!player.hasPermission("smartspawner.list")) {

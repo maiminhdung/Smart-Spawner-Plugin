@@ -1,8 +1,8 @@
-package me.nighter.smartSpawner.utils;
+package me.nighter.smartSpawner.spawner.properties;
 
 import me.nighter.smartSpawner.SmartSpawner;
-import me.nighter.smartSpawner.managers.ConfigManager;
-import me.nighter.smartSpawner.managers.LanguageManager;
+import me.nighter.smartSpawner.utils.ConfigManager;
+import me.nighter.smartSpawner.utils.LanguageManager;
 
 import org.bukkit.Location;
 import org.bukkit.entity.Display;

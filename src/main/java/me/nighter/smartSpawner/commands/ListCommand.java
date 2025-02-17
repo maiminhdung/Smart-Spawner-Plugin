@@ -1,10 +1,10 @@
 package me.nighter.smartSpawner.commands;
 
 import me.nighter.smartSpawner.SmartSpawner;
-import me.nighter.smartSpawner.managers.LanguageManager;
+import me.nighter.smartSpawner.utils.LanguageManager;
 import me.nighter.smartSpawner.managers.SpawnerHeadManager;
-import me.nighter.smartSpawner.managers.SpawnerManager;
-import me.nighter.smartSpawner.utils.SpawnerData;
+import me.nighter.smartSpawner.spawner.properties.SpawnerManager;
+import me.nighter.smartSpawner.spawner.properties.SpawnerData;
 
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
@@ -22,13 +22,13 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-public class SpawnerListCommand {
+public class ListCommand {
     private final SmartSpawner plugin;
     private final SpawnerManager spawnerManager;
     private final LanguageManager languageManager;
     private static final int SPAWNERS_PER_PAGE = 45;
 
-    public SpawnerListCommand(SmartSpawner plugin) {
+    public ListCommand(SmartSpawner plugin) {
         this.plugin = plugin;
         this.spawnerManager = plugin.getSpawnerManager();
         this.languageManager = plugin.getLanguageManager();
@@ -62,25 +62,21 @@ public class SpawnerListCommand {
         inv.setItem(13, netherButton);
         inv.setItem(15, endButton);
 
-        // Add decorative glass panes
-//        ItemStack decoration = createDecorationItem();
-//        for (int i = 0; i < 27; i++) {
-//            if (inv.getItem(i) == null) {
-//                inv.setItem(i, decoration);
-//            }
-//        }
-
         player.openInventory(inv);
     }
 
     private List<String> getWorldDescription(String path, String worldName) {
         List<String> description = new ArrayList<>();
+        int physicalSpawners = spawnerManager.countSpawnersInWorld(worldName);
+        int totalWithStacks = spawnerManager.countTotalSpawnersWithStacks(worldName);
+
         for (String line : languageManager.getMessage(path).split("\n")) {
-            description.add(line.replace("{total}", String.valueOf(countSpawnersInWorld(worldName))));
+            description.add(line
+                    .replace("{total}", String.valueOf(physicalSpawners))
+                    .replace("{total_stacked}", languageManager.formatNumberTenThousand(totalWithStacks)));
         }
         return description;
     }
-
 
     private ItemStack createDecorationItem() {
         ItemStack item = new ItemStack(Material.BLACK_STAINED_GLASS_PANE);
@@ -97,12 +93,6 @@ public class SpawnerListCommand {
         meta.setLore(lore);
         button.setItemMeta(meta);
         return button;
-    }
-
-    private int countSpawnersInWorld(String worldName) {
-        return (int) spawnerManager.getAllSpawners().stream()
-                .filter(spawner -> spawner.getSpawnerLocation().getWorld().getName().equals(worldName))
-                .count();
     }
 
     public void openSpawnerListGUI(Player player, String worldName, int page) {
@@ -161,51 +151,43 @@ public class SpawnerListCommand {
     }
 
     private ItemStack createSpawnerInfoItem(SpawnerData spawner) {
+        // Get the custom head for the spawner's entity type
         ItemStack spawnerItem = SpawnerHeadManager.getCustomHead(spawner.getEntityType());
         ItemMeta meta = spawnerItem.getItemMeta();
         Location loc = spawner.getSpawnerLocation();
 
-        // Set display name with spawner ID
+        if (meta == null) return spawnerItem;
+
+        // Set display name with formatted spawner ID
         meta.setDisplayName(languageManager.getMessage("spawner-list.spawner-item.name",
                 Map.of("{id}", String.valueOf(spawner.getSpawnerId()))));
 
-        List<String> lore = new ArrayList<>();
+        // Build the lore list
+        List<String> lore = new ArrayList<>(List.of(
+                languageManager.getMessage("spawner-list.spawner-item.lore.separator"), // Top separator
+                languageManager.getMessage("spawner-list.spawner-item.lore.entity",
+                        Map.of("{entity}", formatEntityName(spawner.getEntityType().name()))),
+                languageManager.getMessage("spawner-list.spawner-item.lore.stack_size",
+                        Map.of("{size}", String.valueOf(spawner.getStackSize()))),
+                languageManager.getMessage(spawner.getSpawnerStop()
+                        ? "spawner-list.spawner-item.lore.status.inactive"
+                        : "spawner-list.spawner-item.lore.status.active"),
+                languageManager.getMessage("spawner-list.spawner-item.lore.location",
+                        Map.of(
+                                "{x}", String.valueOf(loc.getBlockX()),
+                                "{y}", String.valueOf(loc.getBlockY()),
+                                "{z}", String.valueOf(loc.getBlockZ())
+                        )),
+                languageManager.getMessage("spawner-list.spawner-item.lore.separator"), // Bottom separator
+                languageManager.getMessage("spawner-list.spawner-item.lore.teleport")
+        ));
 
-        // Add separator
-        lore.add(languageManager.getMessage("spawner-list.spawner-item.lore.separator"));
-
-        // Add entity info
-        lore.add(languageManager.getMessage("spawner-list.spawner-item.lore.entity",
-                Map.of("{entity}", formatEntityName(spawner.getEntityType().name()))));
-
-        // Add stack size
-        lore.add(languageManager.getMessage("spawner-list.spawner-item.lore.stack_size",
-                Map.of("{size}", String.valueOf(spawner.getStackSize()))));
-
-        // Add status
-        String statusPath = spawner.getSpawnerStop() ?
-                "spawner-list.spawner-item.lore.status.inactive" :
-                "spawner-list.spawner-item.lore.status.active";
-        lore.add(languageManager.getMessage(statusPath));
-
-        // Add location info
-        lore.add(languageManager.getMessage("spawner-list.spawner-item.lore.location",
-                Map.of(
-                        "{x}", String.valueOf(loc.getBlockX()),
-                        "{y}", String.valueOf(loc.getBlockY()),
-                        "{z}", String.valueOf(loc.getBlockZ())
-                )));
-
-        // Add bottom separator
-        lore.add(languageManager.getMessage("spawner-list.spawner-item.lore.separator"));
-
-        // Add teleport instruction
-        lore.add(languageManager.getMessage("spawner-list.spawner-item.lore.teleport"));
-
+        // Set lore and apply meta
         meta.setLore(lore);
         spawnerItem.setItemMeta(meta);
         return spawnerItem;
     }
+
 
     private String formatEntityName(String name) {
         return Arrays.stream(name.toLowerCase().split("_"))

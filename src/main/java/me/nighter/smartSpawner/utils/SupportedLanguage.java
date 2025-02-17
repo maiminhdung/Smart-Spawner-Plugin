@@ -1,8 +1,9 @@
 package me.nighter.smartSpawner.utils;
 
 public enum SupportedLanguage {
-    ENGLISH("en", "English", "messages/en.yml"),
-    VIETNAMESE("vi", "Tiếng Việt", "messages/vi.yml");
+    ENGLISH("en_US", "English", "messages/en_US.yml"),
+    VIETNAMESE("vi_VN", "Tiếng Việt", "messages/vi_VN.yml"),
+    CHINESE("zh_CN", "简体中文", "messages/zh_CN.yml");
 
     private final String code;
     private final String displayName;

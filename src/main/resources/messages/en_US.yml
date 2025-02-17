@@ -1,4 +1,7 @@
-
+#---------------------------------------------------
+# Language: English (United States)
+# Plugin Version: 1.2.3
+#---------------------------------------------------
 prefix: "&8[&#3287A9&lSmartSpawner&8]&r"
 
 #---------------------------------------------------
@@ -174,7 +177,7 @@ messages:
   # Spawner Stacking/Unstacking
   #---------------------------------------------------
   hand-stack:
-    message: "&#00E689[✔] Successfully stacked &6%amount%&#00E689 spawners!"
+    message: "&f[&#00E689✔&f] &fSuccessfully stacked &#00E689%amount%&f spawners!"
     prefix: false
     type: ACTION_BAR
     sound: entity.experience_orb.pickup
@@ -276,7 +279,7 @@ messages:
   # Spawner List Teleport Message
   #---------------------------------------------------
   teleported:
-    message: "&aSuccessfully teleported to &6Spawner #%spawnerId%"
+    message: "&aSuccessfully teleported to &dSpawner #%spawnerId%"
     prefix: true
     type: CHAT
     sound: entity.enderman.teleport
@@ -382,13 +385,13 @@ navigation-button:
 page-indicator:
   name: "&#ffd700Page [%current_page%/&#ffd700%total_pages%]"
   lore: |
-    &7Total Items: &a%current_items%&7/&f%max_slots%
+    &7Used Slots: &a%used_slots%&7/&f%max_slots%
 
 shop-page-indicator:
   name: "&#ffd700Sell All Items"
   lore: |
     
-    &8▪ &#ffd700Total Items: &a%current_items%&7/&f%max_slots%
+    &8▪ &#ffd700Slots: &a%used_slots%&7/&f%max_slots%
     &8▪ &#ffd700Storage: &a%percent_storage%&a%&f full
     
     &#ffd700➜ &7Click to sell all items
@@ -415,43 +418,56 @@ spawner-list:
     world-selection: "&#3287A9&lSpawner List"
     page-title: "{world} &r- [{current}/{total}]"
 
-  world-buttons:
-    overworld:
-      name: "&a&lOverworld"
-      lore: |
-        &8▪ &7Total spawners: &a{total}
-        
-        &a➜ &7Click to view Overworld spawners
-    nether:
-      name: "&c&lNether"
-      lore: |
-        &8▪ &7Total spawners: &c{total}
-        
-        &c➜ &7Click to view Nether spawners
-    end:
-      name: "&5&lThe End"
-      lore: |
-        &8▪ &7Total spawners: &5{total}
-        
-        &5➜ &7Click to view The End spawners
-
-  spawner-item:
-    name: "&#4fc3f7&lSpawner #{id}"
-    id_pattern: "Spawner #([A-Za-z0-9]+)"    # Pattern to match the spawner id for teleportation
-    lore:
-      separator: "&8&m------------------------"
-      location: "&8▪ &7Location: &f{x}, {y}, {z}"
-      entity: "&8▪ &7Entity: &f{entity}"
-      stack_size: "&8▪ &7Stack Size: &6{size}"
-      status:
-        active: "&8▪ &7Status: &a&lACTIVE"
-        inactive: "&8▪ &7Status: &c&lINACTIVE"
-      teleport: "&#3287A9➜ &eClick to teleport"
-
   navigation:
     previous-page: "&e&lPrevious Page"
     next-page: "&e&lNext Page"
     back: "&c&lBack to World Selection"
+
+  world-buttons:
+
+    overworld:
+      name: "&a&lOverworld"
+      lore: |
+        &8━━━━━━━━━━━━━━━━━━━━
+        &7⮞ &fTotal Spawners: &a{total}
+        &7⮞ &fTotal Stacked: &a{total_stacked}
+        &8━━━━━━━━━━━━━━━━━━━━
+        &a▶ &7Click to view!
+
+    nether:
+      name: "&c&lNether"
+      lore: |
+        &8━━━━━━━━━━━━━━━━━━━━
+        &7⮞ &fTotal Spawners: &c{total}
+        &7⮞ &fTotal Stacked: &c{total_stacked}
+        &8━━━━━━━━━━━━━━━━━━━━
+        &c▶ &7Click to view!
+
+    end:
+      name: "&5&lThe End"
+      lore: |
+        &8━━━━━━━━━━━━━━━━━━━━
+        &7⮞ &fTotal Spawners: &5{total}
+        &7⮞ &fTotal Stacked: &5{total_stacked}
+        &8━━━━━━━━━━━━━━━━━━━━
+        &5▶ &7Click to view!
+
+  spawner-item:
+    name: "&#4fc3f7&lSpawner #{id}"
+    id_pattern: "Spawner #([A-Za-z0-9]+)"
+
+    lore:
+      separator: "&7&m―――――――――――――――――――――――"
+      entity: "&f⮞ &7Entity: &f{entity}"
+      stack_size: "&f⮞ &7Stack Size: &#4fc3f7{size}"
+
+      status:
+        active: "&f⮞ &7Status: &a&lACTIVE"
+        inactive: "&f⮞ &7Status: &c&lINACTIVE"
+
+      location: "&f⮞ &7Location: &#4fc3f7{x}, {y}, {z}"
+
+      teleport: "&#4fc3f7▶ &fClick to teleport"
 
 #---------------------------------------------------
 # Command & Update Messages

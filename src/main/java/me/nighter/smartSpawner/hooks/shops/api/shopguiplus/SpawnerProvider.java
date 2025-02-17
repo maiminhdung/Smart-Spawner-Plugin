@@ -1,8 +1,8 @@
 package me.nighter.smartSpawner.hooks.shops.api.shopguiplus;
 
 import me.nighter.smartSpawner.SmartSpawner;
-import me.nighter.smartSpawner.managers.ConfigManager;
-import me.nighter.smartSpawner.managers.LanguageManager;
+import me.nighter.smartSpawner.utils.ConfigManager;
+import me.nighter.smartSpawner.utils.LanguageManager;
 import net.brcdev.shopgui.spawner.external.provider.ExternalSpawnerProvider;
 import org.bukkit.Material;
 import org.bukkit.block.CreatureSpawner;

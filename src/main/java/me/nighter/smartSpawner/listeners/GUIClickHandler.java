@@ -1,12 +1,12 @@
 package me.nighter.smartSpawner.listeners;
 
 import me.nighter.smartSpawner.*;
-import me.nighter.smartSpawner.managers.ConfigManager;
-import me.nighter.smartSpawner.managers.LanguageManager;
+import me.nighter.smartSpawner.spawner.properties.VirtualInventory;
+import me.nighter.smartSpawner.utils.ConfigManager;
+import me.nighter.smartSpawner.utils.LanguageManager;
 import me.nighter.smartSpawner.managers.SpawnerLootManager;
 import me.nighter.smartSpawner.holders.PagedSpawnerLootHolder;
-import me.nighter.smartSpawner.utils.OptimizedVirtualInventory;
-import me.nighter.smartSpawner.utils.SpawnerData;
+import me.nighter.smartSpawner.spawner.properties.SpawnerData;
 
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
@@ -86,7 +86,7 @@ public class GUIClickHandler implements Listener {
         int amountToMove = singleItem ? 1 : item.getAmount();
         int amountMoved = 0;
         PlayerInventory playerInv = player.getInventory();
-        OptimizedVirtualInventory virtualInv = spawner.getVirtualInventory();
+        VirtualInventory virtualInv = spawner.getVirtualInventory();
 
         // Try to add to player inventory
         for (int i = 0; i < 36 && amountToMove > 0; i++) {
@@ -138,7 +138,7 @@ public class GUIClickHandler implements Listener {
 
     private void takeAllSimilarItems(Player player, Inventory sourceInv, ItemStack targetItem, SpawnerData spawner) {
         Map<Integer, ItemStack> similarItems = new HashMap<>();
-        OptimizedVirtualInventory virtualInv = spawner.getVirtualInventory();
+        VirtualInventory virtualInv = spawner.getVirtualInventory();
 
         // Find all similar items
         for (int i = 0; i < 45; i++) {
@@ -290,7 +290,7 @@ public class GUIClickHandler implements Listener {
     public void handleTakeAllItems(Player player, Inventory sourceInventory) {
         PagedSpawnerLootHolder holder = (PagedSpawnerLootHolder) sourceInventory.getHolder();
         SpawnerData spawner = holder.getSpawnerData();
-        OptimizedVirtualInventory virtualInv = spawner.getVirtualInventory();
+        VirtualInventory virtualInv = spawner.getVirtualInventory();
 
         // Collect all non-null and non-air items
         Map<Integer, ItemStack> sourceItems = new HashMap<>();

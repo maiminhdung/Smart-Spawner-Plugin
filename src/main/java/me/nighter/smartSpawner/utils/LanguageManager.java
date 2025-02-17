@@ -1,5 +1,4 @@
-package me.nighter.smartSpawner.managers;
-import me.nighter.smartSpawner.utils.SupportedLanguage;
+package me.nighter.smartSpawner.utils;
 
 import net.md_5.bungee.api.ChatColor;
 import net.md_5.bungee.api.ChatMessageType;
@@ -16,6 +15,9 @@ import org.bukkit.plugin.Plugin;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
+import java.nio.file.Files;
+import java.nio.file.StandardCopyOption;
 import java.util.*;
 import java.util.logging.Logger;
 import java.util.regex.Matcher;
@@ -168,7 +170,7 @@ public class LanguageManager {
         put("messages.sell-failed.sound", "block.note_block.pling");
 
         // Spawner Stacking/Unstacking Messages
-        put("messages.hand-stack.message", "&#00E689[✔] Successfully stacked &6%amount%&#00E689 spawners!");
+        put("messages.hand-stack.message", "&f[&#00E689✔&f] &fSuccessfully stacked &#00E689%amount%&f spawners!");
         put("messages.hand-stack.prefix", false);
         put("messages.hand-stack.type", "ACTION_BAR");
         put("messages.hand-stack.sound", "entity.experience_orb.pickup");
@@ -340,13 +342,13 @@ public class LanguageManager {
 
         // Page Indicator
         put("page-indicator.name", "&#f4d842Page %current_page%/&#f4d842%total_pages%");
-        put("page-indicator.lore", "&7Total Items: &a%current_items%&7/&f%max_slots%");
+        put("page-indicator.lore", "&7Used Slots: &a%used_slots%&7/&f%max_slots%");
 
         // Shop Page Indicator
         put("shop-page-indicator.name", "&#ffd700Sell All Items");
         put("shop-page-indicator.lore", Arrays.asList(
                 "",
-                "&8▪ &#ffd700Total Items: &a%current_items%&7/&f%max_slots%",
+                "&8▪ &#ffd700Slots: &a%used_slots%&7/&f%max_slots%",
                 "&8▪ &#ffd700Storage: &a%percent_storage%&a%&f full",
                 "",
                 "&#ffd700➜ &7Click to sell all items"
@@ -397,31 +399,51 @@ public class LanguageManager {
         put("spawner-list.gui-title.world-selection", "&#3287A9&lSpawner List");
         put("spawner-list.gui-title.page-title", "{world} &r- [{current}/{total}]");
 
-        // World Buttons
-        put("spawner-list.world-buttons.overworld.name", "&a&lOverworld");
-        put("spawner-list.world-buttons.overworld.lore", "&8▪ &7Total spawners: &a{total}\n\n&a➜ &7Click to view Overworld spawners");
-
-        put("spawner-list.world-buttons.nether.name", "&c&lNether");
-        put("spawner-list.world-buttons.nether.lore", "&8▪ &7Total spawners: &c{total}\n\n&c➜ &7Click to view Nether spawners");
-
-        put("spawner-list.world-buttons.end.name", "&5&lThe End");
-        put("spawner-list.world-buttons.end.lore", "&8▪ &7Total spawners: &5{total}\n\n&5➜ &7Click to view The End spawners");
-
-        // Spawner Item
-        put("spawner-list.spawner-item.name", "&#4fc3f7&lSpawner #{id}");
-        put("spawner-list.spawner-item.id_pattern", "Spawner #([A-Za-z0-9]+)");
-        put("spawner-list.spawner-item.lore.separator", "&8&m------------------------");
-        put("spawner-list.spawner-item.lore.location", "&8▪ &7Location: &f{x}, {y}, {z}");
-        put("spawner-list.spawner-item.lore.entity", "&8▪ &7Entity: &f{entity}");
-        put("spawner-list.spawner-item.lore.stack_size", "&8▪ &7Stack Size: &6{size}");
-        put("spawner-list.spawner-item.lore.status.active", "&8▪ &7Status: &a&lACTIVE");
-        put("spawner-list.spawner-item.lore.status.inactive", "&8▪ &7Status: &c&lINACTIVE");
-        put("spawner-list.spawner-item.lore.teleport", "&#3287A9➜ &eClick to teleport");
-
         // Navigation
         put("spawner-list.navigation.previous-page", "&e&lPrevious Page");
         put("spawner-list.navigation.next-page", "&e&lNext Page");
         put("spawner-list.navigation.back", "&c&lBack to World Selection");
+
+        // World Buttons
+        put("spawner-list.world-buttons.overworld.name", "&a&lOverworld");
+        put("spawner-list.world-buttons.overworld.lore",
+            "&8━━━━━━━━━━━━━━━━━━━━\n" +
+            "&7⮞ &fTotal Spawners: &a{total}\n" +
+            "&7⮞ &fTotal Stacked: &a{total_stacked}\n" +
+            "&8━━━━━━━━━━━━━━━━━━━━\n" +
+            "&a▶ &7Click to view!"
+        );
+
+        put("spawner-list.world-buttons.nether.name", "&c&lNether");
+        put("spawner-list.world-buttons.nether.lore",
+            "&8━━━━━━━━━━━━━━━━━━━━\n" +
+            "&7⮞ &fTotal Spawners: &c{total}\n" +
+            "&7⮞ &fTotal Stacked: &c{total_stacked}\n" +
+            "&8━━━━━━━━━━━━━━━━━━━━\n" +
+            "&c▶ &7Click to view!"
+        );
+
+        put("spawner-list.world-buttons.end.name", "&5&lThe End");
+        put("spawner-list.world-buttons.end.lore",
+            "&8━━━━━━━━━━━━━━━━━━━━\n" +
+            "&7⮞ &fTotal Spawners: &5{total}\n" +
+            "&7⮞ &fTotal Stacked: &5{total_stacked}\n" +
+            "&8━━━━━━━━━━━━━━━━━━━━\n" +
+            "&5▶ &7Click to view!"
+        );
+
+        // Spawner Item
+        put("spawner-list.spawner-item.name", "&#4fc3f7&lSpawner #{id}");
+        put("spawner-list.spawner-item.id_pattern", "Spawner #([A-Za-z0-9]+)");
+        put("spawner-list.spawner-item.lore.separator", "&7&m―――――――――――――――――――――――");
+        put("spawner-list.spawner-item.lore.entity", "&f⮞ &7Entity: &f{entity}");
+        put("spawner-list.spawner-item.lore.stack_size", "&f⮞ &7Stack Size: &#4fc3f7{size}");
+
+        put("spawner-list.spawner-item.lore.status.active", "&f⮞ &7Status: &a&lACTIVE");
+        put("spawner-list.spawner-item.lore.status.inactive", "&f⮞ &7Status: &c&lINACTIVE");
+
+        put("spawner-list.spawner-item.lore.location", "&f⮞ &7Location: &#4fc3f7{x}, {y}, {z}");
+        put("spawner-list.spawner-item.lore.teleport", "&#4fc3f7▶ &fClick to teleport");
 
     }};
 
@@ -450,66 +472,89 @@ public class LanguageManager {
         messageCache.clear();
         languageMessages.clear();
 
+        // Load all .yml files in messages directory
         File[] languageFiles = messagesDir.listFiles((dir, name) -> name.endsWith(".yml"));
         if (languageFiles != null) {
             for (File file : languageFiles) {
-                String langCode = file.getName().replace(".yml", "");
-                FileConfiguration langConfig = YamlConfiguration.loadConfiguration(file);
-
-                boolean hasChanges = mergeDefaultMessages(langConfig);
-                if (hasChanges) {
-                    try {
-                        langConfig.save(file);
-                        logger.info("Updated language file: " + file.getName());
-                    } catch (IOException e) {
-                        logger.severe("Could not save updated language file " + file.getName() + ": " + e.getMessage());
-                    }
-                }
-
-                languageMessages.put(langCode, langConfig);
+                loadLanguageFile(file);
             }
         }
 
-        String configLang = plugin.getConfig().getString("settings.language", "en");
-        currentLanguage = SupportedLanguage.fromCode(configLang);
-        messages = languageMessages.get(currentLanguage.getCode());
+        // Get language from config
+        String configLang = plugin.getConfig().getString("settings.language", "en_US");
+
+        // Check if it's a supported language
+        SupportedLanguage supportedLang = SupportedLanguage.fromCode(configLang);
+
+        // Try to load the configured language
+        messages = languageMessages.get(configLang);
 
         if (messages == null) {
-            logger.warning("Language " + currentLanguage.getDisplayName() + " not found, falling back to English");
-            currentLanguage = SupportedLanguage.ENGLISH;
-            messages = languageMessages.get(SupportedLanguage.ENGLISH.getCode());
-
-            if (messages == null) {
-                createDefaultLanguageFile(SupportedLanguage.ENGLISH);
-                messages = languageMessages.get(SupportedLanguage.ENGLISH.getCode());
-            }
-        }
-    }
-
-    private void saveDefaultLanguageFiles() {
-        for (SupportedLanguage lang : SupportedLanguage.values()) {
-            saveResource(lang.getResourcePath());
-        }
-    }
-
-    private void saveResource(String resourcePath) {
-        try {
-            if (plugin.getResource(resourcePath) != null) {
-                plugin.saveResource(resourcePath, false);
+            if (supportedLang != SupportedLanguage.ENGLISH) {
+                // If it's a supported language but file doesn't exist, create it
+                if (supportedLang != null) {
+                    createLanguageFile(supportedLang);
+                    messages = languageMessages.get(configLang);
+                } else {
+                    // If it's not a supported language, fall back to English
+                    logger.warning("Language '" + configLang + "' is not supported, falling back to English");
+                    messages = getOrCreateEnglishLanguage();
+                }
             } else {
-                String langCode = resourcePath.substring(resourcePath.lastIndexOf('/') + 1).replace(".yml", "");
-                SupportedLanguage lang = SupportedLanguage.fromCode(langCode);
-                createDefaultLanguageFile(lang);
+                // If English is missing, create it
+                messages = getOrCreateEnglishLanguage();
             }
-        } catch (Exception e) {
-            logger.severe("Failed to save resource " + resourcePath + ": " + e.getMessage());
         }
+
+        currentLanguage = supportedLang != null ? supportedLang : SupportedLanguage.ENGLISH;
+        logger.info("Loaded language: " + currentLanguage.getDisplayName() + " (" + currentLanguage.getCode() + ")");
     }
 
-    private void createDefaultLanguageFile(SupportedLanguage language) {
-        File langFile = new File(plugin.getDataFolder(), language.getResourcePath());
-        FileConfiguration langConfig = new YamlConfiguration();
+    private FileConfiguration getOrCreateEnglishLanguage() {
+        FileConfiguration englishMessages = languageMessages.get(SupportedLanguage.ENGLISH.getCode());
+        if (englishMessages == null) {
+            createLanguageFile(SupportedLanguage.ENGLISH);
+            englishMessages = languageMessages.get(SupportedLanguage.ENGLISH.getCode());
+        }
+        return englishMessages;
+    }
 
+    private void loadLanguageFile(File file) {
+        String langCode = file.getName().replace(".yml", "");
+        FileConfiguration langConfig = YamlConfiguration.loadConfiguration(file);
+
+        // Merge default messages
+        boolean hasChanges = mergeDefaultMessages(langConfig);
+        if (hasChanges) {
+            try {
+                langConfig.save(file);
+                logger.info("Updated language file: " + file.getName());
+            } catch (IOException e) {
+                logger.severe("Could not save updated language file " + file.getName() + ": " + e.getMessage());
+            }
+        }
+
+        languageMessages.put(langCode, langConfig);
+    }
+
+    private void createLanguageFile(SupportedLanguage language) {
+        File langFile = new File(plugin.getDataFolder(), language.getResourcePath());
+
+        // First try to load from jar resources
+        InputStream resourceStream = plugin.getResource(language.getResourcePath());
+        if (resourceStream != null) {
+            try {
+                Files.copy(resourceStream, langFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
+                loadLanguageFile(langFile);
+                logger.info("Created language file from resource: " + language.getResourcePath());
+                return;
+            } catch (IOException e) {
+                logger.warning("Failed to copy resource for " + language.getCode() + ": " + e.getMessage());
+            }
+        }
+
+        // If resource doesn't exist, create from default messages
+        FileConfiguration langConfig = new YamlConfiguration();
         for (Map.Entry<String, Object> entry : defaultMessages.entrySet()) {
             langConfig.set(entry.getKey(), entry.getValue());
         }
@@ -523,6 +568,14 @@ public class LanguageManager {
         }
     }
 
+    private void saveDefaultLanguageFiles() {
+        for (SupportedLanguage lang : SupportedLanguage.values()) {
+            File langFile = new File(plugin.getDataFolder(), lang.getResourcePath());
+            if (!langFile.exists()) {
+                createLanguageFile(lang);
+            }
+        }
+    }
 
     private boolean mergeDefaultMessages(FileConfiguration config) {
         boolean changed = false;
@@ -535,6 +588,7 @@ public class LanguageManager {
         }
         return changed;
     }
+
     // get message from path
     public String getMessage(String path) {
         String cachedMessage = messageCache.get(path + "_" + currentLanguage.getCode());

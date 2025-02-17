@@ -7,6 +7,8 @@ softdepend:
   - EconomyShopGUI
   - EconomyShopGUI-Premium
   - ShopGUIPlus
+  - zShop
+  - Vault
   - Essentials
   - CMI
   - WorldGuard

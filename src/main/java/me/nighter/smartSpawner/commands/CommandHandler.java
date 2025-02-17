@@ -9,18 +9,18 @@ import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
-public class SmartSpawnerCommand implements CommandExecutor, TabCompleter {
+public class CommandHandler implements CommandExecutor, TabCompleter {
     private final ReloadCommand reloadCommand;
-    private final GiveSpawnerCommand giveCommand;
-    private final SpawnerListCommand listCommand;
+    private final GiveCommand giveCommand;
+    private final ListCommand listCommand;
     private final HologramCommand hologramCommand;
     private final SmartSpawner plugin;
 
-    public SmartSpawnerCommand(SmartSpawner plugin) {
+    public CommandHandler(SmartSpawner plugin) {
         this.plugin = plugin;
         this.reloadCommand = new ReloadCommand(plugin);
-        this.giveCommand = new GiveSpawnerCommand(plugin);
-        this.listCommand = new SpawnerListCommand(plugin);
+        this.giveCommand = new GiveCommand(plugin);
+        this.listCommand = new ListCommand(plugin);
         this.hologramCommand = new HologramCommand(plugin);
     }
 

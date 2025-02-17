@@ -1,4 +1,4 @@
-package me.nighter.smartSpawner.dataMigration;
+package me.nighter.smartSpawner.data.migration;
 
 import me.nighter.smartSpawner.SmartSpawner;
 import org.bukkit.configuration.file.FileConfiguration;
@@ -69,7 +69,7 @@ public class SpawnerDataMigration {
             }
 
             if (!needsMigration) {
-                plugin.getLogger().info("Data format is up to date.");
+                //plugin.getLogger().info("Data format is up to date.");
                 return false;
             }
 

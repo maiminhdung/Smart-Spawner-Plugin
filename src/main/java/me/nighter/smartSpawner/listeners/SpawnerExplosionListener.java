@@ -1,9 +1,9 @@
 package me.nighter.smartSpawner.listeners;
 
 import me.nighter.smartSpawner.SmartSpawner;
-import me.nighter.smartSpawner.managers.ConfigManager;
-import me.nighter.smartSpawner.managers.SpawnerManager;
-import me.nighter.smartSpawner.utils.SpawnerData;
+import me.nighter.smartSpawner.utils.ConfigManager;
+import me.nighter.smartSpawner.spawner.properties.SpawnerManager;
+import me.nighter.smartSpawner.spawner.properties.SpawnerData;
 import org.bukkit.Material;
 import org.bukkit.block.Block;
 import org.bukkit.event.EventHandler;

@@ -2,8 +2,10 @@ package me.nighter.smartSpawner.managers;
 
 import me.nighter.smartSpawner.*;
 import me.nighter.smartSpawner.holders.PagedSpawnerLootHolder;
-import me.nighter.smartSpawner.utils.OptimizedVirtualInventory;
-import me.nighter.smartSpawner.utils.SpawnerData;
+import me.nighter.smartSpawner.spawner.properties.VirtualInventory;
+import me.nighter.smartSpawner.spawner.properties.SpawnerData;
+import me.nighter.smartSpawner.utils.ConfigManager;
+import me.nighter.smartSpawner.utils.LanguageManager;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
@@ -27,7 +29,7 @@ public class SpawnerLootManager {
     }
 
     public Inventory createLootInventory(SpawnerData spawner, String title, int page) {
-        OptimizedVirtualInventory virtualInv = spawner.getVirtualInventory();
+        VirtualInventory virtualInv = spawner.getVirtualInventory();
         Map<Integer, ItemStack> displayItems = virtualInv.getDisplayInventory();
         int totalItems = displayItems.size();
         int totalPages = Math.max(1, (int) Math.ceil((double) totalItems / SLOTS_PER_PAGE));
@@ -46,7 +48,7 @@ public class SpawnerLootManager {
     }
 
     public void updateInventoryContents(Inventory inventory, SpawnerData spawner, int page) {
-        OptimizedVirtualInventory virtualInv = spawner.getVirtualInventory();
+        VirtualInventory virtualInv = spawner.getVirtualInventory();
         Map<Integer, ItemStack> displayItems = virtualInv.getDisplayInventory();
         int totalItems = displayItems.size();
         int totalPages = Math.max(1, (int) Math.ceil((double) totalItems / SLOTS_PER_PAGE));
@@ -86,7 +88,7 @@ public class SpawnerLootManager {
         }
 
         // Page indicator
-        ItemStack pageIndicator = createPageIndicator(page, totalPages, totalItems, virtualInv, spawner.getMaxSpawnerLootSlots());
+        ItemStack pageIndicator = createPageIndicator(page, totalPages, virtualInv, spawner.getMaxSpawnerLootSlots());
         inventory.setItem(NAVIGATION_ROW * 9 + 4, pageIndicator);
 
         // Other buttons
@@ -155,22 +157,20 @@ public class SpawnerLootManager {
         return createItemStack(material, buttonName, buttonLore);
     }
 
-    private ItemStack createPageIndicator(int currentPage, int totalPages, int totalItems, OptimizedVirtualInventory virtualInventory, int maxSlots) {
+
+    private ItemStack createPageIndicator(int currentPage, int totalPages, VirtualInventory virtualInventory, int maxSlots) {
         Material material;
         String itemName;
         List<String> itemLore = new ArrayList<>();
 
-        // Get total number of actual items (counting stacks)
-        long totalActualItems = virtualInventory.getTotalItems();
+        // Get used slots count
+        int usedSlots = virtualInventory.getUsedSlots();
 
-        // Calculate maximum possible items (assuming max stack size of 64)
-        long maxPossibleItems = (long) maxSlots * 64;
+        // Calculate storage percentage based on used slots
+        int percentStorage = (int) ((double) usedSlots / maxSlots * 100);
 
-        // Calculate storage percentage based on actual items vs maximum possible
-        int percentStorage = (int) ((double) totalActualItems / maxPossibleItems * 100);
-
-        String formattedMaxPossibleItems = languageManager.formatNumberTenThousand(maxPossibleItems);
-        String formattedTotalActualItems = languageManager.formatNumberTenThousand(totalActualItems);
+        String formattedMaxSlots = languageManager.formatNumberTenThousand(maxSlots);
+        String formattedUsedSlots = languageManager.formatNumberTenThousand(usedSlots);
 
         if (plugin.hasShopIntegration()) {
             material = Material.GOLD_INGOT;
@@ -178,10 +178,9 @@ public class SpawnerLootManager {
                     .replace("%current_page%", String.valueOf(currentPage))
                     .replace("%total_pages%", String.valueOf(totalPages));
 
-
             String loreMessage = languageManager.getMessage("shop-page-indicator.lore")
-                    .replace("%max_slots%", formattedMaxPossibleItems)
-                    .replace("%current_items%", formattedTotalActualItems)
+                    .replace("%max_slots%", formattedMaxSlots)
+                    .replace("%used_slots%", formattedUsedSlots)
                     .replace("%percent_storage%", String.valueOf(percentStorage));
 
             itemLore.addAll(Arrays.asList(loreMessage.split("\n")));
@@ -192,8 +191,8 @@ public class SpawnerLootManager {
                     .replace("%total_pages%", String.valueOf(totalPages));
 
             String loreMessage = languageManager.getMessage("page-indicator.lore")
-                    .replace("%max_slots%", formattedMaxPossibleItems)
-                    .replace("%current_items%", formattedTotalActualItems);
+                    .replace("%max_slots%", formattedMaxSlots)
+                    .replace("%used_slots%", formattedUsedSlots);
 
             itemLore.addAll(Arrays.asList(loreMessage.split("\n")));
         }

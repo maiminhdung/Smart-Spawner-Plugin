@@ -8,8 +8,6 @@ import com.google.gson.JsonObject;
 import io.papermc.paper.threadedregions.scheduler.ScheduledTask;
 
 import me.nighter.smartSpawner.SmartSpawner;
-import me.nighter.smartSpawner.managers.ConfigManager;
-import me.nighter.smartSpawner.managers.LanguageManager;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.event.ClickEvent;
 import net.kyori.adventure.text.event.HoverEvent;
@@ -93,6 +91,7 @@ public class UpdateChecker implements Listener {
 
     private static class Version implements Comparable<Version> {
         private final int[] parts;
+        private static final int MAX_PARTS = 4; // Updated to support 4 parts
 
         public Version(String version) {
             // Remove any non-numeric prefix (e.g., "v1.0.0" -> "1.0.0")
@@ -100,27 +99,29 @@ public class UpdateChecker implements Listener {
                     .replaceAll("^[^0-9]*", "");
 
             String[] split = version.split("\\.");
-            parts = new int[Math.max(split.length, 3)]; // Ensure at least 3 parts (major.minor.patch)
+            parts = new int[MAX_PARTS]; // Initialize array with 4 parts
 
-            // Parse each part, defaulting to 0 if not a valid number
-            for (int i = 0; i < split.length; i++) {
-                try {
-                    parts[i] = Integer.parseInt(split[i]);
-                } catch (NumberFormatException e) {
-                    parts[i] = 0;
+            // Parse each part, defaulting to 0 if not present or not a valid number
+            for (int i = 0; i < MAX_PARTS; i++) {
+                if (i < split.length) {
+                    try {
+                        parts[i] = Integer.parseInt(split[i]);
+                    } catch (NumberFormatException e) {
+                        parts[i] = 0;
+                    }
+                } else {
+                    parts[i] = 0; // Fill remaining parts with 0
                 }
             }
         }
 
+
         @Override
         public int compareTo(Version other) {
-            int maxLength = Math.max(parts.length, other.parts.length);
-            for (int i = 0; i < maxLength; i++) {
-                int thisPart = i < parts.length ? parts[i] : 0;
-                int otherPart = i < other.parts.length ? other.parts[i] : 0;
-
-                if (thisPart != otherPart) {
-                    return thisPart - otherPart;
+            // Compare all 4 parts
+            for (int i = 0; i < MAX_PARTS; i++) {
+                if (parts[i] != other.parts[i]) {
+                    return parts[i] - other.parts[i];
                 }
             }
             return 0;
@@ -129,11 +130,35 @@ public class UpdateChecker implements Listener {
         @Override
         public String toString() {
             StringBuilder sb = new StringBuilder();
-            for (int i = 0; i < parts.length; i++) {
+
+            // Always include the first three parts
+            for (int i = 0; i < 3; i++) {
                 if (i > 0) sb.append('.');
                 sb.append(parts[i]);
             }
+
+            // Only include the fourth part if it's non-zero
+            if (parts[3] > 0) {
+                sb.append('.').append(parts[3]);
+            }
+
             return sb.toString();
+        }
+
+        /**
+         * Gets the version parts as an array
+         * @return array of version parts
+         */
+        public int[] getParts() {
+            return parts.clone();
+        }
+
+        /**
+         * Checks if this version has a fourth number
+         * @return true if the version has a fourth number greater than 0
+         */
+        public boolean hasFourthNumber() {
+            return parts[3] > 0;
         }
     }
 

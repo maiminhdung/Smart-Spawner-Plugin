@@ -1,9 +1,9 @@
 package me.nighter.smartSpawner.commands;
 
-import me.nighter.smartSpawner.managers.LanguageManager;
+import me.nighter.smartSpawner.utils.LanguageManager;
 import me.nighter.smartSpawner.SmartSpawner;
-import me.nighter.smartSpawner.managers.ConfigManager;
-import me.nighter.smartSpawner.managers.SpawnerManager;
+import me.nighter.smartSpawner.utils.ConfigManager;
+import me.nighter.smartSpawner.spawner.properties.SpawnerManager;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
@@ -37,7 +37,7 @@ public class HologramCommand implements CommandExecutor {
         mainConfig.set("hologram.enabled", newValue);
 
         // Save configs and reload
-        configManager.saveConfigs();
+        configManager.saveMainConfig();
         configManager.reloadConfigs();
 
         // Update all holograms
