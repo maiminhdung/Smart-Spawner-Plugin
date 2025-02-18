@@ -1,4 +1,4 @@
-## Smart Spawner - GUI Spawner Plugin ✨ v1.2.2-DEV
+## Smart Spawner - GUI Spawner Plugin ✨ v1.2.3
 This plugin is a fork of the original Smart Spawner plugin by [ptthanh02](https://github.com/ptthanh02). With the purpose of converting from [Spigot API](https://hub.spigotmc.org/javadocs/spigot/) to [Paper API](https://papermc.io/javadocs) to support [Paper](https://github.com/PaperMC/Paper) and [Folia](https://github.com/PaperMC/Folia) servers at the same time and improve performance on these 2 platforms. Only use in production if you are confident in the stability of the plugin.
 
 Join discord: https://discord.gg/k7Sn2aynK6
