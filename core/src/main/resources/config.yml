@@ -1,0 +1,135 @@
+#---------------------------------------------------
+#                 Plugin Settings
+#---------------------------------------------------
+# Language Selection
+# Supported: en_US (English), vi_VN (Vietnamese), zh_CN (Simplified Chinese)
+# You can also use custom language files by placing them in the messages folder
+language: en_US
+
+# Debug Mode (for printing debug messages to console)
+debug: false
+
+# Data Saving Interval in seconds (default: 300 seconds - 5 minutes)
+save-interval: 300 # seconds
+
+#---------------------------------------------------
+#              Spawner Core Mechanics
+#---------------------------------------------------
+# Default entity type for spawners
+default-entity: PIG
+
+# Spawn count limits
+min-mobs: 1
+max-mobs: 4
+
+# Player proximity for activation
+range: 16 # blocks
+
+# Base loot spawn delay
+delay: 20 # seconds
+
+# Storage page(s) per spawner (1 page = 45 slots)
+max-storage-pages: 1
+
+# Maximum storable experience points
+max-stored-exp: 1000
+
+# Maximum spawner stack size
+max-stack-size: 1000
+
+# Experience and equipment features
+allow-exp-mending: true
+allow-toggle-equipment-drops: true
+
+# Prevent explosions destroying spawners
+allow-grief: false
+
+# Immediate spawner activation when placed
+# If false, players must right-click to activate
+activate-on-place: true
+
+#---------------------------------------------------
+#             Custom Mechanics
+#---------------------------------------------------
+# Prevent players from interacting with natural spawners
+natural-spawner-interaction: false
+
+#---------------------------------------------------
+#             Spawner Breaking Mechanics
+#---------------------------------------------------
+# Enable spawner breaking functionality
+spawner-break-enabled: true
+
+# Permitted Breaking Tools
+required-tools:
+  - IRON_PICKAXE
+  - GOLDEN_PICKAXE
+  - DIAMOND_PICKAXE
+  - NETHERITE_PICKAXE
+
+# Durability lost per spawner broken
+durability-loss-per-spawner: 1
+
+# Silk Touch Requirements
+silk-touch-required: true
+silk-touch-level: 1
+
+# Maximum dropped items per break
+drop-stack-amount: 64
+
+#---------------------------------------------------
+#                Aesthetic Features
+#---------------------------------------------------
+# Note: May impact server performance
+
+# Hologram Configuration
+hologram-enabled: false
+hologram-see-through: false
+hologram-shadowed-text: true
+hologram-height: 1.6
+hologram-offset-x: 0.5
+hologram-offset-z: 0.5
+
+# Particle Effects
+particles-loot-spawn: true
+particles-spawner-stack: true
+particles-spawner-activate: true
+
+#---------------------------------------------------
+#              Economic Integration
+#---------------------------------------------------
+# Shop integration options:
+# - auto: Automatically detect supported shop plugins
+# - EconomyShopGUI, EconomyShopGUI-Premium, ShopGUIPlus, zShop
+# - disabled: No shop integration
+shop-integration: auto
+
+# Format prices with currency symbols (K, M, B, T)
+formated-price: true
+
+# Cooldown between selling items
+sell-cooldown: 3 # seconds
+
+# Sales tax configuration
+tax-enabled: false
+tax-rate: 10.0
+
+# Transaction logging
+logging-enabled: true
+logging-file-path: "shop-logs/sales.log"
+
+#---------------------------------------------------
+#           Hopper Mechanics (Experimental)
+#---------------------------------------------------
+# Not recommended for large servers
+hopper-enabled: false
+hopper-items-per-transfer: 4
+hopper-check-interval: 1 # seconds
+
+#---------------------------------------------------
+#              Update Checker
+#---------------------------------------------------
+update-checker-enabled: true
+update-checker-interval: 24 # hours
+update-checker-notify-console: true
+update-checker-notify-on-join: true

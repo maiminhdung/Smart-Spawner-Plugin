@@ -33,6 +33,7 @@ build/
 .gradle
 .gradletasknamecache
 gradle-app.setting
+gradle.properties
 !gradle-wrapper.jar
 
 ##############################

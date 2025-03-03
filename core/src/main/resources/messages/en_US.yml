@@ -1,0 +1,564 @@
+#---------------------------------------------------
+# Language: English (United States)
+# Plugin Version: 1.2.5
+#---------------------------------------------------
+prefix: "&8[&#3287A9&lSmartSpawner&8]&r"
+
+#---------------------------------------------------
+# Formatted Numbers
+#---------------------------------------------------
+format-number:
+  thousand: "%sK"
+  million: "%sM"
+  billion: "%sB"
+  trillion: "%sT"
+  default: "%s"
+
+#---------------------------------------------------
+# Formatted Mob Names
+#---------------------------------------------------
+mob_names:
+  ALLAY: "Allay"
+  ARMADILLO: "Armadillo"
+  AXOLOTL: "Axolotl"
+  BAT: "Bat"
+  BEE: "Bee"
+  BLAZE: "Blaze"
+  BOGGED: "Bogged"
+  BREEZE: "Breeze"
+  CAMEL: "Camel"
+  CAT: "Cat"
+  CAVE_SPIDER: "Cave Spider"
+  CHICKEN: "Chicken"
+  COD: "Cod"
+  COW: "Cow"
+  CREEPER: "Creeper"
+  DOLPHIN: "Dolphin"
+  DONKEY: "Donkey"
+  DROWNED: "Drowned"
+  ELDER_GUARDIAN: "Elder Guardian"
+  ENDERMAN: "Enderman"
+  ENDERMITE: "Endermite"
+  EVOKER: "Evoker"
+  FOX: "Fox"
+  FROG: "Frog"
+  GHAST: "Ghast"
+  GLOW_SQUID: "Glow Squid"
+  GOAT: "Goat"
+  GUARDIAN: "Guardian"
+  HOGLIN: "Hoglin"
+  HORSE: "Horse"
+  HUSK: "Husk"
+  IRON_GOLEM: "Iron Golem"
+  LLAMA: "Llama"
+  MAGMA_CUBE: "Magma Cube"
+  MOOSHROOM: "Mooshroom"
+  MUSHROOM_COW: "Mooshroom" # Fallback for 1.20 version compatibility
+  MULE: "Mule"
+  OCELOT: "Ocelot"
+  PANDA: "Panda"
+  PARROT: "Parrot"
+  PHANTOM: "Phantom"
+  PIG: "Pig"
+  PIGLIN: "Piglin"
+  PIGLIN_BRUTE: "Piglin Brute"
+  PILLAGER: "Pillager"
+  POLAR_BEAR: "Polar Bear"
+  PUFFERFISH: "Pufferfish"
+  RABBIT: "Rabbit"
+  RAVAGER: "Ravager"
+  SALMON: "Salmon"
+  SHEEP: "Sheep"
+  SHULKER: "Shulker"
+  SILVERFISH: "Silverfish"
+  SKELETON: "Skeleton"
+  SKELETON_HORSE: "Skeleton Horse"
+  SLIME: "Slime"
+  SNIFFER: "Sniffer"
+  SNOW_GOLEM: "Snow Golem"
+  SNOWMAN: "Snow Golem" # Fallback for 1.20 version compatibility
+  SPIDER: "Spider"
+  SQUID: "Squid"
+  STRAY: "Stray"
+  STRIDER: "Strider"
+  TADPOLE: "Tadpole"
+  TRADER_LLAMA: "Trader Llama"
+  TROPICAL_FISH: "Tropical Fish"
+  TURTLE: "Turtle"
+  VEX: "Vex"
+  VILLAGER: "Villager"
+  VINDICATOR: "Vindicator"
+  WANDERING_TRADER: "Wandering Trader"
+  WARDEN: "Warden"
+  WITCH: "Witch"
+  WITHER_SKELETON: "Wither Skeleton"
+  WOLF: "Wolf"
+  ZOGLIN: "Zoglin"
+  ZOMBIE: "Zombie"
+  ZOMBIE_HORSE: "Zombie Horse"
+  ZOMBIE_VILLAGER: "Zombie Villager"
+  ZOMBIFIED_PIGLIN: "Zombified Piglin"
+
+#---------------------------------------------------
+# Spawner Item Name & Hologram Format
+#---------------------------------------------------
+spawner-name: "&d%entity% Spawner"
+
+spawner-hologram:
+  # Available placeholders:
+  # %stack_size% - Number of stacked spawners
+  # %entity% - Mob type name
+  # %current_exp% - Current stored XP
+  # %max_exp% - Maximum XP capacity
+  # %used_slots% - Number of used storage slots
+  # %max_slots% - Maximum storage slots
+  format:
+    - "&#FCD05C◆  [&fx%stack_size%&#FCD05C] &d%entity%  &#FCD05C◆"
+    - "&#00E689&lExp: &e%current_exp%&7/&e%max_exp% &7XP"
+    - "&#FCD05C&lStorage: &f%used_slots%&7/&f%max_slots% &7slots"
+
+#---------------------------------------------------
+# Spawner Interaction
+#---------------------------------------------------
+messages:
+  activated:
+    message: "&#d6e7edSpawner &#3287A9activated&#d6e7ed! Mobs won’t spawn naturally, collect loot and XP through the GUI instead."
+    prefix: true
+    type: CHAT
+    sound: block.beacon.activate
+
+  entity-spawner-placed:
+    message: "&#d6e7edThis spawner is &#3287A9not activated&#d6e7ed! Mobs will spawn naturally."
+    prefix: true
+    type: CHAT
+    sound: block.note_block.pling
+
+  changed:
+    message: "&#d6e7edSpawner changed to &#3287A9%type%&#d6e7ed!"
+    prefix: true
+    type: CHAT
+    sound: block.note_block.pling
+
+  invalid-egg:
+    message: "&cInvalid spawn egg! or spawn egg not supported!"
+    prefix: true
+    type: CHAT
+
+  break-warning:
+    message: "&c[!] Warning! All items and xp will be lost!"
+    prefix: false
+    type: ACTION_BAR
+    sound: block.note_block.chime
+
+  required-tools:
+    message: "&c[!] Can't break spawner with this tool!"
+    prefix: false
+    type: ACTION_BAR
+    sound: item.shield.block
+
+  silk-touch-required:
+    message: "&c[!] Required &#3287A9Silk Touch&c to break this spawner!"
+    prefix: false
+    type: ACTION_BAR
+    sound: block.note_block.pling
+
+  # Message for accessing spawner when it's protected by an external plugin
+  spawner-protected:
+    message: "&c[!] This spawner is protected!"
+    prefix: false
+    type: ACTION_BAR
+    sound: block.note_block.pling
+
+  #---------------------------------------------------
+  # Selling Items from Spawner
+  #---------------------------------------------------
+  sell-all:
+    message: "&#d6e7edYou sold a total of &#3287A9%amount% items&#d6e7ed for&a %price%$ &#d6e7ed!"
+    prefix: true
+    type: CHAT
+    sound: block.note_block.bell
+
+  no-items:
+    message: "&cThere are no items to sell in the spawner."
+    prefix: true
+    type: CHAT
+    sound: block.note_block.pling
+
+  sell-all-tax:
+    message: "&#d6e7edYou have sold &#3287A9%amount% items&#d6e7ed. Original price: &a%gross%$&#d6e7ed, After tax (&#ff6b6b%tax%%&#d6e7ed): &a%price%$"
+    prefix: true
+    type: CHAT
+    sound: block.note_block.bell
+
+  no-sellable-items:
+    message: "&cNo items can be sold from this spawner."
+    prefix: true
+    type: CHAT
+    sound: block.note_block.pling
+
+  sell-failed:
+    message: "&cFailed to sell items! Please try again."
+    prefix: true
+    type: CHAT
+    sound: block.note_block.pling
+
+  sell-cooldown:
+    message: "&cPlease wait %seconds% second(s) before trying to sell items again."
+    prefix: true
+    type: CHAT
+    sound: block.note_block.pling
+
+  transaction-in-progress:
+    message: "&cA transaction is already in progress! Please wait."
+    prefix: true
+    type: CHAT
+    sound: block.note_block.pling
+
+  #---------------------------------------------------
+  # Spawner Stacking/Unstacking
+  #---------------------------------------------------
+  hand-stack:
+    message: "&f[&#00E689✔&f] &fSuccessfully stacked &#00E689%amount%&f spawners!"
+    prefix: false
+    type: ACTION_BAR
+    sound: entity.experience_orb.pickup
+
+  cannot-go-below-one:
+    message: "&cCannot go below 1! Only decreasing by %amount%!"
+    prefix: true
+    type: CHAT
+    sound: block.note_block.pling
+
+  stack-full:
+    message: "&cStack limit reached! Cannot increase anymore!"
+    prefix: true
+    type: CHAT
+    sound: block.note_block.pling
+
+  not-enough-spawners:
+    message: "&cYou don't have enough spawners! Need %amountChange% but only have %amountAvailable%!"
+    prefix: true
+    type: CHAT
+    sound: block.note_block.pling
+
+  stack-full-overflow:
+    message: "&cStack limit reached! Only stack %amount% spawners!"
+    prefix: true
+    type: CHAT
+    sound: block.note_block.pling
+
+  inventory-full-drop:
+    message: "&cSome spawners were dropped at your feet due to full inventory!"
+    prefix: true
+    type: CHAT
+    sound: block.note_block.pling
+
+  invalid-spawner:
+    message: "&cInvalid spawner type!"
+    prefix: true
+    type: CHAT
+    sound: block.note_block.pling
+
+  different-type:
+    message: "&cYou can only stack spawners of the same type!"
+    prefix: true
+    type: CHAT
+    sound: block.note_block.pling
+
+  #---------------------------------------------------
+  # Spawner Experience Collection
+  #---------------------------------------------------
+  exp-collected:
+    message: "&#d6e7edCollected &a%exp%&#d6e7ed experience points!"
+    prefix: true
+    type: CHAT
+
+  exp-collected-with-mending:
+    message: "&#d6e7edUsed &a%exp-mending%&#d6e7ed experience points to repair items! Collected &a%exp%&#d6e7ed experience points!"
+    prefix: true
+    type: CHAT
+
+  no-exp:
+    message: "&cThere is no experience to take!"
+    prefix: true
+    type: CHAT
+    sound: block.note_block.pling
+
+  #---------------------------------------------------
+  # Spawner Storage Interaction
+  #---------------------------------------------------
+  no-items-to-take:
+    message: "&cThere are no items to take!"
+    prefix: true
+    type: CHAT
+    sound: block.note_block.pling
+
+  inventory-full:
+    message: "&cYour inventory is full!"
+    prefix: true
+    type: CHAT
+    sound: block.note_block.pling
+
+  take-some-items:
+    message: "&#d6e7edYou have taken &#3287A9%amount%&#d6e7ed items! Your inventory is now full!"
+    prefix: true
+    type: CHAT
+
+  take-all-items:
+    message: "&#d6e7edSuccessfully taken &#3287A9%amount%&#d6e7ed items!"
+    prefix: true
+    type: CHAT
+    sound: block.note_block.chime
+
+  #---------------------------------------------------
+  # Spawner List Teleport Message
+  #---------------------------------------------------
+  teleported:
+    message: "&aSuccessfully teleported to &dSpawner #%spawnerId%"
+    prefix: true
+    type: CHAT
+    sound: entity.enderman.teleport
+
+  not-found:
+    message: "&cCould not teleport to that Spawner! Spawner not found."
+    prefix: true
+    type: CHAT
+    sound: block.note_block.pling
+
+#---------------------------------------------------
+# GUI Titles
+#---------------------------------------------------
+gui-title:
+  menu: "%entity% Spawner"
+  stacked-menu: "%amount% %entity% Spawner"
+  stacker-menu: "Spawner Stacker"
+  loot-menu: "Spawner Storage"
+
+#---------------------------------------------------
+# Main Menu GUI
+#---------------------------------------------------
+spawner-loot-item:
+  name: "&#FCD05C&lLoot Storage"
+  lore:
+    chest: |
+      
+      &8▪ &#FCD05CSlots: &f%current_items%&7/&f%max_slots%
+      &8▪ &#FCD05CStorage: &a%percent_storage%&a%&f full
+      
+      &#FCD05C➜ &7Click to open storage
+
+spawner-info-item:
+  name: "&#4fc3f7&lSpawner Info"
+  lore:
+    spawner-info: |
+
+      &8▪ &#81d4faEntity: &f%entity%
+      &8▪ &#81d4faRange: &f%range% &7blocks
+      &8▪ &#81d4faStack Size: &f%stack_size%
+      &8▪ &#81d4faMob Rate: &f%min_mobs% &7- &f%max_mobs%
+      &8▪ &#81d4faSpawn Delay: &f%delay%&7s
+      &8▪ &#81d4faNext Spawn: &e
+      
+      &#81d4fa➜ &7Click to open stack menu
+  lore-change: "&8▪ &#81d4faNext Spawn: &e"
+  lore-inactive: "&cSpawner is inactive!"
+  lore-full: "&cStorage & Exp is full!"
+
+exp-info-item:
+  name: "&#00F898&lStored Exp: &e%current_exp%&#00F898"
+  lore:
+    exp-bottle: |
+      
+      &8▪ &#00E689Current: &e%current_exp%&7/&e%max_exp% &7XP
+      &8▪ &#00E689Stored: &e%percent_exp%&e% &7XP
+      
+      &#00E689➜ &7Click to collect XP
+
+#---------------------------------------------------
+# Spawner Stacker GUI
+#---------------------------------------------------
+button:
+  name:
+    spawner: "&#4fc3f7%entity% Spawner"
+    decrease-64: "&c-64 Spawners"
+    decrease-10: "&c-10 Spawners"
+    decrease-1: "&c-1 Spawner"
+    increase-64: "&a+64 Spawners"
+    increase-10: "&a+10 Spawners"
+    increase-1: "&a+1 Spawner"
+  lore:
+    remove: |
+      &7Click to remove %amount% spawner
+      &7from the stack
+      &7Current stack: &e%stack_size%
+    add: |
+      &7Click to add %amount% spawner
+      &7to the stack
+      &7Current stack: &e%stack_size%
+    spawner: |
+      
+      &8▪ &#81d4faEntity: &f%entity%
+      &8▪ &#81d4faStack Size: &f%stack_size%
+      &8▪ &#81d4faMax Stack Size: &f%max_stack_size%
+      
+      &#81d4fa➜ &7Click to return main menu
+
+#---------------------------------------------------
+# Spawner Storage GUI
+#---------------------------------------------------
+navigation-button:
+  previous:
+    name: "&#81d4faPrevious Page"
+    lore: |
+      &#81d4faClick to go to page %target_page%
+  next:
+    name: "&#81d4faNext Page"
+    lore: |
+      &#81d4faClick to go to page %target_page%
+
+page-indicator:
+  name: "&#ffd700Page [%current_page%/&#ffd700%total_pages%]"
+  lore: |
+    &7Used Slots: &a%used_slots%&7/&f%max_slots%
+
+shop-page-indicator:
+  name: "&#ffd700Sell All Items"
+  lore: |
+    
+    &8▪ &#ffd700Slots: &a%used_slots%&7/&f%max_slots%
+    &8▪ &#ffd700Storage: &a%percent_storage%&a%&f full
+    
+    &#ffd700➜ &7Click to sell all items
+
+return-button:
+  name: "&#ff6b6b Return to Main Menu"
+
+take-all-button:
+  name: "&#00E689Take All Items"
+
+equipment-toggle:
+  name: "&#f4d842Equipment Drops"
+  lore:
+    enabled: |
+      &7Status: &a&lAllowed
+    disabled: |
+      &7Status: &c&lBlocked
+
+#---------------------------------------------------
+# Spawner List GUI (Command)
+#---------------------------------------------------
+spawner-list:
+  gui-title:
+    world-selection: "&#3287A9&lSpawner World List"
+    page-title: "{world} &r- [{current}/{total}]"
+
+  navigation:
+    previous-page: "&e&lPrevious Page"
+    next-page: "&e&lNext Page"
+    back: "&c&lBack to World Selection"
+
+  world-buttons:
+    overworld:
+      name: "&a&lOverworld"
+      lore: |
+        &8━━━━━━━━━━━━━━━━━━━━
+        &7⮞ &fTotal Spawners: &a{total}
+        &7⮞ &fTotal Stacked: &a{total_stacked}
+        &8━━━━━━━━━━━━━━━━━━━━
+        &a▶ &7Click to view!
+
+    nether:
+      name: "&c&lNether"
+      lore: |
+        &8━━━━━━━━━━━━━━━━━━━━
+        &7⮞ &fTotal Spawners: &c{total}
+        &7⮞ &fTotal Stacked: &c{total_stacked}
+        &8━━━━━━━━━━━━━━━━━━━━
+        &c▶ &7Click to view!
+
+    end:
+      name: "&5&lThe End"
+      lore: |
+        &8━━━━━━━━━━━━━━━━━━━━
+        &7⮞ &fTotal Spawners: &5{total}
+        &7⮞ &fTotal Stacked: &5{total_stacked}
+        &8━━━━━━━━━━━━━━━━━━━━
+        &5▶ &7Click to view!
+
+    # For custom worlds from other plugins
+    custom-nether:
+      name: "&c&l{world_name}"
+
+    custom-overworld:
+      name: "&a&l{world_name}"
+
+    custom-end:
+      name: "&5&l{world_name}"
+
+    custom-default:
+      name: "&b&l{world_name}"
+      lore: |
+        &8━━━━━━━━━━━━━━━━━━━━
+        &7⮞ &fTotal Spawners: &b{total}
+        &7⮞ &fTotal Stacked: &b{total_stacked}
+        &8━━━━━━━━━━━━━━━━━━━━
+        &b▶ &7Click to view!
+
+  spawner-item:
+    name: "&#4fc3f7&lSpawner #{id}"
+    id_pattern: "Spawner #([A-Za-z0-9]+)"
+
+    lore:
+      separator: "&7&m―――――――――――――――――――――――"
+      entity: "&f⮞ &7Entity: &f{entity}"
+      stack_size: "&f⮞ &7Stack Size: &#4fc3f7{size}"
+
+      status:
+        active: "&f⮞ &7Status: &a&lACTIVE"
+        inactive: "&f⮞ &7Status: &c&lINACTIVE"
+
+      location: "&f⮞ &7Location: &#4fc3f7{x}, {y}, {z}"
+
+      teleport: "&#4fc3f7▶ &fClick to teleport"
+
+#---------------------------------------------------
+# Command & Update Messages
+#---------------------------------------------------
+command:
+  usage: |
+    &aCommands Usage:
+    &f/smartspawner reload &7- Reload the plugin configuration
+    &f/smartspawner list &7- Open the spawner list (for admin management)
+    &f/smartspawner give <player> <mobtype> <amount> &7- Give spawners to a player
+    &f/smartspawner hologram &7- Toggle hologram visibility
+  reload:
+    usage: "&cUsage: /smartspawner reload"
+    wait: "&eReloading plugin please wait..."
+    success: "&aPlugin reloaded successfully!"
+    error: "&cError reloading plugin. Check console for details."
+  give:
+    usage: "&cUsage: /smartspawner give <player> <mobtype> <amount>"
+    player-not-found: "&cPlayer not found!"
+    amount-too-large: "&cMaximum amount allowed is %max%!"
+    invalid-amount: "&cInvalid amount! Please enter a number between 1 and 64."
+    inventory-full: "&eYour inventory is full! Some given spawners have been dropped on the ground."
+    invalid-mob-type: "&cInvalid mob type! Use tab completion to see available types."
+    spawner-received: "&aYou have received %amount% %entity% spawner(s)!"
+    spawner-given: "&aYou have given %player% %amount% %entity% spawner(s)!"
+    spawner-given-dropped: "&eYou have given %player% %amount% %entity% spawner(s) (some items were dropped on the ground)"
+  hologram:
+    enabled: "&#00E689Holograms have been &aenabled&7!"
+    disabled: "&#00E689Holograms have been &cdisabled&7!"
+
+no-permission:
+  message: "&cYou do not have permission to do that!"
+  prefix: true
+  type: CHAT
+  sound: block.note_block.pling
+
+update:
+  title: "[Smart Spawner] Update Available!"
+  current_version: "▪ Your version: v%current_version%"
+  last_version: "▪ Latest version: v%new_version%"
+  download_button: "→ [Download]"
+  download_hover: "Click to download the latest version!"

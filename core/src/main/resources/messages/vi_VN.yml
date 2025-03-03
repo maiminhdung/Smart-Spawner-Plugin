@@ -1,0 +1,565 @@
+#---------------------------------------------------
+# Language: Tiếng Việt (Vietnamese)
+# Plugin Version: 1.2.5
+#---------------------------------------------------
+prefix: "&8[&#3287A9&lSmartSpawner&8]&r"
+
+#---------------------------------------------------
+# Định dạng số
+#---------------------------------------------------
+format-number:
+  thousand: "%sK"
+  million: "%sM"
+  billion: "%sB"
+  trillion: "%sT"
+  default: "%s"
+
+#---------------------------------------------------
+# Tên sinh vật
+#---------------------------------------------------
+mob_names:
+  ALLAY: "Allay"
+  ARMADILLO: "Tatu"
+  AXOLOTL: "Axolotl"
+  BAT: "Dơi"
+  BEE: "Ong"
+  BLAZE: "Quỷ Lửa"
+  BOGGED: "Quái Vật Đầm Lầy"
+  BREEZE: "Quỷ Gió"
+  CAMEL: "Lạc Đà"
+  CAT: "Mèo"
+  CAVE_SPIDER: "Nhện Hang"
+  CHICKEN: "Gà"
+  COD: "Cá Thu"
+  COW: "Bò"
+  CREEPER: "Creeper"
+  DOLPHIN: "Cá Heo"
+  DONKEY: "Lừa"
+  DROWNED: "Kẻ Đuối Nước"
+  ELDER_GUARDIAN: "Giám Hộ Cổ"
+  ENDERMAN: "Enderman"
+  ENDERMITE: "Rận Ender"
+  EVOKER: "Kẻ Chiêu Hồn"
+  FOX: "Cáo"
+  FROG: "Ếch"
+  GHAST: "Ghast"
+  GLOW_SQUID: "Mực Phát Sáng"
+  GOAT: "Dê"
+  GUARDIAN: "Giám Hộ"
+  HOGLIN: "Hoglin"
+  HORSE: "Ngựa"
+  HUSK: "Quái Khô Tàn"
+  IRON_GOLEM: "Người Sắt"
+  LLAMA: "Lạc Đà Không Bướu"
+  MAGMA_CUBE: "Khối Dung Nham"
+  MOOSHROOM: "Bò Nấm"
+  MUSHROOM_COW: "Bò Nấm" # Fallback for 1.20 version compatibility
+  MULE: "La"
+  OCELOT: "Báo Đốm"
+  PANDA: "Gấu Trúc"
+  PARROT: "Vẹt"
+  PHANTOM: "Ma Cà Rồng"
+  PIG: "Lợn"
+  PIGLIN: "Piglin"
+  PIGLIN_BRUTE: "Piglin Hung Bạo"
+  PILLAGER: "Kẻ Cướp"
+  POLAR_BEAR: "Gấu Bắc Cực"
+  PUFFERFISH: "Cá Nóc"
+  RABBIT: "Thỏ"
+  RAVAGER: "Quái Thú Cướp Bóc"
+  SALMON: "Cá Hồi"
+  SHEEP: "Cừu"
+  SHULKER: "Shulker"
+  SILVERFISH: "Cá Bạc"
+  SKELETON: "Bộ Xương"
+  SKELETON_HORSE: "Ngựa Xương"
+  SLIME: "Quái Vật Chất Nhờn"
+  SNIFFER: "Kẻ Đánh Hơi"
+  SNOW_GOLEM: "Người Tuyết"
+  SNOWMAN: "Người Tuyết" # Fallback for 1.20 version compatibility
+  SPIDER: "Nhện"
+  SQUID: "Mực"
+  STRAY: "Quái Lang Thang"
+  STRIDER: "Kẻ Sải Bước"
+  TADPOLE: "Nòng Nọc"
+  TRADER_LLAMA: "Lạc Đà Không Bướu Thương Nhân"
+  TROPICAL_FISH: "Cá Nhiệt Đới"
+  TURTLE: "Rùa"
+  VEX: "Linh Hồn Bay"
+  VILLAGER: "Dân Làng"
+  VINDICATOR: "Kẻ Biện Hộ"
+  WANDERING_TRADER: "Thương Nhân Lang Thang"
+  WARDEN: "Giám Ngục"
+  WITCH: "Phù Thủy"
+  WITHER_SKELETON: "Bộ Xương Khô Héo"
+  WOLF: "Sói"
+  ZOGLIN: "Zoglin"
+  ZOMBIE: "Xác Sống"
+  ZOMBIE_HORSE: "Ngựa Xác Sống"
+  ZOMBIE_VILLAGER: "Dân Làng Thây Ma"
+  ZOMBIFIED_PIGLIN: "Piglin Thây Ma"
+
+#---------------------------------------------------
+# Tên lồng spawn có mob
+#---------------------------------------------------
+spawner-name: "&dLồng Spawn %entity%"
+
+spawner-hologram:
+  # Các placeholder có sẵn:
+  # %stack_size% - Số lượng spawner xếp chồng
+  # %entity% - Tên loại quái
+  # %current_exp% - Kinh nghiệm hiện tại được lưu trữ
+  # %max_exp% - Dung lượng kinh nghiệm tối đa
+  # %used_slots% - Số ô vật phẩm hiện đang lưu trữ
+  # %max_slots% - Số ô lưu trữ tối đa
+  format:
+    - "&#FCD05C◆  [&fx%stack_size%&#FCD05C] &d%entity%  &#FCD05C◆"
+    - "&#00E689&lExp: &e%current_exp%&7/&e%max_exp% &7KN"
+    - "&#FCD05C&lKho chứa: &f%used_slots%&7/&f%max_slots% &7ô"
+
+#---------------------------------------------------
+# Tương tác với lồng spawn
+#---------------------------------------------------
+messages:
+  activated:
+    message: "&#d6e7edĐã &#3287A9kích hoạt&#d6e7ed lồng spawn! Quái vật sẽ không xuất hiện tự nhiên, thay vào đó hãy thu thập vật phẩm và điểm kinh nghiệm thông qua giao diện."
+    prefix: true
+    type: CHAT
+    sound: block.beacon.activate
+
+  entity-spawner-placed:
+    message: "&#d6e7edLồng spawn này &#3287A9chưa được kích hoạt&#d6e7ed! Mobs sẽ xuất hiện tự nhiên."
+    prefix: true
+    type: CHAT
+    sound: block.note_block.pling
+
+  changed:
+    message: "&#d6e7edĐã chuyển lồng spawn thành &#3287A9%type%&#d6e7ed!"
+    prefix: true
+    type: CHAT
+    sound: block.note_block.pling
+
+  invalid-egg:
+    message: "&cTrứng sinh quái không hợp lệ hoặc không được hỗ trợ!"
+    prefix: true
+    type: CHAT
+
+  break-warning:
+    message: "&c[!] Cảnh báo! Tất cả vật phẩm và kinh nghiệm sẽ bị mất!"
+    prefix: false
+    type: ACTION_BAR
+    sound: block.note_block.chime
+
+  required-tools:
+    message: "&c[!] Không thể phá lồng spawn bằng công cụ này!"
+    prefix: false
+    type: ACTION_BAR
+    sound: item.shield.block
+
+  silk-touch-required:
+    message: "&c[!] Cần có &#3287A9Mềm Mại&c để phá lồng spawn này!"
+    prefix: false
+    type: ACTION_BAR
+    sound: block.note_block.pling
+
+  # Tin nhắn khi truy cập vào lồng spawn được bảo vệ bởi plugin khác
+  spawner-protected:
+    message: "&c[!] Lồng spawn này được bảo vệ!"
+    prefix: false
+    type: ACTION_BAR
+    sound: block.note_block.pling
+
+  #---------------------------------------------------
+  # Bán vật phẩm từ Spawner
+  #---------------------------------------------------
+  sell-all:
+    message: "&#d6e7edBạn đã bán tổng cộng &#3287A9%amount% vật phẩm&#d6e7ed với giá &a%price%$&#d6e7ed!"
+    prefix: true
+    type: CHAT
+    sound: block.note_block.bell
+
+  sell-all-tax:
+    message: "&#d6e7edBạn đã bán &#3287A9%amount% vật phẩm&#d6e7ed. Giá gốc: &a%gross%$&#d6e7ed, Sau thuế (&#ff6b6b-%tax%%&#d6e7ed): &a%price%$"
+    prefix: true
+    type: CHAT
+    sound: block.note_block.bell
+
+  no-items:
+    message: "&cKhông có vật phẩm nào trong spawner để bán."
+    prefix: true
+    type: CHAT
+    sound: block.note_block.pling
+
+  no-sellable-items:
+    message: "&cKhông có vật phẩm nào có thể bán từ spawner này."
+    prefix: true
+    type: CHAT
+    sound: block.note_block.pling
+
+  sell-failed:
+    message: "&cKhông thể bán vật phẩm! Hãy thử lại sau."
+    prefix: true
+    type: CHAT
+    sound: block.note_block.pling
+
+  sell-cooldown:
+    message: "&cBạn phải chờ &a%time%&c trước khi bán các vật phẩm tiếp theo!"
+    prefix: true
+    type: CHAT
+    sound: block.note_block.pling
+
+  transaction-in-progress:
+    message: "&cGiao dịch bán đang được xử lý! Vui lòng chờ..."
+    prefix: true
+    type: CHAT
+    sound: block.note_block.pling
+
+  #---------------------------------------------------
+  # Chồng/Tách lồng spawn
+  #---------------------------------------------------
+  hand-stack:
+    message: "&#f[&#00E689✔&#f] &#fĐã chồng thành công &#00E689%amount%&#f lồng spawn!"
+    prefix: false
+    type: ACTION_BAR
+    sound: entity.experience_orb.pickup
+
+  cannot-go-below-one:
+    message: "&cKhông thể giảm xuống dưới 1! Chỉ giảm được %amount%!"
+    prefix: true
+    type: CHAT
+    sound: block.note_block.pling
+
+  stack-full:
+    message: "&cĐã đạt giới hạn chồng! Không thể tăng thêm!"
+    prefix: true
+    type: CHAT
+    sound: block.note_block.pling
+
+  not-enough-spawners:
+    message: "&cBạn không có đủ lồng spawn! Cần %amountChange% nhưng chỉ có %amountAvailable%!"
+    prefix: true
+    type: CHAT
+    sound: block.note_block.pling
+
+  stack-full-overflow:
+    message: "&cĐã đạt giới hạn chồng! Chỉ có thể chồng thêm %amount% lồng spawn!"
+    prefix: true
+    type: CHAT
+    sound: block.note_block.pling
+
+  inventory-full-drop:
+    message: "&cMột số lồng spawn đã rơi xuống chân bạn do túi đồ đã đầy!"
+    prefix: true
+    type: CHAT
+    sound: block.note_block.pling
+
+  invalid-spawner:
+    message: "&cSpawner không hợp lệ!"
+    prefix: true
+    type: CHAT
+    sound: block.note_block.pling
+
+  different-type:
+    message: "&cBạn chỉ có thể stack các spawner cùng loại!"
+    prefix: true
+    type: CHAT
+    sound: block.note_block.pling
+
+  #---------------------------------------------------
+  # Thu thập kinh nghiệm
+  #---------------------------------------------------
+  exp-collected:
+    message: "&#d6e7edĐã thu thập &a%exp%&#d6e7ed điểm kinh nghiệm!"
+    prefix: true
+    type: CHAT
+
+  exp-collected-with-mending:
+    message: "&#d6e7edĐã dùng &a%exp-mending%&#d6e7ed điểm kinh nghiệm để sửa chữa vật phẩm! Thu được &a%exp%&#d6e7ed điểm kinh nghiệm!"
+    prefix: true
+    type: CHAT
+
+  no-exp:
+    message: "&cKhông có kinh nghiệm để thu thập!"
+    prefix: true
+    type: CHAT
+    sound: block.note_block.pling
+
+  #---------------------------------------------------
+  # Tương tác với kho chứa
+  #---------------------------------------------------
+  no-items-to-take:
+    message: "&cKhông có vật phẩm để lấy!"
+    prefix: true
+    type: CHAT
+    sound: block.note_block.pling
+
+  inventory-full:
+    message: "&cTúi đồ của bạn đã đầy!"
+    prefix: true
+    type: CHAT
+    sound: block.note_block.pling
+
+  take-some-items:
+    message: "&#d6e7edBạn đã lấy &#3287A9%amount%&#d6e7ed vật phẩm! Túi đồ của bạn đã đầy!"
+    prefix: true
+    type: CHAT
+
+  take-all-items:
+    message: "&#d6e7edĐã lấy thành công &#3287A9%amount%&#d6e7ed vật phẩm!"
+    prefix: true
+    type: CHAT
+    sound: block.note_block.chime
+
+  #---------------------------------------------------
+  # Tin nhắn khi dịch chuyển bằng lệnh /ss list
+  #---------------------------------------------------
+  teleported:
+    message: "&aDịch chuyển thành công đến &dSpawner #%spawnerId%"
+    prefix: true
+    type: CHAT
+    sound: entity.enderman.teleport
+
+  not-found:
+    message: "&cKhông thể dịch chuyển đến Spawner đó! Spawner không tồn tại."
+    prefix: true
+    type: CHAT
+    sound: block.note_block.pling
+
+#---------------------------------------------------
+# Tiêu đề giao diện
+#---------------------------------------------------
+gui-title:
+  menu: "Lồng Spawn %entity%"
+  stacked-menu: "Lồng Spawn %entity% x%amount%"
+  stacker-menu: "Chồng Lồng Spawn"
+  loot-menu: "Kho Chứa Lồng Spawn"
+
+#---------------------------------------------------
+# Giao diện chính
+#---------------------------------------------------
+spawner-loot-item:
+  name: "&#FCD05CKho Chứa Vật Phẩm"
+  lore:
+    chest: |
+      
+      &8▪ &#FCD05CSố ô: &f%current_items%&7/&f%max_slots%
+      &8▪ &#FCD05CĐã chứa &a%percent_storage%&a%&f ô 
+      
+      &#FCD05C➜ &7Nhấn để mở kho chứa
+
+spawner-info-item:
+  name: "&#4fc3f7✧ Thông Tin Lồng Spawn &#4fc3f7✧"
+  lore:
+    spawner-info: |
+      
+      &8▪ &#81d4faLoại: &f%entity%
+      &8▪ &#81d4faPham vi: &f%range% &7khối
+      &8▪ &#81d4faSố lượng chồng: &f%stack_size%
+      &8▪ &#81d4faTỷ lệ sinh: &f%min_mobs% &7- &f%max_mobs%
+      &8▪ &#81d4faThời gian chờ: &f%delay%&7s
+      &8▪ &#81d4faLần sinh tiếp: &e
+      &8&m                       
+      &#81d4fa➜ &7Nhấn để mở menu chồng
+  lore-change: "&8▪ &#81d4faLần sinh tiếp: &e"
+  lore-inactive: "&cLồng spawn đang không hoạt động!"
+  lore-full: "&cKho và exp đã đầy!"
+
+exp-info-item:
+  name: "&#00F898KN đã lưu: &e%current_exp%&#00F898"
+  lore:
+    exp-bottle: |
+      
+      &8▪ &#00E689Hiện tại: &e%current_exp%&7/&e%max_exp% KN
+      &8▪ &#00E689Lưu trữ: &e%percent_exp%&e%&f KN
+      
+      &#00E689➜ &7Nhấn để thu thập KN
+
+#---------------------------------------------------
+# Giao diện chồng lồng spawn
+#---------------------------------------------------
+button:
+  name:
+    spawner: "&#4fc3f7Lồng Spawn %entity%"
+    decrease-64: "&c-64 Lồng"
+    decrease-10: "&c-10 Lồng"
+    decrease-1: "&c-1 Lồng"
+    increase-64: "&a+64 Lồng"
+    increase-10: "&a+10 Lồng"
+    increase-1: "&a+1 Lồng"
+  lore:
+    remove: |
+      &7Nhấn để giảm %amount% lồng
+      &7khỏi stack
+      &7Hiện tại: &e%stack_size%
+    add: |
+      &7Nhấn để thêm %amount% lồng
+      &7vào stack
+      &7Hiện tại: &e%stack_size%
+    spawner: |
+      
+      &8▪ &#81d4faLoại: &f%entity%
+      &8▪ &#81d4faSố lượng chồng: &f%stack_size%
+      &8▪ &#81d4faSố lượng tối đa: &f%max_stack_size%
+      
+      &#81d4fa➜ &7Nhấn để quay lại menu chính
+
+#---------------------------------------------------
+# Giao diện kho chứa
+#---------------------------------------------------
+navigation-button:
+  previous:
+    name: "&#81d4faTrang Trước"
+    lore: |
+      &#81d4faNhấn để đến trang %target_page%
+  next:
+    name: "&#81d4faTrang Sau"
+    lore: |
+      &#81d4faNhấn để đến trang %target_page%
+
+page-indicator:
+  name: "&#ffd700Trang [%current_page%/&#ffd700%total_pages%]"
+  lore: |
+    &7Số ô chứa: &a%used_slots%&7/&f%max_slots%
+
+shop-page-indicator:
+  name: "&#ffd700Trang [%current_page%/&#ffd700%total_pages%]"
+  lore: |
+    
+    &8▪ &#ffd700Số ô chứa: &a%used_slots%&7/&f%max_slots%
+    &8▪ &#ffd700Kho: &a%percent_storage%&a%&f đầy
+    
+    &#ffd700➜ &7Nhấn để bán tất cả vật phẩm
+
+return-button:
+  name: "&#ff6b6bQuay Lại Menu Chính"
+
+take-all-button:
+  name: "&#00E689Lấy Tất Cả Vật Phẩm"
+
+equipment-toggle:
+  name: "&#f4d842Vật Phẩm Trang Bị"
+  lore:
+    enabled: |
+      &7Trạng thái: &a&lCho phép
+    disabled: |
+      &7Trạng thái: &c&lChặn
+
+#---------------------------------------------------
+# Giao diện danh sách Spawner (Lệnh)
+#---------------------------------------------------
+spawner-list:
+  gui-title:
+    world-selection: "&#3287A9&lDanh Sách Spawner"
+    page-title: "{world} &r- [{current}/{total}]"
+
+  navigation:
+    previous-page: "&e&lTrang Trước"
+    next-page: "&e&lTrang Tiếp"
+    back: "&c&lQuay lại Chọn Thế Giới"
+
+  world-buttons:
+
+    overworld:
+      name: "&a&lOverworld"
+      lore: |
+        &8━━━━━━━━━━━━━━━━━━━━
+        &7⮞ &fTổng số Spawner: &a{total}
+        &7⮞ &fTổng đã Stack: &a{total_stacked}
+        &8━━━━━━━━━━━━━━━━━━━━
+        &a▶ &7Nhấp để xem!
+
+    nether:
+      name: "&c&lĐịa Ngục"
+      lore: |
+        &8━━━━━━━━━━━━━━━━━━━━
+        &7⮞ &fTổng số Spawner: &c{total}
+        &7⮞ &fTổng đã Stack: &c{total_stacked}
+        &8━━━━━━━━━━━━━━━━━━━━
+        &c▶ &7Nhấp để xem!
+
+    end:
+      name: "&5&lKết Thúc"
+      lore: |
+        &8━━━━━━━━━━━━━━━━━━━━
+        &7⮞ &fTổng số Spawner: &5{total}
+        &7⮞ &fTổng đã Stack: &5{total_stacked}
+        &8━━━━━━━━━━━━━━━━━━━━
+        &5▶ &7Nhấp để xem!
+
+    # Hỗ trợ cho các thế giới tùy chỉnh (nếu có)
+    custom-nether:
+      name: "&c&l{world_name}"
+
+    custom-overworld:
+      name: "&a&l{world_name}"
+
+    custom-end:
+      name: "&5&l{world_name}"
+
+    custom-default:
+      name: "&b&l{world_name}"
+      lore: |
+        &8━━━━━━━━━━━━━━━━━━━━
+        &7⮞ &fTổng số Spawner: &b{total}
+        &7⮞ &fTổng đã Stack: &b{total_stacked}
+        &8━━━━━━━━━━━━━━━━━━━━
+        &b▶ &7Nhấp để xem!
+
+  spawner-item:
+    name: "&#4fc3f7&lSpawner #{id}"
+    id_pattern: "Spawner #([A-Za-z0-9]+)"
+
+    lore:
+      separator: "&7&m―――――――――――――――――――――――"
+      entity: "&f⮞ &7Thực thể: &f{entity}"
+      stack_size: "&f⮞ &7Kích thước Stack: &#4fc3f7{size}"
+
+      status:
+        active: "&f⮞ &7Trạng thái: &a&lHOẠT ĐỘNG"
+        inactive: "&f⮞ &7Trạng thái: &c&lKHÔNG HOẠT ĐỘNG"
+
+      location: "&f⮞ &7Vị trí: &#4fc3f7{x}, {y}, {z}"
+
+      teleport: "&#4fc3f7▶ &fNhấp để dịch chuyển"
+
+#---------------------------------------------------
+# Thông báo lệnh
+#---------------------------------------------------
+command:
+  usage: |
+    &aLệnh SmartSpawner:
+    &f/ss reload &7- Tải lại cấu hình plugin
+    &f/ss list &7- Xem danh sách spawner (dành cho admin)
+    &f/ss give <người chơi> <loại mob> <số lượng> &7- Tặng spawner cho người chơi
+    &f/ss hologram &7- Bật/Tắt hologram của spawner
+  reload:
+    usage: "&cSử dụng: /smartspawner reload"
+    wait: "&eĐang tải lại plugin..."
+    success: "&aĐã tải lại plugin thành công!"
+    error: "&cLỗi khi tải lại plugin. Kiểm tra console để biết chi tiết."
+  give:
+    usage: "&cSử dụng: /smartspawner give <người chơi> <loại mob> <số lượng>"
+    player-not-found: "&cKhông tìm thấy người chơi!"
+    amount-too-large: "&cSố lượng tối đa cho phép là %max%!"
+    invalid-amount: "&cSố lượng không hợp lệ! Vui lòng nhập số từ 1 đến 64."
+    inventory-full: "&eTúi đồ của bạn đã đầy! Một số lồng spawn được cho đã rơi xuống đất."
+    invalid-mob-type: "&cLoại mob không hợp lệ! Sử dụng tab để xem các loại có sẵn."
+    spawner-received: "&aBạn đã nhận được %amount% lồng spawn %entity%!"
+    spawner-given: "&aBạn đã cho %player% %amount% lồng spawn %entity%!"
+    spawner-given-dropped: "&eBạn đã cho %player% %amount% lồng spawn %entity% (một số đã rơi xuống đất)"
+  hologram:
+    enabled: "&#00E689Hologram đã được &aBẬT&7!"
+    disabled: "&#00E689Hologram đã được &cTẮT&7!"
+
+no-permission:
+  message: "&cBạn không có quyền thực hiện điều này!"
+  prefix: true
+  type: CHAT
+  sound: block.note_block.pling
+
+update:
+  title: "[Smart Spawner] Có Phiên Bản Mới!"
+  current_version: "▪ Phiên bản hiện tại: v%current_version%"
+  last_version: "▪ Phiên bản mới: v%new_version%"
+  download_button: "→ [Tải Xuống]"
+  download_hover: "Nhấp vào để tải phiên bản mới nhất!"

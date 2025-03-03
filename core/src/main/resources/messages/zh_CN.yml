@@ -1,0 +1,504 @@
+#---------------------------------------------------
+# Language: 简体中文 (Chinese Simplified)
+# Plugin Version: 1.2.3
+#---------------------------------------------------
+prefix: "&8[&#3287A9&lSmartSpawner&8]&r"
+
+#---------------------------------------------------
+# 格式化数字缩写
+#---------------------------------------------------
+format-number:
+  thousand: "%sK"
+  million: "%sM"
+  billion: "%sB"
+  trillion: "%sT"
+  default: "%s"
+
+#---------------------------------------------------
+# 格式化实体名称
+#---------------------------------------------------
+mob_names:
+  BLAZE: "烈焰人"
+  BOGGED: "沼骸"
+  BREEZE: "旋风人"
+  CAVE_SPIDER: "洞穴蜘蛛"
+  CHICKEN: "鸡"
+  COW: "牛"
+  CREEPER: "苦力怕"
+  DROWNED: "溺尸"
+  ENDERMAN: "末影人"
+  EVOKER: "唤魔者"
+  GHAST: "恶魂"
+  GLOW_SQUID: "发光鱿鱼"
+  GUARDIAN: "守卫者"
+  HOGLIN: "疣猪兽"
+  HUSK: "尸壳"
+  IRON_GOLEM: "铁傀儡"
+  MAGMA_CUBE: "岩浆史莱姆"
+  MOOSHROOM: "哞菇"
+  PIG: "猪"
+  PIGLIN: "猪灵"
+  PIGLIN_BRUTE: "猪灵蛮兵"
+  PILLAGER: "灾厄村民"
+  PUFFERFISH: "河豚"
+  RABBIT: "兔子"
+  RAVAGER: "劫掠兽"
+  SALMON: "鲑鱼"
+  SHEEP: "羊"
+  SHULKER: "潜影贝"
+  SILVERFISH: "蠹虫"
+  SKELETON: "骷髅"
+  SLIME: "史莱姆"
+  SPIDER: "蜘蛛"
+  SQUID: "鱿鱼"
+  STRAY: "流浪者"
+  STRIDER: "炽足兽"
+  TROPICAL_FISH: "热带鱼"
+  VINDICATOR: "卫道士"
+  WITCH: "女巫"
+  WITHER_SKELETON: "凋零骷髅"
+  ZOGLIN: "僵尸疣猪兽"
+  ZOMBIE: "僵尸"
+  ZOMBIE_VILLAGER: "僵尸村民"
+  ZOMBIFIED_PIGLIN: "僵尸猪灵"
+
+#---------------------------------------------------
+# 刷怪笼物品名称 & 悬浮字格式
+#---------------------------------------------------
+spawner-name: "&d%entity% 刷怪笼"
+
+spawner-hologram:
+  # 可用内建变量:
+  # %stack_size% - 堆叠刷怪笼数量
+  # %entity% - 生物类型名称
+  # %current_exp% - 当前存储的经验值
+  # %max_exp% - 最大存储经验值
+  # %used_slots% - 当前存储的格子数
+  # %max_slots% - 最大存储格子数
+  format:
+    # 第一行 - 带装饰的标题
+    - "&#FCD05C◆  [&fx%stack_size%&#FCD05C] &d%entity%  &#FCD05C◆"
+    # 第二行 - 经验值显示
+    - "&#00E689&l经验值: &e%current_exp%&7/&e%max_exp%"
+    # 第三行 - 存储显示
+    - "&#FCD05C&l容量: &f%used_slots%&7/&f%max_slots%"
+#---------------------------------------------------
+# 刷怪笼交互
+#---------------------------------------------------
+messages:
+  activated:
+    message: "&#d6e7ed刷怪笼&#3287A9已激活&#d6e7ed! 其中的实体不会生成, 它们会被转化为经验与掉落物存储在容器中."
+    prefix: true
+    type: CHAT
+    sound: block.beacon.activate
+
+  entity-spawner-placed:
+    message: "&#d6e7ed这个刷怪笼&#3287A9尚未激活&#d6e7ed! 实体将会像原版一样生成在周围."
+    prefix: true
+    type: CHAT
+    sound: block.note_block.pling
+
+  changed:
+    message: "&#d6e7ed刷怪笼类型已改为 &#3287A9%type%&#d6e7ed!"
+    prefix: true
+    type: CHAT
+    sound: block.note_block.pling
+
+  invalid-egg:
+    message: "&c无效或不支持的刷怪蛋!"
+    prefix: true
+    type: CHAT
+
+  break-warning:
+    message: "&c[!] 警告! 所有物品和经验都会丢失!"
+    prefix: false
+    type: ACTION_BAR
+    sound: block.note_block.chime
+
+  required-tools:
+    message: "&c[!] 不能使用该工具挖掘刷怪笼!"
+    prefix: false
+    type: ACTION_BAR
+    sound: item.shield.block
+
+  silk-touch-required:
+    message: "&c[!] 挖掘该刷怪笼需要工具包含 &#3287A9精准采集&c 附魔!"
+    prefix: false
+    type: ACTION_BAR
+    sound: block.note_block.pling
+
+  # 试图与其他插件保护的刷怪笼互动时发出的消息
+  spawner-protected:
+    message: "&c[!] 该刷怪笼受到保护!"
+    prefix: false
+    type: ACTION_BAR
+    sound: block.note_block.pling
+
+  #---------------------------------------------------
+  # 刷怪笼出售物品相关
+  #---------------------------------------------------
+  sell-all:
+    message: "&#d6e7ed你出售了 &#3287A9%amount% 个物品&#d6e7ed并获得了&a %price%$ &#d6e7ed!"
+    prefix: true
+    type: CHAT
+    sound: block.note_block.bell
+
+  no-items:
+    message: "&c刷怪笼中没有东西可供出售."
+    prefix: true
+    type: CHAT
+    sound: block.note_block.pling
+
+  sell-all-tax:
+    message: "&#d6e7ed你出售了 &#3287A9%amount% 个物品&#d6e7ed并获得了&a %price%$ &#d6e7ed (税费: &#ff6b6b%tax%%&#d6e7ed)!"
+    prefix: true
+    type: CHAT
+    sound: block.note_block.bell
+
+  no-sellable-items:
+    message: "&c刷怪笼中没有可出售的物品."
+    prefix: true
+    type: CHAT
+    sound: block.note_block.pling
+
+  sell-failed:
+    message: "&c出售失败! 请重试."
+    prefix: true
+    type: CHAT
+    sound: block.note_block.pling
+
+  #---------------------------------------------------
+  # 刷怪笼堆叠相关
+  #---------------------------------------------------
+  hand-stack:
+    message: "&f[&#00E689✔&f] &f成功堆叠了 &#00E689%amount%&f 个刷怪笼!"
+    prefix: false
+    type: ACTION_BAR
+    sound: entity.experience_orb.pickup
+
+  items-lost:
+    message: "&c解除堆叠后损失了部分物品!"
+    prefix: true
+    type: CHAT
+    sound: block.note_block.pling
+
+  cannot-go-below-one:
+    message: "&c数量不能小于 1! 只能减少 %amount% 个堆叠!"
+    prefix: true
+    type: CHAT
+    sound: block.note_block.pling
+
+  stack-full:
+    message: "&c已到达堆叠上限! 不能再增加了!"
+    prefix: true
+    type: CHAT
+    sound: block.note_block.pling
+
+  not-enough-spawners:
+    message: "&c你没有足够的刷怪笼! 至少需要 %amountChange% 个, 但你只有 %amountAvailable% 个!"
+    prefix: true
+    type: CHAT
+    sound: block.note_block.pling
+
+  stack-full-overflow:
+    message: "&c已到达堆叠上限! 只能堆叠 %amount% 个刷怪笼!"
+    prefix: true
+    type: CHAT
+    sound: block.note_block.pling
+
+  inventory-full-drop:
+    message: "&c你的背包已满, 部分刷怪笼变为物品形式掉落在地!"
+    prefix: true
+    type: CHAT
+    sound: block.note_block.pling
+
+  invalid-spawner:
+    message: "&c无效刷怪笼类型!"
+    prefix: true
+    type: CHAT
+    sound: block.note_block.pling
+
+  different-type:
+    message: "&c你只能堆叠同种刷怪笼!"
+    prefix: true
+    type: CHAT
+    sound: block.note_block.pling
+
+  #---------------------------------------------------
+  # 刷怪笼经验收集
+  #---------------------------------------------------
+  exp-collected:
+    message: "&#d6e7ed收集了 &a%exp%&#d6e7ed 点经验值!"
+    prefix: true
+    type: CHAT
+
+  exp-collected-with-mending:
+    message: "&#d6e7ed消耗了 &a%exp-mending%&&#d6e7ed 点经验修复物品! 收集了 &a%exp%&&#d6e7ed 点经验值!"
+    prefix: true
+    type: CHAT
+
+  no-exp:
+    message: "&c没有可取出的经验值!"
+    prefix: true
+    type: CHAT
+    sound: block.note_block.pling
+
+  #---------------------------------------------------
+  # 刷怪笼存储交互相关
+  #---------------------------------------------------
+  no-items-to-take:
+    message: "&c没有可取出的物品!"
+    prefix: true
+    type: CHAT
+    sound: block.note_block.pling
+
+  inventory-full:
+    message: "&c你的背包已满!"
+    prefix: true
+    type: CHAT
+    sound: block.note_block.pling
+
+  take-some-items:
+    message: "&#d6e7ed你取出了 &#3287A9%amount%&#d6e7ed 个物品! 你的背包已被装满!"
+    prefix: true
+    type: CHAT
+
+  take-all-items:
+    message: "&#d6e7ed成功取出 &#3287A9%amount%&#d6e7ed 个物品!"
+    prefix: true
+    type: CHAT
+    sound: block.note_block.chime
+
+  #---------------------------------------------------
+  # 刷怪笼列表传送消息
+  #---------------------------------------------------
+  teleported:
+    message: "&a成功传送至&d刷怪笼 #%spawnerId%"
+    prefix: true
+    type: CHAT
+    sound: entity.enderman.teleport
+
+  not-found:
+    message: "&c无法传送至该刷怪笼! 刷怪笼未找到."
+    prefix: true
+    type: CHAT
+    sound: block.note_block.pling
+
+#---------------------------------------------------
+# 菜单标题
+#---------------------------------------------------
+gui-title:
+  menu: "%entity% 刷怪笼"
+  stacked-menu: "%amount% %entity% 刷怪笼"
+  stacker-menu: "刷怪笼堆叠"
+  loot-menu: "刷怪笼仓库"
+
+#---------------------------------------------------
+# 主菜单界面
+#---------------------------------------------------
+spawner-loot-item:
+  name: "&#FCD05C&l掉落存储"
+  lore:
+    chest: |
+      
+      &8▪ &#FCD05C格子数: &f%current_items%&7/&f%max_slots%
+      &8▪ &#FCD05C总容量: &a%percent_storage%&a%&f
+      
+      &#FCD05C➜ &7点击打开仓库
+
+spawner-info-item:
+  name: "&#4fc3f7&l刷怪笼信息"
+  lore:
+    spawner-info: |
+      &7
+      &8▪ &#81d4fa实体: &f%entity%
+      &8▪ &#81d4fa范围: &f%range% &7格
+      &8▪ &#81d4fa堆叠数量: &f%stack_size%
+      &8▪ &#81d4fa刷怪速率: &f%min_mobs% &7- &f%max_mobs%
+      &8▪ &#81d4fa刷怪间隔: &f%delay%&7s
+      &8▪ &#81d4fa下次生成: &e
+      &7
+      &#81d4fa➜ &7点击打开堆叠菜单
+  lore-change: "&8▪ &#81d4fa下次生成: &e"
+  lore-inactive: "&c刷怪笼未激活!"
+  lore-now: "&c现在!"
+  lore-error: "&c错误! 请重新放置刷怪笼."
+
+exp-info-item:
+  name: "&#00F898&l存储经验值: &e%current_exp%&#00F898"
+  lore:
+    exp-bottle: |
+      
+      &8▪ &#00E689经验值: &e%current_exp%&7/&e%max_exp%
+      &8▪ &#00E689总容量: &e%percent_exp%&e%
+      
+      &#00E689➜ &7点击取出经验值
+
+#---------------------------------------------------
+# 刷怪笼堆叠菜单
+#---------------------------------------------------
+button:
+  name:
+    spawner: "&#4fc3f7%entity% 刷怪笼"
+    decrease-64: "&c-64 刷怪笼"
+    decrease-10: "&c-10 刷怪笼"
+    decrease-1: "&c-1 刷怪笼"
+    increase-64: "&a+64 刷怪笼"
+    increase-10: "&a+10 刷怪笼"
+    increase-1: "&a+1 刷怪笼"
+  lore:
+    remove: |
+      &7点击从堆叠中取出 %amount% 个刷怪笼
+      &7当前堆叠数: &e%stack_size%
+    add: |
+      &7点击向堆叠中放入 %amount% 个刷怪笼
+      &7当前堆叠数: &e%stack_size%
+    spawner: |
+      
+      &8▪ &#81d4fa实体: &f%entity%
+      &8▪ &#81d4fa堆叠数: &f%stack_size%
+      &8▪ &#81d4fa最大堆叠数: &f%max_stack_size%
+      
+      &#81d4fa➜ &7点击返回主菜单
+
+#---------------------------------------------------
+# 刷怪笼存储界面
+#---------------------------------------------------
+navigation-button:
+  previous:
+    name: "&#81d4fa上一页"
+    lore: |
+      &#81d4fa点击前往第 %target_page% 页
+  next:
+    name: "&#81d4fa下一页"
+    lore: |
+      &#81d4fa点击前往第 %target_page% 页
+
+page-indicator:
+  name: "&#ffd700第 [%current_page%/&#ffd700%total_pages%] 页"
+  lore: |
+    &7格子: &a%used_slots%&7/&f%max_slots%
+
+shop-page-indicator:
+  name: "&#ffd700全部出售"
+  lore: |
+    
+    &8▪ &#ffd700格子: &a%used_slots%&7/&f%max_slots%
+    &8▪ &#ffd700仓库: &a%percent_storage%&a%&f 已满
+    
+    &#ffd700➜ &7点击出售所有物品
+
+return-button:
+  name: "&#ff6b6b 返回至主菜单"
+
+take-all-button:
+  name: "&#00E689 取出所有物品"
+
+equipment-toggle:
+  name: "&#f4d842 装备掉落"
+  lore:
+    enabled: |
+      &7当前状态: &a&l允许
+    disabled: |
+      &7当前状态: &c&l禁止
+
+#---------------------------------------------------
+# 刷怪笼列表界面 (命令)
+#---------------------------------------------------
+spawner-list:
+  gui-title:
+    world-selection: "&#3287A9&l刷怪笼列表"
+    page-title: "{world} &r- [{current}/{total}]"
+
+  navigation:
+    previous-page: "&e&l上一页"
+    next-page: "&e&l下一页"
+    back: "&c&l返回世界选择"
+
+  world-buttons:
+
+    overworld:
+      name: "&a&l主世界"
+      lore: |
+        &8━━━━━━━━━━━━━━━━━━━━
+        &7⮞ &f刷怪笼总数: &a{total}
+        &7⮞ &f堆叠总数: &a{total_stacked}
+        &8━━━━━━━━━━━━━━━━━━━━
+        &a▶ &7点击查看!
+
+    nether:
+      name: "&c&l下界"
+      lore: |
+        &8━━━━━━━━━━━━━━━━━━━━
+        &7⮞ &f刷怪笼总数: &c{total}
+        &7⮞ &f堆叠总数: &c{total_stacked}
+        &8━━━━━━━━━━━━━━━━━━━━
+        &c▶ &7点击查看!
+
+    end:
+      name: "&5&l末地"
+      lore: |
+        &8━━━━━━━━━━━━━━━━━━━━
+        &7⮞ &f刷怪笼总数: &5{total}
+        &7⮞ &f堆叠总数: &5{total_stacked}
+        &8━━━━━━━━━━━━━━━━━━━━
+        &5▶ &7点击查看!
+
+  spawner-item:
+    name: "&#4fc3f7&l刷怪笼 #{id}"
+    id_pattern: "刷怪笼 #([A-Za-z0-9]+)"
+
+    lore:
+      separator: "&7&m―――――――――――――――――――――――"
+      entity: "&f⮞ &7实体: &f{entity}"
+      stack_size: "&f⮞ &7堆叠大小: &#4fc3f7{size}"
+
+      status:
+        active: "&f⮞ &7状态: &a&l激活"
+        inactive: "&f⮞ &7状态: &c&l未激活"
+
+      location: "&f⮞ &7位置: &#4fc3f7{x}, {y}, {z}"
+
+      teleport: "&#4fc3f7▶ &f点击传送"
+
+#---------------------------------------------------
+# 命令与更新消息
+#---------------------------------------------------
+command:
+  usage: |
+    &a命令用法:
+    &f/smartspawner reload &7- 重载插件配置
+    &f/smartspawner list &7- 打开刷怪笼列表 (管理员相关)
+    &f/smartspawner give <玩家名称> <实体类型> <数量> &7- 给予玩家刷怪笼
+    &f/smartspawner hologram &7- 切换悬浮字可见性
+  reload:
+    usage: "&c用法: /smartspawner reload"
+    wait: "&e正在重载插件, 请等待..."
+    success: "&a插件重载成功!"
+    error: "&c重载插件时出现错误, 请检查控制台."
+  give:
+    usage: "&c用法: /smartspawner give <玩家名称> <实体类型> <数量>"
+    player-not-found: "&c玩家不存在!"
+    amount-too-large: "&c允许的最大数量为 %max%!"
+    invalid-amount: "&c数量无效! 请填入 1 到 64 之间的整数."
+    inventory-full: "&e你的背包已满! 部分给予的刷怪笼已掉落在地."
+    invalid-mob-type: "&c无效生物类型! 请使用 TAB 键自动补全显示可用的生物类型."
+    spawner-received: "&a你收到了 %amount% 个 %entity% 刷怪笼!"
+    spawner-given: "&a你给予了玩家 %player% %amount% 个 %entity% 刷怪笼!"
+    spawner-given-dropped: "&e你给予了玩家 %player% %amount% 个 %entity% 刷怪笼 (部分物品已掉落在地)"
+  hologram:
+    enabled: "&#00E689悬浮字已&a启用&7!"
+    disabled: "&#00E689悬浮字已&c禁用&7!"
+
+no-permission:
+  message: "&c你没有权限这么做!"
+  prefix: true
+  type: CHAT
+  sound: block.note_block.pling
+
+update:
+  title: "[Smart Spawner] 更新可用!"
+  current_version: "▪ 当前版本: v%current_version%"
+  last_version: "▪ 最新版本: v%new_version%"
+  download_button: "→ [点此下载]"
+  download_hover: "点击下载最新版本!"
