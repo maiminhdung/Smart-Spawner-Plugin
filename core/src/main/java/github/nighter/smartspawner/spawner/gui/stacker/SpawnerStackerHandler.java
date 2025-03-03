@@ -6,6 +6,8 @@ import github.nighter.smartspawner.spawner.gui.main.SpawnerMenuUI;
 import github.nighter.smartspawner.spawner.properties.SpawnerData;
 import github.nighter.smartspawner.utils.ConfigManager;
 import github.nighter.smartspawner.utils.LanguageManager;
+
+import io.papermc.paper.threadedregions.scheduler.ScheduledTask;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.Sound;
@@ -24,10 +26,10 @@ import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.BlockStateMeta;
 import org.bukkit.inventory.meta.ItemMeta;
-import org.bukkit.scheduler.BukkitTask;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -53,7 +55,7 @@ public class SpawnerStackerHandler implements Listener {
 
     // Player interaction tracking
     private final Map<UUID, Long> lastClickTime = new ConcurrentHashMap<>();
-    private final Map<UUID, BukkitTask> pendingUpdates = new ConcurrentHashMap<>();
+    private final Map<UUID, ScheduledTask> pendingUpdates = new ConcurrentHashMap<>();
     private final Map<String, Set<UUID>> activeViewers = new ConcurrentHashMap<>();
     private final Map<UUID, AtomicBoolean> updateLocks = new ConcurrentHashMap<>();
 
@@ -74,11 +76,11 @@ public class SpawnerStackerHandler implements Listener {
     }
 
     private void startCleanupTask() {
-        Bukkit.getScheduler().runTaskTimer(plugin, () -> {
+        Bukkit.getAsyncScheduler().runAtFixedRate(plugin, task -> {
             long now = System.currentTimeMillis();
             lastClickTime.entrySet().removeIf(entry -> now - entry.getValue() > 5000);
             updateLocks.entrySet().removeIf(entry -> !lastClickTime.containsKey(entry.getKey()));
-        }, 100L, 100L);
+        }, 100L, 100L, TimeUnit.MILLISECONDS);
     }
 
     @EventHandler(priority = EventPriority.HIGH)
@@ -148,7 +150,7 @@ public class SpawnerStackerHandler implements Listener {
         String spawnerId = holder.getSpawnerData().getSpawnerId();
 
         // Verify the player is really closing the GUI (not just inventory updates)
-        Bukkit.getScheduler().runTaskLater(plugin, () -> {
+        Bukkit.getGlobalRegionScheduler().runDelayed(plugin, task -> {
             Inventory topInventory = player.getOpenInventory().getTopInventory();
             if (!(topInventory.getHolder() instanceof SpawnerStackerHolder)) {
                 // Remove viewer and cancel any pending updates
@@ -167,7 +169,7 @@ public class SpawnerStackerHandler implements Listener {
 
     private void cleanupPlayer(UUID playerId) {
         // Cancel any pending tasks
-        BukkitTask task = pendingUpdates.remove(playerId);
+        ScheduledTask task = pendingUpdates.remove(playerId);
         if (task != null && !task.isCancelled()) {
             task.cancel();
         }

@@ -7,6 +7,7 @@ import github.nighter.smartspawner.spawner.properties.SpawnerData;
 import github.nighter.smartspawner.spawner.properties.SpawnerManager;
 import github.nighter.smartspawner.utils.ConfigManager;
 import github.nighter.smartspawner.utils.LanguageManager;
+
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.Material;
@@ -106,7 +107,9 @@ public class SpawnerPlaceListener implements Listener {
      */
     private void initializeSpawner(Block block, Player player, EntityType storedEntityType) {
         // Run this with a longer delay to ensure block state is fully initialized
-        Bukkit.getScheduler().runTaskLater(plugin, () -> {
+        Bukkit.getRegionScheduler().runDelayed(plugin, block.getLocation().getWorld(),
+                block.getX() >> 4, block.getZ() >> 4, task -> {
+
             BlockState blockState = block.getState();
             if (!(blockState instanceof CreatureSpawner)) {
                 return;
@@ -127,17 +130,18 @@ public class SpawnerPlaceListener implements Listener {
                 languageManager.sendMessage(player, "messages.entity-spawner-placed");
 
                 // Double-check entity type after a short delay
-                Bukkit.getScheduler().runTaskLater(plugin, () -> {
-                    BlockState recheckedState = block.getState();
-                    if (recheckedState instanceof CreatureSpawner) {
-                        CreatureSpawner recheckedSpawner = (CreatureSpawner) recheckedState;
-                        if (recheckedSpawner.getSpawnedType() != entityType) {
-                            recheckedSpawner.setSpawnedType(entityType);
-                            recheckedSpawner.update(true, false);
-                            configManager.debug("Fixed entity type on spawner at " + block.getLocation());
-                        }
-                    }
-                }, 3L);
+                Bukkit.getRegionScheduler().runDelayed(plugin, block.getWorld(),
+                        block.getX() >> 4, block.getZ() >> 4, rechecktask -> {
+
+                            BlockState recheckedState = block.getState();
+                            if (recheckedState instanceof CreatureSpawner recheckedSpawner) {
+                                if (recheckedSpawner.getSpawnedType() != entityType) {
+                                    recheckedSpawner.setSpawnedType(entityType);
+                                    recheckedSpawner.update(true, false);
+                                    configManager.debug("Fixed entity type on spawner at " + block.getLocation());
+                                }
+                            }
+                        }, 3L);
                 // Create spawner data but don't activate
                 String spawnerId = UUID.randomUUID().toString().substring(0, 8);
 

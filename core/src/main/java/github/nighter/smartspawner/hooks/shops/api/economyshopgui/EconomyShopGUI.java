@@ -323,7 +323,7 @@ public class EconomyShopGUI implements IShopIntegration {
     }
 
     private void updateShopStats(Map<ShopItem, Integer> items, UUID playerUUID) {
-        plugin.runTaskAsync(() -> {
+        plugin.runTaskAsync(task -> {
             for (Map.Entry<ShopItem, Integer> entry : items.entrySet()) {
                 ShopItem item = entry.getKey();
                 int amount = entry.getValue();

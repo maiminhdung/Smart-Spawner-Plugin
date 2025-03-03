@@ -120,6 +120,7 @@ logging-file-path: "shop-logs/sales.log"
 
 #---------------------------------------------------
 #           Hopper Mechanics (Experimental)
+#             NOT WORK ON FOLIA SERVERS
 #---------------------------------------------------
 # Not recommended for large servers
 hopper-enabled: false

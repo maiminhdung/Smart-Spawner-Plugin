@@ -37,16 +37,17 @@ import github.nighter.smartspawner.utils.LanguageManager;
 import github.nighter.smartspawner.utils.UpdateChecker;
 import github.nighter.smartspawner.nms.VersionInitializer;
 
+import io.papermc.paper.threadedregions.scheduler.ScheduledTask;
+
 import me.ryanhamshire.GriefPrevention.GriefPrevention;
 
 import org.bukkit.Bukkit;
 import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.PluginManager;
 import org.bukkit.plugin.java.JavaPlugin;
-import org.bukkit.scheduler.BukkitTask;
-import org.geysermc.floodgate.api.FloodgateApi;
 
 import java.util.concurrent.CompletableFuture;
+import java.util.function.Consumer;
 import java.util.logging.Level;
 
 /**
@@ -175,7 +176,7 @@ public class SmartSpawner extends JavaPlugin  implements SmartSpawnerPlugin {
         this.spawnerGuiViewManager = new SpawnerGuiViewManager(this);
         this.spawnerLootGenerator = new SpawnerLootGenerator(this);
         this.rangeChecker = new SpawnerRangeChecker(this);
-;
+        ;
         // Parallel initialization for components that can be initialized concurrently
         CompletableFuture<Void> asyncInit = CompletableFuture.runAsync(() -> {
             this.shopIntegrationManager = new ShopIntegrationManager(this);
@@ -206,8 +207,10 @@ public class SmartSpawner extends JavaPlugin  implements SmartSpawnerPlugin {
 
         // Complete initialization
         return asyncInit.thenRunAsync(() -> {
-            updateChecker.initialize();
-        }, getServer().getScheduler().getMainThreadExecutor(this));
+            Bukkit.getAsyncScheduler().runNow(this, task -> {
+                updateChecker.initialize();
+            });
+        });
     }
 
     /**
@@ -378,11 +381,11 @@ public class SmartSpawner extends JavaPlugin  implements SmartSpawnerPlugin {
     /**
      * Runs a task asynchronously.
      *
-     * @param runnable The task to run
-     * @return The BukkitTask representing the scheduled task
+     * @param task The task to run
+     * @return The ScheduledTask representing the scheduled task
      */
-    public BukkitTask runTaskAsync(Runnable runnable) {
-        return getServer().getScheduler().runTaskAsynchronously(this, runnable);
+    public ScheduledTask runTaskAsync(Consumer<ScheduledTask> task) {
+        return getServer().getAsyncScheduler().runNow(this, task);
     }
 
     /**

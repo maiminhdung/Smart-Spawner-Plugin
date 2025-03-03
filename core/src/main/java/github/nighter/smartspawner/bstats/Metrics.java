@@ -47,6 +47,8 @@ import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.Plugin;
 
+import static org.bukkit.Bukkit.getScheduler;
+
 public class Metrics {
 
     private final Plugin plugin;
@@ -114,8 +116,8 @@ public class Metrics {
                         this::appendPlatformData,
                         this::appendServiceData,
                         isFolia
-                                ? null
-                                : submitDataTask -> Bukkit.getScheduler().runTask(plugin, submitDataTask),
+                                ? submitDataTask -> Bukkit.getGlobalRegionScheduler().execute(plugin, submitDataTask)
+                                : submitDataTask -> getScheduler().runTask(plugin, submitDataTask),
                         plugin::isEnabled,
                         (message, error) -> this.plugin.getLogger().log(Level.WARNING, message, error),
                         (message) -> this.plugin.getLogger().log(Level.INFO, message),

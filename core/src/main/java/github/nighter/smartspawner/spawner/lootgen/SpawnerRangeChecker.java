@@ -4,6 +4,7 @@ import github.nighter.smartspawner.SmartSpawner;
 import github.nighter.smartspawner.utils.ConfigManager;
 import github.nighter.smartspawner.spawner.properties.SpawnerManager;
 import github.nighter.smartspawner.spawner.properties.SpawnerData;
+import io.papermc.paper.threadedregions.scheduler.ScheduledTask;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.World;
@@ -13,6 +14,7 @@ import org.bukkit.scheduler.BukkitTask;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.TimeUnit;
 
 public class SpawnerRangeChecker {
     private static final long CHECK_INTERVAL = 20L; // 1 second in ticks
@@ -20,7 +22,7 @@ public class SpawnerRangeChecker {
     private final ConfigManager configManager;
     private final SpawnerManager spawnerManager;
     private final SpawnerLootGenerator spawnerLootGenerator;
-    private final Map<String, BukkitTask> spawnerTasks;
+    private final Map<String, ScheduledTask> spawnerTasks;
     private final Map<String, Set<UUID>> playersInRange;
 
     public SpawnerRangeChecker(SmartSpawner plugin) {
@@ -34,7 +36,7 @@ public class SpawnerRangeChecker {
     }
 
     private void initializeRangeCheckTask() {
-        Bukkit.getScheduler().runTaskTimer(plugin, () ->
+        Bukkit.getGlobalRegionScheduler().runAtFixedRate(plugin, task ->
                         spawnerManager.getAllSpawners().forEach(this::updateSpawnerStatus),
                 CHECK_INTERVAL, CHECK_INTERVAL);
     }
@@ -108,20 +110,29 @@ public class SpawnerRangeChecker {
         stopSpawnerTask(spawner);
 
         spawner.setLastSpawnTime(System.currentTimeMillis() + spawner.getSpawnDelay());
-        BukkitTask task = Bukkit.getScheduler().runTaskTimer(plugin,
-                () -> {
-                    if (!spawner.getSpawnerStop()) {
-                        spawnerLootGenerator.spawnLootToSpawner(spawner);
+
+        // Sử dụng RegionScheduler để chạy an toàn trong chunk chứa spawner
+        ScheduledTask task = Bukkit.getRegionScheduler().runAtFixedRate(plugin,
+                spawner.getSpawnerLocation().getWorld(),
+                spawner.getSpawnerLocation().getBlockX() >> 4,
+                spawner.getSpawnerLocation().getBlockZ() >> 4,
+                1L, spawner.getSpawnDelay(), (scheduledTask) -> {
+
+                    if (spawner.getSpawnerStop()) {
+                        scheduledTask.cancel();
+                        spawnerTasks.remove(spawner.getSpawnerId());
+                        return;
                     }
-                },
-                0L, spawner.getSpawnDelay()
-        );
+
+                    // Spawn loot an toàn trong region
+                    spawnerLootGenerator.spawnLootToSpawner(spawner);
+                });
 
         spawnerTasks.put(spawner.getSpawnerId(), task);
     }
 
     public void stopSpawnerTask(SpawnerData spawner) {
-        BukkitTask task = spawnerTasks.remove(spawner.getSpawnerId());
+        ScheduledTask task = (ScheduledTask) spawnerTasks.remove(spawner.getSpawnerId());
         if (task != null) {
             task.cancel();
         }
@@ -132,7 +143,7 @@ public class SpawnerRangeChecker {
     }
 
     public void cleanup() {
-        spawnerTasks.values().forEach(BukkitTask::cancel);
+        spawnerTasks.values().forEach(ScheduledTask::cancel);
         spawnerTasks.clear();
         playersInRange.clear();
     }

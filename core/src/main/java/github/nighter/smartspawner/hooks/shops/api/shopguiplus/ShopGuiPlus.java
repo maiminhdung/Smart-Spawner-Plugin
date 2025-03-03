@@ -80,7 +80,7 @@ public class ShopGuiPlus implements IShopIntegration {
 
                 if (error != null) {
                     plugin.getLogger().log(Level.SEVERE, "Error processing sale", error);
-                    plugin.getServer().getScheduler().runTask(plugin, () ->
+                    plugin.getServer().getAsyncScheduler().runNow(plugin, task ->
                             languageManager.sendMessage(player, "messages.sell-failed"));
                 }
             });
